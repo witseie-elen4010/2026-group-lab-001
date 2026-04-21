@@ -58,6 +58,10 @@ form {
   gap: 16px;
 }
 
+.secondary-form {
+  margin-top: 16px;
+}
+
 label {
   display: grid;
   gap: 8px;

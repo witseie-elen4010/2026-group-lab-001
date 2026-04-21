@@ -15,11 +15,10 @@ router.post('/', (req, res) => {
   if (!username || !password) {
     return res.status(400).render('login', {
       title: 'Log In',
-      error: 'Username and password are required.',
+      error: 'Username and Password are required.',
       username: username || ''
     });
   }
-
   res.redirect(`/home`);
 });
 
