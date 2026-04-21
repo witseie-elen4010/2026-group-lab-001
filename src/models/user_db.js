@@ -12,7 +12,6 @@ async function addUser(user) {
   return usersCollection().insertOne(user);
 }
 
-// Mwahahahahahaha hahahaha ahah
 async function deleteUser(username) {
   return usersCollection().deleteOne({ username });
 }
