@@ -11,17 +11,18 @@ const runDbTest = process.env.MONGODB_URI ? test : test.skip;
 const COLLECTION_NAME = process.env.MONGODB_COLLECTION_NAME || 'User';
 
 //placeholder fields the table is initialised with
+
 const EXPECTED_USER = {
-  _id: '69e7a1803578de0763686bbd',
-  email: 'test@email.com',
-  firstName: 'name',
-  lastName: 'surname',
-  role: 'student',
-  universityId: 'uni_id',
-  facultyId: 'faculty_id',
-  schoolId: 'school_id',
-  username: 'user',
-  passwordHash: 'hashed_password_here'
+  _id: "69e807ee1d7f14dc00c23b3b",
+  facultyId: "unassigned",
+  firstName: "Pending",
+  lastName: "Pending",
+  role: "student",
+  schoolId: "unassigned",
+  universityId: "unassigned",
+  email: "test@email.com",
+  passwordHash: "5575b9e488a4b6f4bdf1516cde2080fb:e874e018fd925529df6149ce865a26f0339c6f48b004a963444a3dd53964303a92a5dcd51ae0c6ff30a8764e1c437152761b596e8e0647498a29c6eba0d98a34",
+  username: "user"
 };
 
 //all strings except for ID (objectID). University, faculty and school IDs

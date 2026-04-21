@@ -1,7 +1,7 @@
 const express = require('express');
 const { connectToDatabase } = require('../models/db');
 const { addUser } = require('../models/user_db');
-
+const { hashPassword } = require('../utils/password');
 const router = express.Router();
 
 const PLACEHOLDER_USER_FIELDS = Object.freeze({
@@ -26,7 +26,7 @@ async function buildUser({ emailAddress, password, username }) {
   return {
     ...PLACEHOLDER_USER_FIELDS,
     email: emailAddress.toLowerCase(),
-    passwordHash: password, // not yet hashed
+    passwordHash: await hashPassword(password),
     username
   };
 }

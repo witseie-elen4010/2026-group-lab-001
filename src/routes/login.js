@@ -1,6 +1,7 @@
 const express = require('express');
 const { connectToDatabase } = require('../models/db');
 const { getUser } = require('../models/user_db');
+const { verifyPassword } = require('../utils/password');
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    if (user.passwordHash !== password) {
+    if (!(await verifyPassword(password, user.passwordHash))) {
       return renderLogin(res, {
         statusCode: 401,
         error: 'Password is incorrect.',
