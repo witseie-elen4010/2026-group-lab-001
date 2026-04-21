@@ -64,7 +64,7 @@ describe('register route', () => {
     expect(connectToDatabase).toHaveBeenCalledTimes(1);
     expect(addUser).toHaveBeenCalledTimes(1);
     expect(addUser).toHaveBeenCalledWith(expect.objectContaining({
-      email: 'newUser@example.com',
+      email: 'newuser@example.com',
       facultyId: 'unassigned',
       firstName: 'Pending',
       lastName: 'Pending',
