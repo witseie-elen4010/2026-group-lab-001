@@ -3,6 +3,7 @@ const { connectToDatabase } = require('../models/db');
 const { addUser } = require('../models/user_db');
 const { hashPassword } = require('../utils/password');
 const router = express.Router();
+const BASIC_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PLACEHOLDER_USER_FIELDS = Object.freeze({
   facultyId: 'unassigned',
@@ -49,6 +50,15 @@ router.post('/', async (req, res) => {
     });
   }
 
+  if (!BASIC_EMAIL_REGEX.test(emailAddress)) {
+    return renderRegister(res, {
+      statusCode: 400,
+      error: 'Enter a valid email address.',
+      emailAddress,
+      username
+    });
+  }
+
   try {
     await connectToDatabase();
     await addUser(await buildUser({ emailAddress, password, username }));
@@ -57,7 +67,7 @@ router.post('/', async (req, res) => {
     if (error?.code === 11000) {
       return renderRegister(res, {
         statusCode: 409,
-        error: 'Username already taken.',
+        error: 'That username is already taken.',
         emailAddress,
         username
       });
