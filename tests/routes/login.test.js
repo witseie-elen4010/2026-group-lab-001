@@ -20,7 +20,12 @@ const { getUser } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
 
-function encodeForm (fields) {
+/**
+ * Encodes form fields for URL-encoded POST requests.
+ * @param {Record<string, string>} fields - Form fields to encode.
+ * @returns {string} URL-encoded form payload.
+ */
+const encodeForm = function (fields) {
   return new URLSearchParams(fields).toString()
 }
 
@@ -28,16 +33,27 @@ describe('login route', () => {
   let server
   let baseUrl
 
-  beforeAll((done) => {
+  beforeAll(async () => {
     server = http.createServer(app)
-    server.listen(0, '127.0.0.1', () => {
-      baseUrl = `http://127.0.0.1:${server.address().port}`
-      done()
+    await new Promise((resolve) => {
+      server.listen(0, '127.0.0.1', () => {
+        baseUrl = `http://127.0.0.1:${server.address().port}`
+        resolve()
+      })
     })
   })
 
-  afterAll((done) => {
-    server.close(done)
+  afterAll(async () => {
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
   })
 
   beforeEach(async () => {

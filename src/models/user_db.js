@@ -1,18 +1,35 @@
 const { getCollection } = require('./db')
 
-function usersCollection () {
-  return getCollection('User')
+const USER_COLLECTION_NAME = 'User'
+
+const usersCollection = function () {
+  return getCollection(USER_COLLECTION_NAME)
 }
 
-async function getUser (username) {
+/**
+ * Returns the user document for a username.
+ * @param {string} username - Username to search for.
+ * @returns {Promise<object|null>} The matching user or null.
+ */
+const getUser = async function (username) {
   return usersCollection().findOne({ username })
 }
 
-async function addUser (user) {
+/**
+ * Inserts a new user document.
+ * @param {object} user - User document to insert.
+ * @returns {Promise<import('mongodb').InsertOneResult>} MongoDB insert result.
+ */
+const addUser = async function (user) {
   return usersCollection().insertOne(user)
 }
 
-async function deleteUser (username) {
+/**
+ * Deletes a user document by username.
+ * @param {string} username - Username to delete.
+ * @returns {Promise<import('mongodb').DeleteResult>} MongoDB delete result.
+ */
+const deleteUser = async function (username) {
   return usersCollection().deleteOne({ username })
 }
 

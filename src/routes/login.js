@@ -3,9 +3,18 @@ const { connectToDatabase } = require('../models/db')
 const { getUser } = require('../models/user_db')
 const { verifyPassword } = require('../utils/password')
 
-const router = express.Router()
+const ROUTER = express.Router()
 
-function renderLogin (res, { statusCode = 200, error = '', username = '' } = {}) {
+/**
+ * Renders the login page with the supplied view state.
+ * @param {import('express').Response} res - Express response object.
+ * @param {object} options - Response rendering options.
+ * @param {number} [options.statusCode=200] - HTTP status code to send.
+ * @param {string} [options.error=''] - Error message to show in the view.
+ * @param {string} [options.username=''] - Username to preserve in the form.
+ * @returns {import('express').Response} The rendered response.
+ */
+const renderLogin = function (res, { statusCode = 200, error = '', username = '' } = {}) {
   return res.status(statusCode).render('login', {
     title: 'Log In',
     error,
@@ -13,11 +22,11 @@ function renderLogin (res, { statusCode = 200, error = '', username = '' } = {})
   })
 }
 
-router.get('/', (req, res) => {
+ROUTER.get('/', (req, res) => {
   return renderLogin(res)
 })
 
-router.post('/', async (req, res) => {
+ROUTER.post('/', async (req, res) => {
   const username = req.body.username?.trim() || ''
   const password = req.body.password || ''
 
@@ -58,4 +67,4 @@ router.post('/', async (req, res) => {
   }
 })
 
-module.exports = router
+module.exports = ROUTER
