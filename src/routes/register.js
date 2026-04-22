@@ -2,7 +2,7 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { addUser } = require('../models/user_db')
 const { hashPassword } = require('../utils/password')
-const router = express.Router()
+const ROUTER = express.Router()
 const BASIC_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const PLACEHOLDER_USER_FIELDS = Object.freeze({
@@ -14,7 +14,17 @@ const PLACEHOLDER_USER_FIELDS = Object.freeze({
   universityId: 'unassigned'
 })
 
-function renderRegister (res, { statusCode = 200, error = '', emailAddress = '', username = '' } = {}) {
+/**
+ * Renders the register page with the supplied view state.
+ * @param {import('express').Response} res - Express response object.
+ * @param {object} options - Response rendering options.
+ * @param {number} [options.statusCode=200] - HTTP status code to send.
+ * @param {string} [options.error=''] - Error message to show in the view.
+ * @param {string} [options.emailAddress=''] - Email address to preserve in the form.
+ * @param {string} [options.username=''] - Username to preserve in the form.
+ * @returns {import('express').Response} The rendered response.
+ */
+const renderRegister = function (res, { statusCode = 200, error = '', emailAddress = '', username = '' } = {}) {
   return res.status(statusCode).render('register', {
     title: 'Register',
     error,
@@ -23,7 +33,15 @@ function renderRegister (res, { statusCode = 200, error = '', emailAddress = '',
   })
 }
 
-async function buildUser ({ emailAddress, password, username }) {
+/**
+ * Builds a user record from the current register form fields.
+ * @param {object} input - User details from the register form.
+ * @param {string} input.emailAddress - Raw email address from the request.
+ * @param {string} input.password - Raw password from the request.
+ * @param {string} input.username - Username from the request.
+ * @returns {Promise<object>} The user document ready for insertion.
+ */
+const buildUser = async function ({ emailAddress, password, username }) {
   return {
     ...PLACEHOLDER_USER_FIELDS,
     email: emailAddress.toLowerCase(),
@@ -32,11 +50,11 @@ async function buildUser ({ emailAddress, password, username }) {
   }
 }
 
-router.get('/', (req, res) => {
+ROUTER.get('/', (req, res) => {
   return renderRegister(res)
 })
 
-router.post('/', async (req, res) => {
+ROUTER.post('/', async (req, res) => {
   const emailAddress = req.body.emailAddress?.trim() || ''
   const username = req.body.username?.trim() || ''
   const password = req.body.password || ''
@@ -82,4 +100,4 @@ router.post('/', async (req, res) => {
   }
 })
 
-module.exports = router
+module.exports = ROUTER

@@ -25,11 +25,11 @@ body {
   padding: 32px 16px;
 }
 
-.page-login {
+.page_login {
   background: #eef2ff;
 }
 
-.page-home {
+.page_home {
   background: #f4f7fb;
 }
 
@@ -41,15 +41,15 @@ body {
   box-shadow: var(--shadow-card);
 }
 
-.card-narrow {
+.card_narrow {
   max-width: 420px;
 }
 
-.card-wide {
+.card_wide {
   max-width: 640px;
 }
 
-.text-center {
+.text_center {
   text-align: center;
 }
 
@@ -58,7 +58,7 @@ form {
   gap: 16px;
 }
 
-.secondary-form {
+.secondary_form {
   margin-top: 16px;
 }
 
@@ -96,7 +96,7 @@ a {
   color: var(--color-error-text);
 }
 
-.back-link {
+.back_link {
   margin-top: 16px;
   background: var(--color-secondary);
 }

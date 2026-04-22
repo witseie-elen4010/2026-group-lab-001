@@ -6,28 +6,34 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
 </head>
-<body class="page page-login">
-  <main class="card card-narrow">
-    <h1>Log In</h1>
-    <p>Enter your username and password.</p>
-    <% if (error) { %>
-      <div class="error"><%= error %></div>
-    <% } %>
-    <form action="/login" method="post">
-      <label>
-        Username
-        <input type="text" name="username" value="<%= username %>" placeholder="username" required>
-      </label>
-      <label>
-        Password
-        <input type="password" name="password" placeholder="password" required>
-      </label>
-      <button type="submit">Log In</button>
-    </form>
+<body class="page page_login">
+  <main class="card card_narrow">
+    <header>
+      <h1>Log In</h1>
+      <p>Enter your username and password.</p>
+    </header>
 
-    <form action="/register" method="get" class="secondary-form">
-      <button type="submit" class="back-link">Register</button>
-    </form>
+    <section>
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+
+      <form action="/login" method="post">
+        <label>
+          Username
+          <input type="text" name="username" value="<%= username %>" placeholder="username" required>
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" placeholder="password" required>
+        </label>
+        <button type="submit">Log In</button>
+      </form>
+
+      <form class="secondary_form" action="/register" method="get">
+        <button class="back_link" type="submit">Register</button>
+      </form>
+    </section>
   </main>
 </body>
 </html>

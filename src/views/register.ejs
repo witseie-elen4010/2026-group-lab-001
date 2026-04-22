@@ -6,33 +6,37 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
 </head>
-<body class="page page-login">
-  <main class="card card-narrow">
-    <h1>Register</h1>
-    <p>Welcome to Let's Talk</p>
+<body class="page page_login">
+  <main class="card card_narrow">
+    <header>
+      <h1>Register</h1>
+      <p>Welcome to Let's Talk</p>
+    </header>
 
-    <% if (error) { %>
-      <div class="error"><%= error %></div>
-    <% } %>
+    <section>
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
 
-    <form action="/register" method="post">
-      <label>
-        Email Address
-        <input type="text" name="emailAddress" value="<%= emailAddress %>" placeholder="1234567@students.wits.ac.za" required>
-      </label>
+      <form action="/register" method="post">
+        <label>
+          Email Address
+          <input type="text" name="emailAddress" value="<%= emailAddress %>" placeholder="1234567@students.wits.ac.za" required>
+        </label>
 
-      <label>
-        Username
-        <input type="text" name="username" value="<%= username %>" placeholder="username" required>
-      </label>
+        <label>
+          Username
+          <input type="text" name="username" value="<%= username %>" placeholder="username" required>
+        </label>
 
-      <label>
-        Password
-        <input type="password" name="password" placeholder="password" required>
-      </label>
+        <label>
+          Password
+          <input type="password" name="password" placeholder="password" required>
+        </label>
 
-      <button type="submit">Register</button>
-    </form>
+        <button type="submit">Register</button>
+      </form>
+    </section>
   </main>
 </body>
 </html>

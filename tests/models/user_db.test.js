@@ -7,7 +7,7 @@ const {
 const { addUser, deleteUser, getUser } = require('../../src/models/user_db')
 
 // fetching the connection string for the LetsTalk database (MongoDB Atlas)
-const runDbTest = process.env.MONGODB_URI ? test : test.skip
+const RUN_DB_TEST = process.env.MONGODB_URI ? test : test.skip
 const COLLECTION_NAME = process.env.MONGODB_COLLECTION_NAME || 'User'
 
 // placeholder fields the table is initialised with
@@ -39,7 +39,12 @@ const EXPECTED_FIELDS = [
   'passwordHash'
 ]
 
-function createTestUser (overrides = {}) {
+/**
+ * Builds a unique test user payload for Atlas integration tests.
+ * @param {object} overrides - Field overrides for the base user document.
+ * @returns {object} A unique test user document.
+ */
+const createTestUser = function (overrides = {}) {
   const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   return {
@@ -67,7 +72,7 @@ afterAll(async () => {
 })
 
 describe('MongoDB Atlas setup', () => {
-  runDbTest('Connects to Atlas and finds "User" collection', async () => {
+  RUN_DB_TEST('Connects to Atlas and finds "User" collection', async () => {
     const collections = await getDb()
       .listCollections({}, { nameOnly: true })
       .toArray()
@@ -79,7 +84,7 @@ describe('MongoDB Atlas setup', () => {
 })
 
 describe('MongoDB Atlas test user', () => {
-  runDbTest('Returns the expected test user by username', async () => {
+  RUN_DB_TEST('Returns the expected test user by username', async () => {
     const user = await getUser(EXPECTED_USER.username)
 
     expect(user).not.toBeNull()
@@ -96,8 +101,9 @@ describe('MongoDB Atlas test user', () => {
     })
     expect(user._id.toString()).toBe(EXPECTED_USER._id)
   })
+
   // document = entry in table
-  runDbTest('Includes all expected fields on the test user document', async () => {
+  RUN_DB_TEST('Includes all expected fields on the test user document', async () => {
     const user = await getUser(EXPECTED_USER.username)
     expect(user).not.toBeNull()
     for (const field of EXPECTED_FIELDS) {
@@ -105,7 +111,7 @@ describe('MongoDB Atlas test user', () => {
     }
   })
 
-  runDbTest('Adds a new user document to the "User" collection', async () => {
+  RUN_DB_TEST('Adds a new user document to the "User" collection', async () => {
     const newUser = createTestUser()
 
     try {
@@ -123,7 +129,7 @@ describe('MongoDB Atlas test user', () => {
   })
 
   // If this test fails, go delete test user manually on Atlas
-  runDbTest('deletes a user document from the "User" collection', async () => {
+  RUN_DB_TEST('deletes a user document from the "User" collection', async () => {
     const newUser = createTestUser()
 
     try {
@@ -138,7 +144,7 @@ describe('MongoDB Atlas test user', () => {
     }
   })
 
-  runDbTest('Rejects a user when role is not lecturer or student', async () => {
+  RUN_DB_TEST('Rejects a user when role is not lecturer or student', async () => {
     const invalidUser = createTestUser({ role: 'admin' })
 
     await expect(addUser(invalidUser)).rejects.toMatchObject({
@@ -149,7 +155,7 @@ describe('MongoDB Atlas test user', () => {
     await deleteUser(invalidUser.username)
   })
 
-  runDbTest('Rejects creating two users with the same username', async () => {
+  RUN_DB_TEST('Rejects creating two users with the same username', async () => {
     const originalUser = createTestUser()
     const duplicateUser = createTestUser({
       username: originalUser.username,
