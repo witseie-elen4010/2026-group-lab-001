@@ -11,7 +11,7 @@
     <header>
       <h1>Hello <%= username %></h1>
     </header>
-    <a class="back_link" href="/user_profile?username=<%= encodeURIComponent(username) %>">User Profile</a>
+    <a class="back_link" href="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(username) %>">User Profile</a>
   </main>
 </body>
 </html>

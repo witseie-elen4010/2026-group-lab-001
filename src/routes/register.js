@@ -1,20 +1,10 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
-const {
-  getFaculty,
-  getSchool,
-  getUniversity,
-  searchFaculties,
-  searchSchools,
-  searchUniversities,
-  isFacultyInUniversity,
-  isSchoolInFaculty
-} = require('../models/university_db')
 const { addUser } = require('../models/user_db')
+const { validateSelection } = require('../services/institution_validation')
 const { hashPassword } = require('../utils/password')
 const ROUTER = express.Router()
 const BASIC_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const INSTITUTION_SEARCH_LIMIT = 8 // arbitrary
 
 const PLACEHOLDER_USER_FIELDS = Object.freeze({
   facultyId: 'unassigned',
@@ -99,82 +89,6 @@ const buildUser = async function ({
   }
 }
 
-ROUTER.get('/universities', async (req, res) => {
-  const query = req.query.query?.trim() || ''
-
-  if (!query) {
-    return res.json({ results: [] })
-  }
-
-  try {
-    await connectToDatabase()
-    const universities = await searchUniversities(query, INSTITUTION_SEARCH_LIMIT)
-
-    return res.json({
-      results: universities.map((universityDocument) => universityDocument.name)
-    })
-  } catch (error) {
-    return res.status(500).json({
-      error: 'Sorry. We can not search universities right now.',
-      results: []
-    })
-  }
-})
-
-ROUTER.get('/faculties', async (req, res) => {
-  const query = req.query.query?.trim() || ''
-  const university = req.query.university?.trim() || ''
-
-  if (!query) {
-    return res.json({ results: [] })
-  }
-
-  try {
-    await connectToDatabase()
-    const faculties = await searchFaculties(query, {
-      limit: INSTITUTION_SEARCH_LIMIT,
-      university
-    })
-
-    return res.json({
-      results: faculties.map((facultyDocument) => facultyDocument.name)
-    })
-  } catch (error) {
-    return res.status(500).json({
-      error: 'Sorry. We can not search faculties right now.',
-      results: []
-    })
-  }
-})
-
-ROUTER.get('/schools', async (req, res) => {
-  const query = req.query.query?.trim() || ''
-  const university = req.query.university?.trim() || ''
-  const faculty = req.query.faculty?.trim() || ''
-
-  if (!query) {
-    return res.json({ results: [] })
-  }
-
-  try {
-    await connectToDatabase()
-    const schools = await searchSchools(query, {
-      faculty,
-      limit: INSTITUTION_SEARCH_LIMIT,
-      university
-    })
-
-    return res.json({
-      results: schools.map((schoolDocument) => schoolDocument.name)
-    })
-  } catch (error) {
-    return res.status(500).json({
-      error: 'Sorry. We could not search schools right now.',
-      results: []
-    })
-  }
-})
-
 ROUTER.get('/', (req, res) => {
   return renderRegister(res)
 })
@@ -215,49 +129,19 @@ ROUTER.post('/', async (req, res) => {
       ...formValues
     })
   }
-  // force user to enter valid institution
+
   try {
     await connectToDatabase()
-    const matchedUniversity = await getUniversity(university)
-    if (!matchedUniversity) {
-      return renderRegister(res, {
-        statusCode: 400,
-        error: 'University does not exist.',
-        ...formValues
-      })
-    }
+    const institutionValidation = await validateSelection({
+      faculty,
+      school,
+      university
+    })
 
-    const matchedFaculty = await getFaculty(faculty)
-    if (!matchedFaculty) {
+    if (!institutionValidation.isValid) {
       return renderRegister(res, {
-        statusCode: 400,
-        error: 'Faculty does not exist.',
-        ...formValues
-      })
-    }
-
-    if (!(await isFacultyInUniversity(matchedFaculty, matchedUniversity))) {
-      return renderRegister(res, {
-        statusCode: 400,
-        error: 'Faculty not found in University.',
-        ...formValues
-      })
-    }
-
-    const matchedSchool = await getSchool(school)
-
-    if (!matchedSchool) {
-      return renderRegister(res, {
-        statusCode: 400,
-        error: 'School does not exist.',
-        ...formValues
-      })
-    }
-
-    if (!(await isSchoolInFaculty(matchedSchool, matchedFaculty))) {
-      return renderRegister(res, {
-        statusCode: 400,
-        error: 'School not found in Faculty.',
+        statusCode: institutionValidation.statusCode,
+        error: institutionValidation.error,
         ...formValues
       })
     }
@@ -278,7 +162,7 @@ ROUTER.post('/', async (req, res) => {
     if (error?.code === 11000) {
       return renderRegister(res, {
         statusCode: 409,
-        error: 'Username is unavailable.',
+        error: 'That username is already taken.',
         ...formValues
       })
     }

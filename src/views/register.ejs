@@ -58,19 +58,19 @@
           <div class="register_right_column">
             <label>
               University
-              <input id="university" type="search" name="university" value="<%= university %>" placeholder="..." autocomplete="off" list="university_options" aria-describedby="university_search_status" data-search-url="/register/universities" data-search-label="university" required>
+              <input id="university" type="search" name="university" value="<%= university %>" placeholder="..." autocomplete="off" list="university_options" aria-describedby="university_search_status" data-search-url="/institutions/universities" data-search-label="university" required>
               <datalist id="university_options"></datalist>
               <p id="university_search_status" class="search_status" aria-live="polite"></p>
             </label>
             <label>
               Faculty
-              <input id="faculty" type="search" name="faculty" value="<%= faculty %>" placeholder="..." autocomplete="off" list="faculty_options" aria-describedby="faculty_search_status" data-search-url="/register/faculties" data-search-label="faculty" data-search-parents="university" required>
+              <input id="faculty" type="search" name="faculty" value="<%= faculty %>" placeholder="..." autocomplete="off" list="faculty_options" aria-describedby="faculty_search_status" data-search-url="/institutions/faculties" data-search-label="faculty" data-search-parents="university" required>
               <datalist id="faculty_options"></datalist>
               <p id="faculty_search_status" class="search_status" aria-live="polite"></p>
             </label>
             <label>
               School
-              <input id="school" type="search" name="school" value="<%= school %>" placeholder="..." autocomplete="off" list="school_options" aria-describedby="school_search_status" data-search-url="/register/schools" data-search-label="school" data-search-parents="university,faculty" required>
+              <input id="school" type="search" name="school" value="<%= school %>" placeholder="..." autocomplete="off" list="school_options" aria-describedby="school_search_status" data-search-url="/institutions/schools" data-search-label="school" data-search-parents="university,faculty" required>
               <datalist id="school_options"></datalist>
               <p id="school_search_status" class="search_status" aria-live="polite"></p>
             </label>

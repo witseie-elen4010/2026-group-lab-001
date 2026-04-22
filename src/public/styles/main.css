@@ -156,6 +156,14 @@ a {
   align-content: start;
 }
 
+.profile_update_form {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  text-align: left;
+}
+
 .profile_detail {
   padding: 14px;
   border: 1px solid var(--color-border);

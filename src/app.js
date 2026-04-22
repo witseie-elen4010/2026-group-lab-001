@@ -1,5 +1,6 @@
 const path = require('path')
 const express = require('express')
+const institutionSearchRouter = require('./routes/institution_search')
 const loginRouter = require('./routes/login')
 const registerRouter = require('./routes/register')
 const homeRouter = require('./routes/home')
@@ -12,6 +13,7 @@ APP.set('views', path.join(__dirname, 'views'))
 
 APP.use(express.urlencoded({ extended: true }))
 APP.use(express.static(path.join(__dirname, 'public'))) // css style template
+APP.use('/institutions', institutionSearchRouter)
 APP.use('/login', loginRouter)
 APP.use('/register', registerRouter)
 APP.use('/home', homeRouter)
