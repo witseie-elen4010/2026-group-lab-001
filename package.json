@@ -4,6 +4,17 @@
     "test": "jest",
     "test:db": "jest tests/models"
   },
+  "standard": {
+    "globals": [
+      "afterAll",
+      "beforeAll",
+      "beforeEach",
+      "describe",
+      "expect",
+      "jest",
+      "test"
+    ]
+  },
   "dependencies": {
     "dotenv": "^17.4.2",
     "mongodb": "^7.2.0"
