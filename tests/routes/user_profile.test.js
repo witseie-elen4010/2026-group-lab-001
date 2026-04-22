@@ -102,7 +102,7 @@ describe('user profile route', () => {
     expect(body).toContain('Update Institution')
     expect(body).toContain('Morris')
     expect(body).toContain('Wits')
-    expect(body).toContain('morris@example.com')
+    expect(body).toContain('sd3lovers@example.com')
     expect(body).toContain('University of the Witwatersrand')
     expect(body).toContain('Engineering and the Built Environment')
     expect(body).toContain('Electrical and Information Engineering')
