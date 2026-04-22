@@ -8,6 +8,9 @@ const {
   getFaculty,
   getSchool,
   getUniversity,
+  searchFaculties,
+  searchSchools,
+  searchUniversities,
   isFacultyInUniversity,
   isSchoolInFaculty
 } = require('../../src/models/university_db')
@@ -74,6 +77,49 @@ describe('MongoDB Atlas institution lookups', () => {
       name: EXPECTED_UNIVERSITY.name
     })
     expect(university._id.toString()).toBe(EXPECTED_UNIVERSITY._id)
+  })
+
+  RUN_DB_TEST('Returns matching universities for a partial query', async () => {
+    const universities = await searchUniversities('wit', 5)
+
+    expect(universities).toEqual(
+      expect.arrayContaining([
+        {
+          name: EXPECTED_UNIVERSITY.name
+        }
+      ])
+    )
+  })
+
+  RUN_DB_TEST('Returns matching faculties for a partial query within a university', async () => {
+    const faculties = await searchFaculties('eng', {
+      limit: 5,
+      university: EXPECTED_UNIVERSITY.name
+    })
+
+    expect(faculties).toEqual(
+      expect.arrayContaining([
+        {
+          name: EXPECTED_FACULTY.name
+        }
+      ])
+    )
+  })
+
+  RUN_DB_TEST('Returns matching schools for a partial query within a faculty', async () => {
+    const schools = await searchSchools('elect', {
+      faculty: EXPECTED_FACULTY.name,
+      limit: 5,
+      university: EXPECTED_UNIVERSITY.name
+    })
+
+    expect(schools).toEqual(
+      expect.arrayContaining([
+        {
+          name: EXPECTED_SCHOOL.name
+        }
+      ])
+    )
   })
 
   RUN_DB_TEST('Returns the expected faculty by id', async () => {

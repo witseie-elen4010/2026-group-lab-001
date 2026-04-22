@@ -9,6 +9,9 @@ const {
   getFaculty,
   getSchool,
   getUniversity,
+  searchFaculties,
+  searchSchools,
+  searchUniversities,
   isFacultyInUniversity,
   isSchoolInFaculty
 } = require('../../src/models/university_db')
@@ -18,9 +21,9 @@ describe('institution relationship lookups', () => {
 
   beforeEach(() => {
     collections = {
-      Faculty: { findOne: jest.fn() },
-      School: { findOne: jest.fn() },
-      University: { findOne: jest.fn() }
+      Faculty: { find: jest.fn(), findOne: jest.fn() },
+      School: { find: jest.fn(), findOne: jest.fn() },
+      University: { find: jest.fn(), findOne: jest.fn() }
     }
 
     getCollection.mockImplementation((name) => collections[name])
@@ -51,6 +54,134 @@ describe('institution relationship lookups', () => {
 
     await expect(getFaculty(facultyId.toHexString())).resolves.toEqual(faculty)
     expect(collections.Faculty.findOne).toHaveBeenCalledWith({ _id: facultyId })
+  })
+
+  test('searchUniversities returns matching universities for a query', async () => {
+    const universityCursor = {
+      limit: jest.fn(),
+      sort: jest.fn(),
+      toArray: jest.fn()
+    }
+
+    universityCursor.sort.mockReturnValue(universityCursor)
+    universityCursor.limit.mockReturnValue(universityCursor)
+    universityCursor.toArray.mockResolvedValue([
+      {
+        name: 'University of the Witwatersrand'
+      }
+    ])
+
+    collections.University.find.mockReturnValue(universityCursor)
+
+    await expect(searchUniversities('wit', 5)).resolves.toEqual([
+      {
+        name: 'University of the Witwatersrand'
+      }
+    ])
+    expect(collections.University.find).toHaveBeenCalledWith(
+      {
+        name: {
+          $options: 'i',
+          $regex: 'wit'
+        }
+      },
+      {
+        projection: {
+          _id: 0,
+          name: 1
+        }
+      }
+    )
+    expect(universityCursor.sort).toHaveBeenCalledWith({ name: 1 })
+    expect(universityCursor.limit).toHaveBeenCalledWith(5)
+  })
+
+  test('searchFaculties filters faculties by university name', async () => {
+    const facultyCursor = {
+      limit: jest.fn(),
+      sort: jest.fn(),
+      toArray: jest.fn()
+    }
+
+    facultyCursor.sort.mockReturnValue(facultyCursor)
+    facultyCursor.limit.mockReturnValue(facultyCursor)
+    facultyCursor.toArray.mockResolvedValue([
+      {
+        name: 'Engineering and the Built Environment'
+      }
+    ])
+
+    collections.Faculty.find.mockReturnValue(facultyCursor)
+
+    await expect(searchFaculties('eng', {
+      limit: 4,
+      university: 'University of the Witwatersrand'
+    })).resolves.toEqual([
+      {
+        name: 'Engineering and the Built Environment'
+      }
+    ])
+    expect(collections.Faculty.find).toHaveBeenCalledWith(
+      {
+        name: {
+          $options: 'i',
+          $regex: 'eng'
+        },
+        universityName: 'University of the Witwatersrand'
+      },
+      {
+        projection: {
+          _id: 0,
+          name: 1
+        }
+      }
+    )
+    expect(facultyCursor.limit).toHaveBeenCalledWith(4)
+  })
+
+  test('searchSchools filters schools by university and faculty names', async () => {
+    const schoolCursor = {
+      limit: jest.fn(),
+      sort: jest.fn(),
+      toArray: jest.fn()
+    }
+
+    schoolCursor.sort.mockReturnValue(schoolCursor)
+    schoolCursor.limit.mockReturnValue(schoolCursor)
+    schoolCursor.toArray.mockResolvedValue([
+      {
+        name: 'Electrical and Information Engineering'
+      }
+    ])
+
+    collections.School.find.mockReturnValue(schoolCursor)
+
+    await expect(searchSchools('elect', {
+      faculty: 'Engineering and the Built Environment',
+      limit: 3,
+      university: 'University of the Witwatersrand'
+    })).resolves.toEqual([
+      {
+        name: 'Electrical and Information Engineering'
+      }
+    ])
+    expect(collections.School.find).toHaveBeenCalledWith(
+      {
+        facultyName: 'Engineering and the Built Environment',
+        name: {
+          $options: 'i',
+          $regex: 'elect'
+        },
+        universityName: 'University of the Witwatersrand'
+      },
+      {
+        projection: {
+          _id: 0,
+          name: 1
+        }
+      }
+    )
+    expect(schoolCursor.limit).toHaveBeenCalledWith(3)
   })
 
   test('getSchool finds a school by id', async () => {
