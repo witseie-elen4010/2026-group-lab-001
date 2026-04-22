@@ -3,8 +3,10 @@ const dns = require('node:dns')
 const dotenv = require('dotenv')
 const { MongoClient, ServerApiVersion } = require('mongodb')
 
+const DNS_SERVERS = ['8.8.8.8', '1.1.1.1']
+
 dotenv.config({ path: path.resolve(__dirname, '../../.env'), quiet: true })
-dns.setServers(['8.8.8.8', '1.1.1.1'])
+dns.setServers(DNS_SERVERS)
 
 // retrieve the connection string from .env
 const DATABASE_NAME = process.env.MONGODB_DB_NAME || 'LetsTalk'
@@ -12,7 +14,11 @@ const DATABASE_NAME = process.env.MONGODB_DB_NAME || 'LetsTalk'
 let client
 let db
 
-function getMongoUri () {
+/**
+ * Returns the configured MongoDB connection string.
+ * @returns {string} The MongoDB connection URI.
+ */
+const getMongoUri = function () {
   const uri = process.env.MONGODB_URI
 
   if (!uri) {
@@ -22,7 +28,11 @@ function getMongoUri () {
   return uri
 }
 
-async function connectToDatabase () {
+/**
+ * Connects to MongoDB and returns the current database instance.
+ * @returns {Promise<import('mongodb').Db>} The connected database instance.
+ */
+const connectToDatabase = async function () {
   if (db) return db
 
   client = new MongoClient(getMongoUri(), {
@@ -38,21 +48,36 @@ async function connectToDatabase () {
   return db
 }
 
-function getDb () {
+/**
+ * Returns the active database connection.
+ * @returns {import('mongodb').Db} The active database instance.
+ */
+const getDb = function () {
   if (!db) {
     throw new Error('Database has not been connected yet.')
   }
+
   return db
 }
 
-function getCollection (name) {
+/**
+ * Returns a collection from the active database connection.
+ * @param {string} name - MongoDB collection name.
+ * @returns {import('mongodb').Collection} The requested collection.
+ */
+const getCollection = function (name) {
   return getDb().collection(name)
 }
 
-async function closeDatabaseConnection () {
+/**
+ * Closes the active database connection when one exists.
+ * @returns {Promise<void>} Resolves when the connection is closed.
+ */
+const closeDatabaseConnection = async function () {
   if (!client) {
     return
   }
+
   await client.close()
   client = undefined
   db = undefined

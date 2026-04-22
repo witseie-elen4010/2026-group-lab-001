@@ -12,7 +12,7 @@ const {
   isSchoolInFaculty
 } = require('../../src/models/university_db')
 
-const runDbTest = process.env.MONGODB_URI ? test : test.skip
+const RUN_DB_TEST = process.env.MONGODB_URI ? test : test.skip
 const EXPECTED_COLLECTIONS = ['University', 'Faculty', 'School']
 
 const EXPECTED_UNIVERSITY = {
@@ -51,7 +51,7 @@ afterAll(async () => {
 })
 
 describe('MongoDB Atlas Institutions dB setup', () => {
-  runDbTest('Connects to Atlas and finds the institution collections', async () => {
+  RUN_DB_TEST('Connects to Atlas and finds the institution collections', async () => {
     const collections = await getDb()
       .listCollections({}, { nameOnly: true })
       .toArray()
@@ -64,7 +64,7 @@ describe('MongoDB Atlas Institutions dB setup', () => {
 })
 
 describe('MongoDB Atlas institution lookups', () => {
-  runDbTest('Returns the expected university by name', async () => {
+  RUN_DB_TEST('Returns the expected university by name', async () => {
     const university = await getUniversity(EXPECTED_UNIVERSITY.name)
 
     expect(university).not.toBeNull()
@@ -76,7 +76,7 @@ describe('MongoDB Atlas institution lookups', () => {
     expect(university._id.toString()).toBe(EXPECTED_UNIVERSITY._id)
   })
 
-  runDbTest('Returns the expected faculty by id', async () => {
+  RUN_DB_TEST('Returns the expected faculty by id', async () => {
     const faculty = await getFaculty(EXPECTED_FACULTY._id)
 
     expect(faculty).not.toBeNull()
@@ -88,7 +88,7 @@ describe('MongoDB Atlas institution lookups', () => {
     expect(faculty.universityID.toString()).toBe(EXPECTED_FACULTY.universityID)
   })
 
-  runDbTest('Returns the expected school by id', async () => {
+  RUN_DB_TEST('Returns the expected school by id', async () => {
     const school = await getSchool(EXPECTED_SCHOOL._id)
 
     expect(school).not.toBeNull()
@@ -102,13 +102,13 @@ describe('MongoDB Atlas institution lookups', () => {
     expect(school.universityID.toString()).toBe(EXPECTED_SCHOOL.universityID)
   })
 
-  runDbTest('Confirms the faculty belongs to the university', async () => {
+  RUN_DB_TEST('Confirms the faculty belongs to the university', async () => {
     await expect(
       isFacultyInUniversity(EXPECTED_FACULTY._id, EXPECTED_UNIVERSITY._id)
     ).resolves.toBe(true)
   })
 
-  runDbTest('Confirms the school belongs to the faculty', async () => {
+  RUN_DB_TEST('Confirms the school belongs to the faculty', async () => {
     await expect(
       isSchoolInFaculty(EXPECTED_SCHOOL._id, EXPECTED_FACULTY._id)
     ).resolves.toBe(true)
