@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="page page-login">
+  <main class="card card-narrow">
+    <h1>Register</h1>
+    <p>Welcome to Let's Talk</p>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+
+    <form action="/register" method="post">
+      <label>
+        Email Address
+        <input type="text" name="emailAddress" value="<%= emailAddress %>" placeholder="1234567@students.wits.ac.za" required>
+      </label>
+
+      <label>
+        Username
+        <input type="text" name="username" value="<%= username %>" placeholder="username" required>
+      </label>
+
+      <label>
+        Password
+        <input type="password" name="password" placeholder="password" required>
+      </label>
+
+      <button type="submit">Register</button>
+    </form>
+  </main>
+</body>
+</html>

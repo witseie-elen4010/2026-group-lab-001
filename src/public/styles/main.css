@@ -1,0 +1,102 @@
+:root {
+  --font-base: Arial, sans-serif;
+  --color-text: #1f2937;
+  --color-surface: #ffffff;
+  --color-primary: #2563eb;
+  --color-secondary: #64748b;
+  --color-border: #cbd5e1;
+  --color-error-bg: #fee2e2;
+  --color-error-text: #991b1b;
+  --shadow-card: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-base);
+  color: var(--color-text);
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.page-login {
+  background: #eef2ff;
+}
+
+.page-home {
+  background: #f4f7fb;
+}
+
+.card {
+  margin: 48px auto;
+  padding: 32px;
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.card-narrow {
+  max-width: 420px;
+}
+
+.card-wide {
+  max-width: 640px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+form {
+  display: grid;
+  gap: 16px;
+}
+
+.secondary-form {
+  margin-top: 16px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+input {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button,
+a {
+  display: inline-block;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.error {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.back-link {
+  margin-top: 16px;
+  background: var(--color-secondary);
+}

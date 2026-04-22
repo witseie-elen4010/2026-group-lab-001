@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="page page-login">
+  <main class="card card-narrow">
+    <h1>Log In</h1>
+    <p>Enter your username and password.</p>
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+    <form action="/login" method="post">
+      <label>
+        Username
+        <input type="text" name="username" value="<%= username %>" placeholder="username" required>
+      </label>
+      <label>
+        Password
+        <input type="password" name="password" placeholder="password" required>
+      </label>
+      <button type="submit">Log In</button>
+    </form>
+
+    <form action="/register" method="get" class="secondary-form">
+      <button type="submit" class="back-link">Register</button>
+    </form>
+  </main>
+</body>
+</html>
