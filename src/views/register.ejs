@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <script src="/scripts/search.js" defer></script>
 </head>
 <body class="page page_login">
-  <main class="card card_narrow">
+  <main class="card card_even_wider">
     <header>
       <h1>Register</h1>
       <p>Welcome to Let's Talk</p>
@@ -19,20 +20,62 @@
       <% } %>
 
       <form action="/register" method="post">
-        <label>
-          Email Address
-          <input type="text" name="emailAddress" value="<%= emailAddress %>" placeholder="1234567@students.wits.ac.za" required>
-        </label>
+        <div class="register_columns">
+          <div class="register_left_column">
+            <label>
+              Username
+              <input type="text" name="username" value="<%= username %>" placeholder="username" required>
+            </label>
+            <label>
+              Password
+              <input type="password" name="password" placeholder="password" required>
+            </label>
+            <label>
+              Email Address
+              <input type="text" name="emailAddress" value="<%= emailAddress %>" placeholder="1234567@students.wits.ac.za" required>
+            </label>
+            </div>
 
-        <label>
-          Username
-          <input type="text" name="username" value="<%= username %>" placeholder="username" required>
-        </label>
-
-        <label>
-          Password
-          <input type="password" name="password" placeholder="password" required>
-        </label>
+            <div class="register_middle_column">
+            <label>
+              First Name(s)
+              <input type="text" name="name" value="<%= name %>" placeholder="Stephen" required>
+            </label>
+            <label>
+              Last Name
+              <input type="text" name="surname" value="<%= surname %>" placeholder="Levitt" required>
+            </label>
+            <label>
+              Role
+                <select id="role" name="role" required>
+                  <option value="" disabled selected>Select one...</option>
+                  <option value="student">Student</option>
+                  <option value="lecturer">Lecturer</option>
+                </select>
+            </label>
+          </div>
+               
+          <div class="register_right_column">
+            <label>
+              University
+              <input id="university" type="search" name="university" value="<%= university %>" placeholder="..." autocomplete="off" list="university_options" aria-describedby="university_search_status" data-search-url="/register/universities" data-search-label="university" required>
+              <datalist id="university_options"></datalist>
+              <p id="university_search_status" class="search_status" aria-live="polite"></p>
+            </label>
+            <label>
+              Faculty
+              <input id="faculty" type="search" name="faculty" value="<%= faculty %>" placeholder="..." autocomplete="off" list="faculty_options" aria-describedby="faculty_search_status" data-search-url="/register/faculties" data-search-label="faculty" data-search-parents="university" required>
+              <datalist id="faculty_options"></datalist>
+              <p id="faculty_search_status" class="search_status" aria-live="polite"></p>
+            </label>
+            <label>
+              School
+              <input id="school" type="search" name="school" value="<%= school %>" placeholder="..." autocomplete="off" list="school_options" aria-describedby="school_search_status" data-search-url="/register/schools" data-search-label="school" data-search-parents="university,faculty" required>
+              <datalist id="school_options"></datalist>
+              <p id="school_search_status" class="search_status" aria-live="polite"></p>
+            </label>
+          </div>
+        </div>
 
         <button type="submit">Register</button>
       </form>

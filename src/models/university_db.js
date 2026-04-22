@@ -17,6 +17,38 @@ const schoolsCollection = function () {
   return getCollection(SCHOOL_COLLECTION_NAME)
 }
 
+const escapeRegularExpression = function (value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// cleans user input text to query against institution collections
+const searchByName = async function (collection, query, { filters = {}, limit = 10 } = {}) {
+  const normalizedQuery = query?.trim() || ''
+
+  if (!normalizedQuery) {
+    return []
+  }
+  return collection
+    .find(
+      {
+        ...filters,
+        name: {
+          $regex: escapeRegularExpression(normalizedQuery), // ignore regexes
+          $options: 'i' // case-insensitive for querying
+        }
+      },
+      {
+        projection: {
+          _id: 0, // to ONLY return the name - not the rest of the entries
+          name: 1
+        }
+      }
+    )
+    .sort({ name: 1 }) // returns alphabetised list
+    .limit(limit)
+    .toArray()
+}
+
 /**
  * Converts a supported value into a MongoDB ObjectId.
  * @param {string|import('mongodb').ObjectId} value - Value to convert.
@@ -26,11 +58,9 @@ const toObjectId = function (value) {
   if (value instanceof ObjectId) {
     return value
   }
-
   if (typeof value === 'string' && ObjectId.isValid(value)) {
     return new ObjectId(value)
   }
-
   return null
 }
 
@@ -41,7 +71,6 @@ const idsMatch = function (left, right) {
   if (!leftId || !rightId) {
     return false
   }
-
   return leftId.equals(rightId)
 }
 
@@ -57,15 +86,12 @@ const findByIdOrName = async function (collection, value) {
   if (documentId) {
     return collection.findOne({ _id: documentId })
   }
-
   if (value && typeof value === 'object') {
     return value
   }
-
   if (typeof value === 'string') {
     return collection.findOne({ name: value })
   }
-
   return null
 }
 
@@ -76,6 +102,60 @@ const findByIdOrName = async function (collection, value) {
  */
 const getUniversity = async function (university) {
   return findByIdOrName(universitiesCollection(), university)
+}
+
+/**
+ * Returns universities whose names match a partial query.
+ * @param {string} query - Partial university name to search for.
+ * @param {number} [limit=10] - Maximum number of results to return.
+ * @returns {Promise<Array<{name: string}>>} Matching universities.
+ */
+const searchUniversities = async function (query, limit = 10) {
+  return searchByName(universitiesCollection(), query, { limit })
+}
+
+/**
+ * Returns faculties whose names match a partial query.
+ * @param {string} query - Partial faculty name to search for.
+ * @param {object} [options={}] - Optional faculty search filters.
+ * @param {string} [options.university=''] - University name to filter faculties by.
+ * @param {number} [options.limit=10] - Maximum number of results to return.
+ * @returns {Promise<Array<{name: string}>>} Matching faculties.
+ */
+const searchFaculties = async function (query, { university = '', limit = 10 } = {}) {
+  const filters = {}
+
+  if (university) {
+    filters.universityName = university
+  }
+  return searchByName(facultiesCollection(), query, {
+    filters,
+    limit
+  })
+}
+
+/**
+ * Returns schools whose names match a partial query.
+ * @param {string} query - Partial school name to search for.
+ * @param {object} [options={}] - Optional school search filters.
+ * @param {string} [options.university=''] - University name to filter schools by.
+ * @param {string} [options.faculty=''] - Faculty name to filter schools by.
+ * @param {number} [options.limit=10] - Maximum number of results to return.
+ * @returns {Promise<Array<{name: string}>>} Matching schools.
+ */
+const searchSchools = async function (query, { university = '', faculty = '', limit = 10 } = {}) {
+  const filters = {}
+
+  if (university) {
+    filters.universityName = university
+  }
+  if (faculty) {
+    filters.facultyName = faculty
+  }
+  return searchByName(schoolsCollection(), query, {
+    filters,
+    limit
+  })
 }
 
 /**
@@ -109,7 +189,6 @@ const isFacultyInUniversity = async function (faculty, university) {
   if (!facultyDocument || !universityDocument) {
     return false
   }
-
   return idsMatch(facultyDocument.universityID, universityDocument._id)
 }
 
@@ -126,7 +205,6 @@ const isSchoolInFaculty = async function (school, faculty) {
   if (!schoolDocument || !facultyDocument) {
     return false
   }
-
   return idsMatch(schoolDocument.facultyID, facultyDocument._id)
 }
 
@@ -134,6 +212,9 @@ module.exports = {
   getFaculty,
   getSchool,
   getUniversity,
+  searchFaculties,
+  searchSchools,
+  searchUniversities,
   isFacultyInUniversity,
   isSchoolInFaculty
 }
