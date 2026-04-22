@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="page page_home">
+  <main class="card card_even_wider text_center">
+    <header>
+      <h1>Hello <%= username %></h1>
+    </header>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+
+    <section class="profile_details">
+      <div class="profile_column">
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Username</h2>
+          <p class="profile_detail_value"><%= username %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">First Name(s)</h2>
+          <p class="profile_detail_value"><%= name %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Last Name</h2>
+          <p class="profile_detail_value"><%= surname %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Email Address</h2>
+          <p class="profile_detail_value"><%= emailAddress %></p>
+        </div>
+      </div>
+
+      <div class="profile_column">
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Role</h2>
+          <p class="profile_detail_value"><%= role %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">University</h2>
+          <p class="profile_detail_value"><%= university %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Faculty</h2>
+          <p class="profile_detail_value"><%= faculty %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">School</h2>
+          <p class="profile_detail_value"><%= school %></p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

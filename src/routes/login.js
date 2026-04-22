@@ -57,7 +57,7 @@ ROUTER.post('/', async (req, res) => {
       })
     }
 
-    return res.redirect('/home')
+    return res.redirect('/home?username=' + encodeURIComponent(username))
   } catch (error) {
     return renderLogin(res, {
       statusCode: 500,

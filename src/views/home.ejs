@@ -9,8 +9,9 @@
 <body class="page page_home">
   <main class="card card_wide text_center">
     <header>
-      <h1>Home Page</h1>
+      <h1>Hello <%= username %></h1>
     </header>
+    <a class="back_link" href="/user_profile?username=<%= encodeURIComponent(username) %>">User Profile</a>
   </main>
 </body>
 </html>
