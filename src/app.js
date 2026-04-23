@@ -5,6 +5,7 @@ const institutionSearchRouter = require('./routes/institution_search')
 const loginRouter = require('./routes/login')
 const registerRouter = require('./routes/register')
 const homeRouter = require('./routes/home')
+const scheduleConsultationRouter = require('./routes/schedule_consultation')
 const userProfileRouter = require('./routes/user_profile')
 const app = express()
 const PORT = process.env.PORT || 8080
@@ -24,6 +25,7 @@ app.use('/institutions', institutionSearchRouter)
 app.use('/login', loginRouter)
 app.use('/register', registerRouter)
 app.use('/home', homeRouter)
+app.use('/schedule_consultation', scheduleConsultationRouter)
 app.use('/user_profile', userProfileRouter)
 // entry-point is login page. This can be changed when authentication between pages is added
 

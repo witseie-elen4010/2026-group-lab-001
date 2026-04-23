@@ -102,6 +102,11 @@ describe('home route', () => {
     expect(body).toContain('<title>Student Home</title>')
     expect(body).toContain('Hello morris')
     expect(body).toContain('You are logged in as a student.')
+    expect(body).toContain('Choose an option below.')
+    expect(body).toContain('User Profile')
+    expect(body).toContain('Schedule a Consultation')
+    expect(body).toContain('/user_profile?user=morris&viewer=morris')
+    expect(body).toContain('href="/schedule_consultation"')
   })
 
   test('Renders the lecturer home page after a successful login', async () => {
@@ -138,5 +143,16 @@ describe('home route', () => {
     expect(body).toContain('<title>Lecturer Home</title>')
     expect(body).toContain('Hello lecturer1')
     expect(body).toContain('You are logged in as a lecturer.')
+    expect(body).not.toContain('Schedule a Consultation')
+  })
+
+  test('Renders the schedule consultation page', async () => {
+    const response = await fetch(`${baseUrl}/schedule_consultation`)
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Schedule a Consultation</title>')
+    expect(body).toContain('Schedule a Consultation')
   })
 })
