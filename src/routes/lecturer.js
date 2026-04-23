@@ -1,0 +1,32 @@
+'use strict'
+
+const express = require('express')
+const { connectToDatabase } = require('../models/db')
+const { getUser } = require('../models/user_db')
+const { getSession } = require('../utils/session')
+
+const ROUTER = express.Router()
+
+ROUTER.get('/:username', async (req, res) => {
+  const session = getSession(req)
+  if (!session) return res.redirect('/login')
+
+  try {
+    await connectToDatabase()
+    const lecturer = await getUser(req.params.username)
+
+    if (!lecturer || lecturer.role !== 'lecturer') {
+      return res.status(404).render('lecturer', { title: 'Not Found', lecturer: null, session })
+    }
+
+    return res.render('lecturer', {
+      title: `${lecturer.firstName} ${lecturer.lastName}`,
+      lecturer,
+      session
+    })
+  } catch {
+    return res.status(500).render('lecturer', { title: 'Error', lecturer: null, session })
+  }
+})
+
+module.exports = ROUTER
