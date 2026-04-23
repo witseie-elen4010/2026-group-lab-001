@@ -153,6 +153,7 @@ describe('user profile route', () => {
     expect(body).toContain('University of the Witwatersrand')
     expect(body).toContain('Engineering and the Built Environment')
     expect(body).toContain('Electrical and Information Engineering')
+    expect(body).toContain('href="/home"')
   })
 
   test('Renders another user profile without the edit form for the viewer', async () => {
@@ -181,6 +182,7 @@ describe('user profile route', () => {
     expect(body).toContain('Hello alice')
     expect(body).not.toContain('Update Institution')
     expect(body).toContain('alice@example.com')
+    expect(body).toContain('href="/home"')
   })
 
   test('Redirects to login when the user does not exist', async () => {
