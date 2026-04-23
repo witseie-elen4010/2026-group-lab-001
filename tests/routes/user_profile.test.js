@@ -36,15 +36,56 @@ const {
   isFacultyInUniversity,
   isSchoolInFaculty
 } = require('../../src/models/university_db')
+const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
+let baseUrl
 
 const encodeForm = function (fields) {
   return new URLSearchParams(fields).toString()
 }
 
+const getSessionCookie = function (setCookieHeader) {
+  return setCookieHeader?.split(';')[0] || ''
+}
+
+const buildUser = async function (overrides = {}) {
+  return {
+    email: 'sd3lovers@example.com',
+    facultyId: 'Engineering and the Built Environment',
+    firstName: 'Morris',
+    lastName: 'Wits',
+    passwordHash: await hashPassword('welovesd3'),
+    role: 'student',
+    schoolId: 'Electrical and Information Engineering',
+    universityId: 'University of the Witwatersrand',
+    username: 'morris',
+    ...overrides
+  }
+}
+
+const loginAs = async function (userOverrides = {}) {
+  const loginUser = await buildUser(userOverrides)
+  getUser.mockResolvedValueOnce(loginUser)
+  const response = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: encodeForm({
+      password: 'welovesd3',
+      username: loginUser.username
+    }),
+    redirect: 'manual'
+  })
+
+  getUser.mockClear()
+  connectToDatabase.mockClear()
+
+  return getSessionCookie(response.headers.get('set-cookie'))
+}
+
 describe('user profile route', () => {
   let server
-  let baseUrl
 
   beforeAll(async () => {
     server = http.createServer(app)
@@ -69,20 +110,11 @@ describe('user profile route', () => {
     })
   })
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks()
     connectToDatabase.mockResolvedValue(undefined)
     updateUserInstitutions.mockResolvedValue({ acknowledged: true, modifiedCount: 1 })
-    getUser.mockResolvedValue({
-      email: 'sd3lovers@example.com',
-      facultyId: 'Engineering and the Built Environment',
-      firstName: 'Morris',
-      lastName: 'Wits',
-      role: 'student',
-      schoolId: 'Electrical and Information Engineering',
-      universityId: 'University of the Witwatersrand',
-      username: 'morris'
-    })
+    getUser.mockResolvedValue(await buildUser())
     getFaculty.mockResolvedValue({ name: 'Engineering and the Built Environment' })
     getSchool.mockResolvedValue({ name: 'Electrical and Information Engineering' })
     getUniversity.mockResolvedValue({ name: 'University of the Witwatersrand' })
@@ -90,8 +122,23 @@ describe('user profile route', () => {
     isSchoolInFaculty.mockResolvedValue(true)
   })
 
+  test('Redirects unauthenticated users to login before rendering the profile page', async () => {
+    const response = await fetch(`${baseUrl}/user_profile?user=morris`, {
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/login')
+    expect(connectToDatabase).not.toHaveBeenCalled()
+  })
+
   test('Renders the owner profile with the edit form', async () => {
-    const response = await fetch(`${baseUrl}/user_profile?user=morris&viewer=morris`)
+    const sessionCookie = await loginAs()
+    const response = await fetch(`${baseUrl}/user_profile?user=morris&viewer=morris`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
 
     const body = await response.text()
 
@@ -109,7 +156,8 @@ describe('user profile route', () => {
   })
 
   test('Renders another user profile without the edit form for the viewer', async () => {
-    getUser.mockResolvedValue({
+    const sessionCookie = await loginAs()
+    getUser.mockResolvedValueOnce(await buildUser({
       email: 'alice@example.com',
       facultyId: 'Faculty of Science',
       firstName: 'Alice',
@@ -118,9 +166,13 @@ describe('user profile route', () => {
       schoolId: 'School of Chemistry',
       universityId: 'University of Cape Town',
       username: 'alice'
-    })
+    }))
 
-    const response = await fetch(`${baseUrl}/user_profile?user=alice&viewer=morris`)
+    const response = await fetch(`${baseUrl}/user_profile?user=alice&viewer=morris`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
 
     const body = await response.text()
 
@@ -132,9 +184,13 @@ describe('user profile route', () => {
   })
 
   test('Redirects to login when the user does not exist', async () => {
-    getUser.mockResolvedValue(null)
+    const sessionCookie = await loginAs()
+    getUser.mockResolvedValueOnce(null)
 
     const response = await fetch(`${baseUrl}/user_profile?user=missing&viewer=morris`, {
+      headers: {
+        cookie: sessionCookie
+      },
       redirect: 'manual'
     })
 
@@ -142,11 +198,34 @@ describe('user profile route', () => {
     expect(response.headers.get('location')).toBe('/login')
   })
 
-  test('Updates the user institution details when the selection is valid', async () => {
+  test('Redirects unauthenticated users to login before updating the profile page', async () => {
     const response = await fetch(`${baseUrl}/user_profile`, {
       method: 'POST',
       headers: {
         'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: encodeForm({
+        faculty: 'Faculty of Science',
+        school: 'School of Mathematics',
+        user: 'morris',
+        university: 'Updated University',
+        viewer: 'morris'
+      }),
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/login')
+    expect(connectToDatabase).not.toHaveBeenCalled()
+  })
+
+  test('Updates the user institution details when the selection is valid', async () => {
+    const sessionCookie = await loginAs()
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        cookie: sessionCookie
       },
       body: encodeForm({
         faculty: 'Faculty of Science',
@@ -171,12 +250,14 @@ describe('user profile route', () => {
   })
 
   test('Re-renders the profile page when the updated faculty is not from the database list', async () => {
+    const sessionCookie = await loginAs()
     getFaculty.mockResolvedValue(null)
 
     const response = await fetch(`${baseUrl}/user_profile`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/x-www-form-urlencoded'
+        'content-type': 'application/x-www-form-urlencoded',
+        cookie: sessionCookie
       },
       body: encodeForm({
         faculty: 'Unknown Faculty',
@@ -195,7 +276,8 @@ describe('user profile route', () => {
   })
 
   test('Rejects institution updates when the viewer is not the profile owner', async () => {
-    getUser.mockResolvedValue({
+    const sessionCookie = await loginAs()
+    getUser.mockResolvedValueOnce(await buildUser({
       email: 'alice@example.com',
       facultyId: 'Faculty of Science',
       firstName: 'Alice',
@@ -204,12 +286,13 @@ describe('user profile route', () => {
       schoolId: 'School of Chemistry',
       universityId: 'University of Cape Town',
       username: 'alice'
-    })
+    }))
 
     const response = await fetch(`${baseUrl}/user_profile`, {
       method: 'POST',
       headers: {
-        'content-type': 'application/x-www-form-urlencoded'
+        'content-type': 'application/x-www-form-urlencoded',
+        cookie: sessionCookie
       },
       body: encodeForm({
         faculty: 'Faculty of Science',

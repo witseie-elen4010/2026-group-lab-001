@@ -1,6 +1,7 @@
 const path = require('path')
 const express = require('express')
 const session = require('express-session')
+const requireAuthentication = require('./middleware/require_authentication')
 const institutionSearchRouter = require('./routes/institution_search')
 const loginRouter = require('./routes/login')
 const registerRouter = require('./routes/register')
@@ -25,11 +26,10 @@ app.use(session({
 app.use('/institutions', institutionSearchRouter)
 app.use('/login', loginRouter)
 app.use('/register', registerRouter)
-app.use('/home', homeRouter)
-app.use('/schedule_consultation', scheduleConsultationRouter)
-app.use('/scheduled_consultations', scheduledConsultationsRouter)
-app.use('/user_profile', userProfileRouter)
-// entry-point is login page. This can be changed when authentication between pages is added
+app.use('/home', requireAuthentication, homeRouter)
+app.use('/schedule_consultation', requireAuthentication, scheduleConsultationRouter)
+app.use('/scheduled_consultations', requireAuthentication, scheduledConsultationsRouter)
+app.use('/user_profile', requireAuthentication, userProfileRouter)
 
 app.get('/', (req, res) => {
   res.redirect('/login')

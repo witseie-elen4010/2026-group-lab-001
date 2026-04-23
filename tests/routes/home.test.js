@@ -18,6 +18,7 @@ const http = require('node:http')
 const { getUser } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
+let baseUrl
 const MONTH_LABELS = Object.freeze([
   'January',
   'February',
@@ -52,6 +53,38 @@ const getSessionCookie = function (setCookieHeader) {
 }
 
 /**
+ * Logs in and returns the session cookie for protected route tests.
+ * @param {object} options - Login user details.
+ * @param {string} [options.role='student'] - User role to store in the session.
+ * @param {string} [options.username='morris'] - Username used for login.
+ * @returns {Promise<{loginResponse: Response, sessionCookie: string}>} Login response and session cookie.
+ */
+const loginAs = async function ({ role = 'student', username = 'morris' } = {}) {
+  getUser.mockResolvedValueOnce({
+    passwordHash: await hashPassword('welovesd3'),
+    role,
+    username
+  })
+
+  const loginResponse = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: encodeForm({
+      password: 'welovesd3',
+      username
+    }),
+    redirect: 'manual'
+  })
+
+  return {
+    loginResponse,
+    sessionCookie: getSessionCookie(loginResponse.headers.get('set-cookie'))
+  }
+}
+
+/**
  * Returns the current month label used on the home page calendar.
  * @param {Date} [referenceDate=new Date()] - Date used to choose the month label.
  * @returns {string} Current month label.
@@ -62,7 +95,6 @@ const getCurrentMonthLabel = function (referenceDate = new Date()) {
 
 describe('home route', () => {
   let server
-  let baseUrl
 
   beforeAll(async () => {
     server = http.createServer(app)
@@ -91,26 +123,21 @@ describe('home route', () => {
     jest.clearAllMocks()
   })
 
-  test('Renders the student home page after a successful login', async () => {
-    getUser.mockResolvedValue({
-      passwordHash: await hashPassword('welovesd3'),
-      role: 'student',
-      username: 'morris'
-    })
-
-    const loginResponse = await fetch(`${baseUrl}/login`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded'
-      },
-      body: encodeForm({
-        password: 'welovesd3',
-        username: 'morris'
-      }),
+  test('Redirects unauthenticated users to login when requesting the home page', async () => {
+    const response = await fetch(`${baseUrl}/home`, {
       redirect: 'manual'
     })
 
-    const sessionCookie = getSessionCookie(loginResponse.headers.get('set-cookie'))
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/login')
+    expect(getUser).not.toHaveBeenCalled()
+  })
+
+  test('Renders the student home page after a successful login', async () => {
+    const { loginResponse, sessionCookie } = await loginAs({
+      role: 'student',
+      username: 'morris'
+    })
     const response = await fetch(`${baseUrl}/home`, {
       headers: {
         cookie: sessionCookie
@@ -138,25 +165,10 @@ describe('home route', () => {
   })
 
   test('Renders the lecturer home page after a successful login', async () => {
-    getUser.mockResolvedValue({
-      passwordHash: await hashPassword('welovesd3'),
+    const { loginResponse, sessionCookie } = await loginAs({
       role: 'lecturer',
       username: 'lecturer1'
     })
-
-    const loginResponse = await fetch(`${baseUrl}/login`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded'
-      },
-      body: encodeForm({
-        password: 'welovesd3',
-        username: 'lecturer1'
-      }),
-      redirect: 'manual'
-    })
-
-    const sessionCookie = getSessionCookie(loginResponse.headers.get('set-cookie'))
     const response = await fetch(`${baseUrl}/home`, {
       headers: {
         cookie: sessionCookie
@@ -182,8 +194,25 @@ describe('home route', () => {
     expect(body).toContain('calendar_table')
   })
 
+  test('Redirects unauthenticated users to login when requesting the schedule consultation page', async () => {
+    const response = await fetch(`${baseUrl}/schedule_consultation`, {
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/login')
+  })
+
   test('Renders the schedule consultation page', async () => {
-    const response = await fetch(`${baseUrl}/schedule_consultation`)
+    const { sessionCookie } = await loginAs({
+      role: 'student',
+      username: 'morris'
+    })
+    const response = await fetch(`${baseUrl}/schedule_consultation`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
 
     const body = await response.text()
 
@@ -195,8 +224,25 @@ describe('home route', () => {
     expect(body).toContain('href="/home"')
   })
 
+  test('Redirects unauthenticated users to login when requesting the scheduled consultations page', async () => {
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/login')
+  })
+
   test('Renders the scheduled consultations page', async () => {
-    const response = await fetch(`${baseUrl}/scheduled_consultations`)
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
 
     const body = await response.text()
 

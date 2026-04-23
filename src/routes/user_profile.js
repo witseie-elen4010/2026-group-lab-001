@@ -52,8 +52,8 @@ const buildProfileViewState = function (user, overrides = {}) {
 }
 
 router.get('/', async (req, res) => {
-  const profileUsername = req.query.user?.trim() || req.query.username?.trim() || ''
-  const viewer = req.query.viewer?.trim() || ''
+  const viewer = req.session?.user?.username || ''
+  const profileUsername = req.query.user?.trim() || req.query.username?.trim() || viewer
 
   if (!profileUsername) {
     return res.redirect('/login')
@@ -85,8 +85,8 @@ router.get('/', async (req, res) => {
 })
 
 router.post('/', async (req, res) => {
-  const profileUsername = req.body.user?.trim() || req.body.username?.trim() || ''
-  const viewer = req.body.viewer?.trim() || ''
+  const viewer = req.session?.user?.username || ''
+  const profileUsername = req.body.user?.trim() || req.body.username?.trim() || viewer
   const university = req.body.university?.trim() || ''
   const faculty = req.body.faculty?.trim() || ''
   const school = req.body.school?.trim() || ''
