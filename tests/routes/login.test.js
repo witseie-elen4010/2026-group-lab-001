@@ -79,9 +79,19 @@ describe('login route', () => {
     })
 
     expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toBe('/home')
+    expect(response.headers.get('location')).toBe('/home?username=morris')
     expect(connectToDatabase).toHaveBeenCalledTimes(1)
     expect(getUser).toHaveBeenCalledWith('morris')
+  })
+
+  test('Renders the Login page for GET requests', async () => {
+    const response = await fetch(`${baseUrl}/login`)
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(connectToDatabase).not.toHaveBeenCalled()
+    expect(body).toContain('<title>Log In</title>')
   })
 
   test('Re-renders the Login page when required fields are missing', async () => {
@@ -140,5 +150,25 @@ describe('login route', () => {
 
     expect(response.status).toBe(401)
     expect(body).toContain('Password is incorrect.')
+  })
+
+  test('Re-renders the Login page when the database request fails', async () => {
+    connectToDatabase.mockRejectedValue(new Error('database unavailable'))
+
+    const response = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: encodeForm({
+        password: 'welovesd3',
+        username: 'morris'
+      })
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(500)
+    expect(body).toContain('Sorry. We could not log you in. Try again later.')
   })
 })

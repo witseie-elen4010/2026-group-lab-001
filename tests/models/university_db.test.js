@@ -9,6 +9,9 @@ const {
   getFaculty,
   getSchool,
   getUniversity,
+  searchFaculties,
+  searchSchools,
+  searchUniversities,
   isFacultyInUniversity,
   isSchoolInFaculty
 } = require('../../src/models/university_db')
@@ -18,9 +21,9 @@ describe('institution relationship lookups', () => {
 
   beforeEach(() => {
     collections = {
-      Faculty: { findOne: jest.fn() },
-      School: { findOne: jest.fn() },
-      University: { findOne: jest.fn() }
+      Faculty: { find: jest.fn(), findOne: jest.fn() },
+      School: { find: jest.fn(), findOne: jest.fn() },
+      University: { find: jest.fn(), findOne: jest.fn() }
     }
 
     getCollection.mockImplementation((name) => collections[name])
@@ -44,7 +47,7 @@ describe('institution relationship lookups', () => {
     const faculty = {
       _id: facultyId,
       name: 'Engineering and the Built Environment',
-      universityID: new ObjectId()
+      universityId: new ObjectId()
     }
 
     collections.Faculty.findOne.mockResolvedValue(faculty)
@@ -53,13 +56,141 @@ describe('institution relationship lookups', () => {
     expect(collections.Faculty.findOne).toHaveBeenCalledWith({ _id: facultyId })
   })
 
+  test('searchUniversities returns matching universities for a query', async () => {
+    const universityCursor = {
+      limit: jest.fn(),
+      sort: jest.fn(),
+      toArray: jest.fn()
+    }
+
+    universityCursor.sort.mockReturnValue(universityCursor)
+    universityCursor.limit.mockReturnValue(universityCursor)
+    universityCursor.toArray.mockResolvedValue([
+      {
+        name: 'University of the Witwatersrand'
+      }
+    ])
+
+    collections.University.find.mockReturnValue(universityCursor)
+
+    await expect(searchUniversities('wit', 5)).resolves.toEqual([
+      {
+        name: 'University of the Witwatersrand'
+      }
+    ])
+    expect(collections.University.find).toHaveBeenCalledWith(
+      {
+        name: {
+          $options: 'i',
+          $regex: 'wit'
+        }
+      },
+      {
+        projection: {
+          _id: 0,
+          name: 1
+        }
+      }
+    )
+    expect(universityCursor.sort).toHaveBeenCalledWith({ name: 1 })
+    expect(universityCursor.limit).toHaveBeenCalledWith(5)
+  })
+
+  test('searchFaculties filters faculties by university name', async () => {
+    const facultyCursor = {
+      limit: jest.fn(),
+      sort: jest.fn(),
+      toArray: jest.fn()
+    }
+
+    facultyCursor.sort.mockReturnValue(facultyCursor)
+    facultyCursor.limit.mockReturnValue(facultyCursor)
+    facultyCursor.toArray.mockResolvedValue([
+      {
+        name: 'Engineering and the Built Environment'
+      }
+    ])
+
+    collections.Faculty.find.mockReturnValue(facultyCursor)
+
+    await expect(searchFaculties('eng', {
+      limit: 4,
+      university: 'University of the Witwatersrand'
+    })).resolves.toEqual([
+      {
+        name: 'Engineering and the Built Environment'
+      }
+    ])
+    expect(collections.Faculty.find).toHaveBeenCalledWith(
+      {
+        name: {
+          $options: 'i',
+          $regex: 'eng'
+        },
+        universityName: 'University of the Witwatersrand'
+      },
+      {
+        projection: {
+          _id: 0,
+          name: 1
+        }
+      }
+    )
+    expect(facultyCursor.limit).toHaveBeenCalledWith(4)
+  })
+
+  test('searchSchools filters schools by university and faculty names', async () => {
+    const schoolCursor = {
+      limit: jest.fn(),
+      sort: jest.fn(),
+      toArray: jest.fn()
+    }
+
+    schoolCursor.sort.mockReturnValue(schoolCursor)
+    schoolCursor.limit.mockReturnValue(schoolCursor)
+    schoolCursor.toArray.mockResolvedValue([
+      {
+        name: 'Electrical and Information Engineering'
+      }
+    ])
+
+    collections.School.find.mockReturnValue(schoolCursor)
+
+    await expect(searchSchools('elect', {
+      faculty: 'Engineering and the Built Environment',
+      limit: 3,
+      university: 'University of the Witwatersrand'
+    })).resolves.toEqual([
+      {
+        name: 'Electrical and Information Engineering'
+      }
+    ])
+    expect(collections.School.find).toHaveBeenCalledWith(
+      {
+        facultyName: 'Engineering and the Built Environment',
+        name: {
+          $options: 'i',
+          $regex: 'elect'
+        },
+        universityName: 'University of the Witwatersrand'
+      },
+      {
+        projection: {
+          _id: 0,
+          name: 1
+        }
+      }
+    )
+    expect(schoolCursor.limit).toHaveBeenCalledWith(3)
+  })
+
   test('getSchool finds a school by id', async () => {
     const schoolId = new ObjectId()
     const school = {
       _id: schoolId,
-      facultyID: new ObjectId(),
+      facultyId: new ObjectId(),
       name: 'Electrical and Information Engineering',
-      universityID: new ObjectId()
+      universityId: new ObjectId()
     }
 
     collections.School.findOne.mockResolvedValue(school)
@@ -74,7 +205,7 @@ describe('institution relationship lookups', () => {
     const faculty = {
       _id: facultyId,
       name: 'Engineering and the Built Environment',
-      universityID: universityId
+      universityId
     }
     const university = {
       _id: universityId,
@@ -89,14 +220,33 @@ describe('institution relationship lookups', () => {
     expect(collections.University.findOne).toHaveBeenCalledWith({ _id: universityId })
   })
 
+  test('isFacultyInUniversity supports camelCase universityId fields', async () => {
+    const facultyId = new ObjectId()
+    const universityId = new ObjectId()
+    const faculty = {
+      _id: facultyId,
+      name: 'Engineering and the Built Environment',
+      universityId
+    }
+    const university = {
+      _id: universityId,
+      name: 'University of the Witwatersrand'
+    }
+
+    collections.Faculty.findOne.mockResolvedValue(faculty)
+    collections.University.findOne.mockResolvedValue(university)
+
+    await expect(isFacultyInUniversity(facultyId.toHexString(), universityId.toHexString())).resolves.toBe(true)
+  })
+
   test('isSchoolInFaculty returns true when the school belongs to the faculty', async () => {
     const facultyId = new ObjectId()
     const schoolId = new ObjectId()
     const school = {
       _id: schoolId,
-      facultyID: facultyId,
+      facultyId,
       name: 'Electrical and Information Engineering',
-      universityID: new ObjectId()
+      universityId: new ObjectId()
     }
     const faculty = {
       _id: facultyId,
@@ -109,5 +259,25 @@ describe('institution relationship lookups', () => {
     await expect(isSchoolInFaculty(schoolId.toHexString(), facultyId.toHexString())).resolves.toBe(true)
     expect(collections.School.findOne).toHaveBeenCalledWith({ _id: schoolId })
     expect(collections.Faculty.findOne).toHaveBeenCalledWith({ _id: facultyId })
+  })
+
+  test('isSchoolInFaculty supports camelCase facultyId fields', async () => {
+    const facultyId = new ObjectId()
+    const schoolId = new ObjectId()
+    const school = {
+      _id: schoolId,
+      facultyId,
+      name: 'Electrical and Information Engineering',
+      universityId: new ObjectId()
+    }
+    const faculty = {
+      _id: facultyId,
+      name: 'Engineering and the Built Environment'
+    }
+
+    collections.School.findOne.mockResolvedValue(school)
+    collections.Faculty.findOne.mockResolvedValue(faculty)
+
+    await expect(isSchoolInFaculty(schoolId.toHexString(), facultyId.toHexString())).resolves.toBe(true)
   })
 })

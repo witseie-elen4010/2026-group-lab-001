@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <script src="/scripts/search.js" defer></script>
+</head>
+<body class="page page_home">
+  <main class="card card_even_wider text_center">
+    <header>
+      <h1>Hello <%= username %></h1>
+    </header>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+
+    <section class="profile_details">
+      <div class="profile_column">
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Username</h2>
+          <p class="profile_detail_value"><%= username %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">First Name(s)</h2>
+          <p class="profile_detail_value"><%= name %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Last Name</h2>
+          <p class="profile_detail_value"><%= surname %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Email Address</h2>
+          <p class="profile_detail_value"><%= emailAddress %></p>
+        </div>
+      </div>
+
+      <div class="profile_column">
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Role</h2>
+          <p class="profile_detail_value"><%= role %></p>
+        </div>
+
+        <% if (canEdit) { %>
+        <form class="profile_update_form" action="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(viewer) %>" method="post">
+          <input type="hidden" name="user" value="<%= username %>">
+          <input type="hidden" name="viewer" value="<%= viewer %>">
+
+          <label>
+            University
+            <input
+              id="profile_university"
+              type="search"
+              name="university"
+              value="<%= university %>"
+              placeholder="..."
+              autocomplete="off"
+              list="profile_university_options"
+              aria-describedby="profile_university_search_status"
+              data-search-url="/institutions/universities"
+              data-search-label="university"
+              required
+            >
+            <datalist id="profile_university_options"></datalist>
+            <p id="profile_university_search_status" class="search_status" aria-live="polite"></p>
+          </label>
+
+          <label>
+            Faculty
+            <input
+              id="profile_faculty"
+              type="search"
+              name="faculty"
+              value="<%= faculty %>"
+              placeholder="..."
+              autocomplete="off"
+              list="profile_faculty_options"
+              aria-describedby="profile_faculty_search_status"
+              data-search-url="/institutions/faculties"
+              data-search-label="faculty"
+              data-search-parents="university"
+              required
+            >
+            <datalist id="profile_faculty_options"></datalist>
+            <p id="profile_faculty_search_status" class="search_status" aria-live="polite"></p>
+          </label>
+
+          <label>
+            School
+            <input
+              id="profile_school"
+              type="search"
+              name="school"
+              value="<%= school %>"
+              placeholder="..."
+              autocomplete="off"
+              list="profile_school_options"
+              aria-describedby="profile_school_search_status"
+              data-search-url="/institutions/schools"
+              data-search-label="school"
+              data-search-parents="university,faculty"
+              required
+            >
+            <datalist id="profile_school_options"></datalist>
+            <p id="profile_school_search_status" class="search_status" aria-live="polite"></p>
+          </label>
+
+          <button type="submit">Update Institution</button>
+        </form>
+        <% } %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
