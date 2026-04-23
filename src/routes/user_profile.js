@@ -10,7 +10,6 @@ const renderProfile = function (res, {
   error = '',
   emailAddress = '',
   username = '',
-  viewer = '',
   canEdit = false,
   university = '',
   faculty = '',
@@ -24,7 +23,6 @@ const renderProfile = function (res, {
     error,
     emailAddress,
     username,
-    viewer,
     canEdit,
     university,
     faculty,
@@ -39,7 +37,6 @@ const buildProfileViewState = function (user, overrides = {}) {
   return {
     emailAddress: user?.email || '',
     username: user?.username || '',
-    viewer: '',
     canEdit: false,
     university: user?.universityId || '',
     faculty: user?.facultyId || '',
@@ -71,15 +68,13 @@ router.get('/', async (req, res) => {
 
     return renderProfile(res, buildProfileViewState(user, {
       canEdit: viewer === resolvedUsername,
-      username: resolvedUsername,
-      viewer
+      username: resolvedUsername
     }))
   } catch (error) {
     return renderProfile(res, {
       statusCode: 500,
       error: 'Sorry. We could not find user information.',
-      username: profileUsername,
-      viewer
+      username: profileUsername
     })
   }
 })
@@ -111,8 +106,7 @@ router.post('/', async (req, res) => {
         error: 'You can only edit your own profile.',
         ...buildProfileViewState(user, {
           canEdit: false,
-          username: resolvedUsername,
-          viewer
+          username: resolvedUsername
         })
       })
     }
@@ -132,8 +126,7 @@ router.post('/', async (req, res) => {
           faculty,
           school,
           university,
-          username: resolvedUsername,
-          viewer
+          username: resolvedUsername
         })
       })
     }
@@ -149,15 +142,13 @@ router.post('/', async (req, res) => {
       faculty,
       school,
       university,
-      username: resolvedUsername,
-      viewer
+      username: resolvedUsername
     }))
   } catch (error) {
     return renderProfile(res, {
       statusCode: 500,
       error: 'Sorry. We could not update your institution information.',
       username: profileUsername,
-      viewer,
       university,
       faculty,
       school

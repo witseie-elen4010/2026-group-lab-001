@@ -134,7 +134,7 @@ describe('user profile route', () => {
 
   test('Renders the owner profile with the edit form', async () => {
     const sessionCookie = await loginAs()
-    const response = await fetch(`${baseUrl}/user_profile?user=morris&viewer=morris`, {
+    const response = await fetch(`${baseUrl}/user_profile?user=morris`, {
       headers: {
         cookie: sessionCookie
       }
@@ -169,7 +169,7 @@ describe('user profile route', () => {
       username: 'alice'
     }))
 
-    const response = await fetch(`${baseUrl}/user_profile?user=alice&viewer=morris`, {
+    const response = await fetch(`${baseUrl}/user_profile?user=alice`, {
       headers: {
         cookie: sessionCookie
       }
@@ -189,7 +189,7 @@ describe('user profile route', () => {
     const sessionCookie = await loginAs()
     getUser.mockResolvedValueOnce(null)
 
-    const response = await fetch(`${baseUrl}/user_profile?user=missing&viewer=morris`, {
+    const response = await fetch(`${baseUrl}/user_profile?user=missing`, {
       headers: {
         cookie: sessionCookie
       },
@@ -210,8 +210,7 @@ describe('user profile route', () => {
         faculty: 'Faculty of Science',
         school: 'School of Mathematics',
         user: 'morris',
-        university: 'Updated University',
-        viewer: 'morris'
+        university: 'Updated University'
       }),
       redirect: 'manual'
     })
@@ -233,8 +232,7 @@ describe('user profile route', () => {
         faculty: 'Faculty of Science',
         school: 'School of Mathematics',
         user: 'morris',
-        university: 'Updated University',
-        viewer: 'morris'
+        university: 'Updated University'
       })
     })
 
@@ -265,8 +263,7 @@ describe('user profile route', () => {
         faculty: 'Unknown Faculty',
         school: 'Electrical and Information Engineering',
         user: 'morris',
-        university: 'University of the Witwatersrand',
-        viewer: 'morris'
+        university: 'University of the Witwatersrand'
       })
     })
 
@@ -300,8 +297,7 @@ describe('user profile route', () => {
         faculty: 'Faculty of Science',
         school: 'School of Mathematics',
         user: 'alice',
-        university: 'Updated University',
-        viewer: 'morris'
+        university: 'Updated University'
       })
     })
 

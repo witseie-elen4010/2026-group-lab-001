@@ -44,9 +44,8 @@
         </div>
 
         <% if (canEdit) { %>
-        <form class="profile_update_form" action="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(viewer) %>" method="post">
+        <form class="profile_update_form" action="/user_profile?user=<%= encodeURIComponent(username) %>" method="post">
           <input type="hidden" name="user" value="<%= username %>">
-          <input type="hidden" name="viewer" value="<%= viewer %>">
 
           <label>
             University
