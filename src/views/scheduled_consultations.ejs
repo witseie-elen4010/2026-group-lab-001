@@ -13,8 +13,11 @@
       <% if (username) { %>
         <p>Hello <%= username %></p>
       <% } %>
-      <p>This page will show scheduled consultations soon.</p>
     </header>
+
+    <div class="error"><%= error %></div>
+    <p><%= message %></p>
+    <a class="back_link" href="<%= homePath %>">Home</a>
   </main>
 </body>
 </html>

@@ -187,9 +187,12 @@ describe('home route', () => {
 
     const body = await response.text()
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(501)
     expect(body).toContain('<title>Schedule a Consultation</title>')
     expect(body).toContain('Schedule a Consultation')
+    expect(body).toContain('This page is not available yet.')
+    expect(body).toContain('Scheduling a consultation has not been built yet.')
+    expect(body).toContain('href="/home"')
   })
 
   test('Renders the scheduled consultations page', async () => {
@@ -197,8 +200,11 @@ describe('home route', () => {
 
     const body = await response.text()
 
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(501)
     expect(body).toContain('<title>Scheduled Consultations</title>')
     expect(body).toContain('Scheduled Consultations')
+    expect(body).toContain('This page is not available yet.')
+    expect(body).toContain('Scheduled consultations have not been built yet.')
+    expect(body).toContain('href="/home"')
   })
 })
