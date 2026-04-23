@@ -18,6 +18,20 @@ const http = require('node:http')
 const { getUser } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
+const MONTH_LABELS = Object.freeze([
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+])
 
 /**
  * Encodes form fields for URL-encoded POST requests.
@@ -35,6 +49,15 @@ const encodeForm = function (fields) {
  */
 const getSessionCookie = function (setCookieHeader) {
   return setCookieHeader?.split(';')[0] || ''
+}
+
+/**
+ * Returns the current month label used on the home page calendar.
+ * @param {Date} [referenceDate=new Date()] - Date used to choose the month label.
+ * @returns {string} Current month label.
+ */
+const getCurrentMonthLabel = function (referenceDate = new Date()) {
+  return `${MONTH_LABELS[referenceDate.getMonth()]} ${referenceDate.getFullYear()}`
 }
 
 describe('home route', () => {
@@ -95,6 +118,7 @@ describe('home route', () => {
     })
 
     const body = await response.text()
+    const currentMonthLabel = getCurrentMonthLabel()
 
     expect(loginResponse.status).toBe(302)
     expect(loginResponse.headers.get('location')).toBe('/home')
@@ -107,6 +131,10 @@ describe('home route', () => {
     expect(body).toContain('Schedule a Consultation')
     expect(body).toContain('/user_profile?user=morris&viewer=morris')
     expect(body).toContain('href="/schedule_consultation"')
+    expect(body).toContain(currentMonthLabel)
+    expect(body).toContain('calendar_table')
+    expect(body).toContain('Sun')
+    expect(body).toContain('Sat')
   })
 
   test('Renders the lecturer home page after a successful login', async () => {
@@ -136,6 +164,7 @@ describe('home route', () => {
     })
 
     const body = await response.text()
+    const currentMonthLabel = getCurrentMonthLabel()
 
     expect(loginResponse.status).toBe(302)
     expect(loginResponse.headers.get('location')).toBe('/home')
@@ -149,6 +178,8 @@ describe('home route', () => {
     expect(body).toContain('/user_profile?user=lecturer1&viewer=lecturer1')
     expect(body).toContain('href="/scheduled_consultations"')
     expect(body).not.toContain('Schedule a Consultation')
+    expect(body).toContain(currentMonthLabel)
+    expect(body).toContain('calendar_table')
   })
 
   test('Renders the schedule consultation page', async () => {
