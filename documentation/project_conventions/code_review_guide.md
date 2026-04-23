@@ -54,3 +54,5 @@ fix(router): fix payload parameter in post request // header
 - ⁠Reviewer merges the PR after approval.
 - ⁠Squash merge preferred unless otherwise specified.
 - ⁠Always pull latest ⁠``main``⁠ into your branch before merging if needed.
+- GitHub branch protection for ``main`` must require the `CI / lint-and-test` status check to pass before merging.
+- Pull requests with failing automated checks must not be merged.
