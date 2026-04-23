@@ -2,6 +2,8 @@ const path = require('path')
 const express = require('express')
 const loginRouter = require('./routes/login')
 const registerRouter = require('./routes/register')
+const homeRouter = require('./routes/home')
+const searchRouter = require('./routes/search')
 
 const APP = express()
 const PORT = process.env.PORT || 8080
@@ -13,17 +15,12 @@ APP.use(express.urlencoded({ extended: true }))
 APP.use(express.static(path.join(__dirname, 'public'))) // css style template
 APP.use('/login', loginRouter)
 APP.use('/register', registerRouter)
+APP.use('/home', homeRouter)
+APP.use('/search', searchRouter)
 
 // entry-point is login page. This can be changed when authentication between pages is added
 APP.get('/', (req, res) => {
   res.redirect('/login')
-})
-
-// does nothing atm
-APP.get('/home', (req, res) => {
-  res.render('home', {
-    title: 'Home'
-  })
 })
 
 if (require.main === module) {

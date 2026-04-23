@@ -2,6 +2,7 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { getUser } = require('../models/user_db')
 const { verifyPassword } = require('../utils/password')
+const { setSession } = require('../utils/session')
 
 const ROUTER = express.Router()
 
@@ -57,6 +58,15 @@ ROUTER.post('/', async (req, res) => {
       })
     }
 
+    setSession(res, {
+      username: user.username,
+      universityId: user.universityId,
+      facultyId: user.facultyId,
+      schoolId: user.schoolId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role
+    })
     return res.redirect('/home')
   } catch (error) {
     return renderLogin(res, {

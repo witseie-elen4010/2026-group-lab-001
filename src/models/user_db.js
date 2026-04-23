@@ -33,8 +33,31 @@ const deleteUser = async function (username) {
   return usersCollection().deleteOne({ username })
 }
 
+const searchLecturers = async function ({ universityId, query = '', facultyId = '', schoolId = '' }) {
+  const filter = {
+    role: 'lecturer',
+    universityId
+  }
+
+  if (facultyId) filter.facultyId = facultyId
+  if (schoolId) filter.schoolId = schoolId
+
+  if (query) {
+    const escaped = query.replace(/[.*+?^${}()|[\]}\\]/g, '\\$&')
+    const regex = new RegExp(escaped, 'i')
+    filter.$or = [
+      { username: regex },
+      { firstName: regex },
+      { lastName: regex }
+    ]
+  }
+
+  return usersCollection().find(filter).toArray()
+}
+
 module.exports = {
   addUser,
   deleteUser,
-  getUser
+  getUser,
+  searchLecturers
 }
