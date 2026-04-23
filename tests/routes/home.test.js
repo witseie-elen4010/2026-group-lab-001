@@ -143,6 +143,11 @@ describe('home route', () => {
     expect(body).toContain('<title>Lecturer Home</title>')
     expect(body).toContain('Hello lecturer1')
     expect(body).toContain('You are logged in as a lecturer.')
+    expect(body).toContain('Choose an option below.')
+    expect(body).toContain('User Profile')
+    expect(body).toContain('Scheduled Consultations')
+    expect(body).toContain('/user_profile?user=lecturer1&viewer=lecturer1')
+    expect(body).toContain('href="/scheduled_consultations"')
     expect(body).not.toContain('Schedule a Consultation')
   })
 
@@ -154,5 +159,15 @@ describe('home route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Schedule a Consultation</title>')
     expect(body).toContain('Schedule a Consultation')
+  })
+
+  test('Renders the scheduled consultations page', async () => {
+    const response = await fetch(`${baseUrl}/scheduled_consultations`)
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Scheduled Consultations</title>')
+    expect(body).toContain('Scheduled Consultations')
   })
 })

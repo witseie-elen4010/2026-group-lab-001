@@ -25,6 +25,13 @@
         <a href="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(username) %>">User Profile</a>
         <a href="/schedule_consultation">Schedule a Consultation</a>
       </section>
+    <% } else if (role === 'lecturer' && username) { %>
+      <section class="home_navigation">
+        <h2 class="home_navigation_title">Navigation</h2>
+        <p class="home_navigation_text">Choose an option below.</p>
+        <a href="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(username) %>">User Profile</a>
+        <a href="/scheduled_consultations">Scheduled Consultations</a>
+      </section>
     <% } else if (username) { %>
       <a class="back_link" href="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(username) %>">User Profile</a>
     <% } %>
