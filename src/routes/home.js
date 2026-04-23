@@ -1,11 +1,19 @@
 const express = require('express')
 
 const router = express.Router()
+const HOME_TITLES = Object.freeze({
+  lecturer: 'Lecturer Home',
+  student: 'Student Home'
+})
 
 router.get('/', (req, res) => {
-  const username = req.query.username?.trim() || ''
+  const role = req.session?.user?.role || ''
+  const username = req.session?.user?.username || ''
+
   res.render('home', {
-    title: 'Home',
+    title: HOME_TITLES[role] || 'Home',
+    homeTitle: HOME_TITLES[role] || 'Home',
+    role,
     username
   })
 })

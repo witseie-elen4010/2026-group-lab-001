@@ -9,9 +9,17 @@
 <body class="page page_home">
   <main class="card card_wide text_center">
     <header>
-      <h1>Hello <%= username %></h1>
+      <h1><%= homeTitle %></h1>
+      <% if (username) { %>
+        <p>Hello <%= username %></p>
+      <% } %>
+      <% if (role) { %>
+        <p>You are logged in as a <%= role %>.</p>
+      <% } %>
     </header>
-    <a class="back_link" href="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(username) %>">User Profile</a>
+    <% if (username) { %>
+      <a class="back_link" href="/user_profile?user=<%= encodeURIComponent(username) %>&viewer=<%= encodeURIComponent(username) %>">User Profile</a>
+    <% } %>
   </main>
 </body>
 </html>
