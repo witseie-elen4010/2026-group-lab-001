@@ -28,16 +28,16 @@ const EXPECTED_UNIVERSITY = {
 const EXPECTED_FACULTY = {
   _id: '69e7d63e5db99de0cf001bf2',
   name: 'Engineering and the Built Environment',
-  universityID: EXPECTED_UNIVERSITY._id,
+  universityId: EXPECTED_UNIVERSITY._id,
   universityName: EXPECTED_UNIVERSITY.name
 }
 
 const EXPECTED_SCHOOL = {
   _id: '69e7d9025db99de0cf001bfe',
-  facultyID: EXPECTED_FACULTY._id,
+  facultyId: EXPECTED_FACULTY._id,
   facultyName: EXPECTED_FACULTY.name,
   name: 'Electrical and Information Engineering',
-  universityID: EXPECTED_UNIVERSITY._id,
+  universityId: EXPECTED_UNIVERSITY._id,
   universityName: EXPECTED_UNIVERSITY.name
 }
 
@@ -131,7 +131,7 @@ describe('MongoDB Atlas institution lookups', () => {
       universityName: EXPECTED_FACULTY.universityName
     })
     expect(faculty._id.toString()).toBe(EXPECTED_FACULTY._id)
-    expect(faculty.universityID.toString()).toBe(EXPECTED_FACULTY.universityID)
+    expect(faculty.universityId.toString()).toBe(EXPECTED_FACULTY.universityId)
   })
 
   RUN_DB_TEST('Returns the expected school by id', async () => {
@@ -144,8 +144,8 @@ describe('MongoDB Atlas institution lookups', () => {
       universityName: EXPECTED_SCHOOL.universityName
     })
     expect(school._id.toString()).toBe(EXPECTED_SCHOOL._id)
-    expect(school.facultyID.toString()).toBe(EXPECTED_SCHOOL.facultyID)
-    expect(school.universityID.toString()).toBe(EXPECTED_SCHOOL.universityID)
+    expect(school.facultyId.toString()).toBe(EXPECTED_SCHOOL.facultyId)
+    expect(school.universityId.toString()).toBe(EXPECTED_SCHOOL.universityId)
   })
 
   RUN_DB_TEST('Confirms the faculty belongs to the university', async () => {

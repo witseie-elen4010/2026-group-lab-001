@@ -6,10 +6,10 @@ const {
   searchUniversities
 } = require('../models/university_db')
 
-const ROUTER = express.Router()
+const router = express.Router()
 const INSTITUTION_SEARCH_LIMIT = 8
 
-ROUTER.get('/universities', async (req, res) => {
+router.get('/universities', async (req, res) => {
   const query = req.query.query?.trim() || ''
 
   if (!query) {
@@ -31,7 +31,7 @@ ROUTER.get('/universities', async (req, res) => {
   }
 })
 
-ROUTER.get('/faculties', async (req, res) => {
+router.get('/faculties', async (req, res) => {
   const query = req.query.query?.trim() || ''
   const university = req.query.university?.trim() || ''
 
@@ -57,7 +57,7 @@ ROUTER.get('/faculties', async (req, res) => {
   }
 })
 
-ROUTER.get('/schools', async (req, res) => {
+router.get('/schools', async (req, res) => {
   const query = req.query.query?.trim() || ''
   const university = req.query.university?.trim() || ''
   const faculty = req.query.faculty?.trim() || ''
@@ -85,4 +85,4 @@ ROUTER.get('/schools', async (req, res) => {
   }
 })
 
-module.exports = ROUTER
+module.exports = router

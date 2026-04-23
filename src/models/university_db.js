@@ -189,7 +189,7 @@ const isFacultyInUniversity = async function (faculty, university) {
   if (!facultyDocument || !universityDocument) {
     return false
   }
-  return idsMatch(facultyDocument.universityID, universityDocument._id)
+  return idsMatch(facultyDocument.universityId, universityDocument._id)
 }
 
 /**
@@ -205,7 +205,7 @@ const isSchoolInFaculty = async function (school, faculty) {
   if (!schoolDocument || !facultyDocument) {
     return false
   }
-  return idsMatch(schoolDocument.facultyID, facultyDocument._id)
+  return idsMatch(schoolDocument.facultyId, facultyDocument._id)
 }
 
 module.exports = {

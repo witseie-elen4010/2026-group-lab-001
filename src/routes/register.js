@@ -3,7 +3,7 @@ const { connectToDatabase } = require('../models/db')
 const { addUser } = require('../models/user_db')
 const { validateSelection } = require('../services/institution_validation')
 const { hashPassword } = require('../utils/password')
-const ROUTER = express.Router()
+const router = express.Router()
 const BASIC_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const PLACEHOLDER_USER_FIELDS = Object.freeze({
@@ -89,11 +89,11 @@ const buildUser = async function ({
   }
 }
 
-ROUTER.get('/', (req, res) => {
+router.get('/', (req, res) => {
   return renderRegister(res)
 })
 
-ROUTER.post('/', async (req, res) => {
+router.post('/', async (req, res) => {
   const emailAddress = req.body.emailAddress?.trim() || ''
   const username = req.body.username?.trim() || ''
   const password = req.body.password || ''
@@ -175,4 +175,4 @@ ROUTER.post('/', async (req, res) => {
   }
 })
 
-module.exports = ROUTER
+module.exports = router

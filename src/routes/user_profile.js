@@ -3,7 +3,7 @@ const { connectToDatabase } = require('../models/db')
 const { getUser, updateUserInstitutions } = require('../models/user_db')
 const { validateSelection } = require('../services/institution_validation')
 
-const ROUTER = express.Router()
+const router = express.Router()
 
 const renderProfile = function (res, {
   statusCode = 200,
@@ -51,7 +51,7 @@ const buildProfileViewState = function (user, overrides = {}) {
   }
 }
 
-ROUTER.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
   const profileUsername = req.query.user?.trim() || req.query.username?.trim() || ''
   const viewer = req.query.viewer?.trim() || ''
 
@@ -84,7 +84,7 @@ ROUTER.get('/', async (req, res) => {
   }
 })
 
-ROUTER.post('/', async (req, res) => {
+router.post('/', async (req, res) => {
   const profileUsername = req.body.user?.trim() || req.body.username?.trim() || ''
   const viewer = req.body.viewer?.trim() || ''
   const university = req.body.university?.trim() || ''
@@ -165,4 +165,4 @@ ROUTER.post('/', async (req, res) => {
   }
 })
 
-module.exports = ROUTER
+module.exports = router

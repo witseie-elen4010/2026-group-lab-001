@@ -1,8 +1,8 @@
 const express = require('express')
 
-const ROUTER = express.Router()
+const router = express.Router()
 
-ROUTER.get('/', (req, res) => {
+router.get('/', (req, res) => {
   const username = req.query.username?.trim() || ''
   res.render('home', {
     title: 'Home',
@@ -10,4 +10,4 @@ ROUTER.get('/', (req, res) => {
   })
 })
 
-module.exports = ROUTER
+module.exports = router
