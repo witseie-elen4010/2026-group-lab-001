@@ -2,7 +2,6 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { getUser } = require('../models/user_db')
 const { verifyPassword } = require('../utils/password')
-const { setSession } = require('../utils/session')
 
 const router = express.Router()
 
@@ -58,15 +57,15 @@ router.post('/', async (req, res) => {
       })
     }
 
-    setSession(res, {
-      username: user.username,
-      universityId: user.universityId,
-      facultyId: user.facultyId,
-      schoolId: user.schoolId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role
-    })
+    req.session.user = {
+      role: user.role || '',
+      username: user.username || username,
+      universityId: user.universityId || '',
+      facultyId: user.facultyId || '',
+      schoolId: user.schoolId || '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || ''
+    }
     return res.redirect('/home')
   } catch (error) {
     return renderLogin(res, {

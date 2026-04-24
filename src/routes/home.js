@@ -3,21 +3,25 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { searchLecturers } = require('../models/user_db')
-const { getSession } = require('../utils/session')
+const { buildCurrentMonthCalendar } = require('../utils/calendar')
 
-const ROUTER = express.Router()
+const router = express.Router()
 
-/**
- * Renders the home page, including lecturer search results for student users.
- * @param {import('express').Request} req - Express request object with optional query params `q`, `facultyId`, `schoolId`.
- * @param {import('express').Response} res - Express response object.
- */
-ROUTER.get('/', async (req, res) => {
-  const session = getSession(req)
-  if (!session) return res.redirect('/login')
+const HOME_TITLES = Object.freeze({
+  lecturer: 'Lecturer Home',
+  student: 'Student Home'
+})
 
-  if (session.role !== 'student') {
-    return res.render('home', { title: 'Home', session, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '' })
+router.get('/', async (req, res) => {
+  const role = req.session?.user?.role || ''
+  const username = req.session?.user?.username || ''
+  const universityId = req.session?.user?.universityId || ''
+  const calendar = buildCurrentMonthCalendar()
+  const title = HOME_TITLES[role] || 'Home'
+  const homeTitle = HOME_TITLES[role] || 'Home'
+
+  if (role !== 'student') {
+    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '' })
   }
 
   const query = req.query.q?.trim() || ''
@@ -26,7 +30,7 @@ ROUTER.get('/', async (req, res) => {
 
   try {
     await connectToDatabase()
-    const allLecturers = await searchLecturers({ universityId: session.universityId, query })
+    const allLecturers = await searchLecturers({ universityId, query })
 
     const faculties = [...new Set(allLecturers.map(l => l.facultyId).filter(Boolean))]
     const schools = [...new Set(
@@ -40,10 +44,10 @@ ROUTER.get('/', async (req, res) => {
       (!schoolId || l.schoolId === schoolId)
     )
 
-    return res.render('home', { title: 'Home', session, lecturers, faculties, schools, query, facultyId, schoolId })
+    return res.render('home', { title, homeTitle, role, username, calendar, lecturers, faculties, schools, query, facultyId, schoolId })
   } catch {
-    return res.render('home', { title: 'Home', session, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId })
+    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId })
   }
 })
 
-module.exports = ROUTER
+module.exports = router

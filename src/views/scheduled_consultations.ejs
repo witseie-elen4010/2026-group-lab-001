@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="page page_home">
+  <main class="card card_wide text_center">
+    <header>
+      <h1>Scheduled Consultations</h1>
+      <% if (username) { %>
+        <p>Hello <%= username %></p>
+      <% } %>
+    </header>
+
+    <div class="error"><%= error %></div>
+    <p><%= message %></p>
+    <a class="back_link" href="<%= homePath %>">Home</a>
+  </main>
+</body>
+</html>

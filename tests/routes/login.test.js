@@ -61,6 +61,7 @@ describe('login route', () => {
     connectToDatabase.mockResolvedValue(undefined)
     getUser.mockResolvedValue({
       passwordHash: await hashPassword('welovesd3'),
+      role: 'student',
       username: 'morris'
     })
   })
