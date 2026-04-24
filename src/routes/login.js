@@ -59,9 +59,13 @@ router.post('/', async (req, res) => {
 
     req.session.user = {
       role: user.role || '',
-      username: user.username || username
+      username: user.username || username,
+      universityId: user.universityId || '',
+      facultyId: user.facultyId || '',
+      schoolId: user.schoolId || '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || ''
     }
-
     return res.redirect('/home')
   } catch (error) {
     return renderLogin(res, {

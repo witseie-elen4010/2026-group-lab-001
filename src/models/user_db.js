@@ -59,9 +59,53 @@ const deleteUser = async function (username) {
   return usersCollection().deleteOne({ username })
 }
 
+/**
+ * Searches for lecturer documents within a university, optionally filtering by name, faculty, and school.
+ * @param {object} options - Search options.
+ * @param {string} options.universityId - University to scope the search to.
+ * @param {string} [options.query=''] - Name or username substring to match (case-insensitive).
+ * @param {string} [options.facultyId=''] - Faculty to filter by.
+ * @param {string} [options.schoolId=''] - School to filter by.
+ * @returns {Promise<object[]>} Array of matching lecturer documents.
+ */
+const searchLecturers = async function ({ universityId, query = '', facultyId = '', schoolId = '' }) {
+  const filter = {
+    role: 'lecturer',
+    universityId
+  }
+
+  if (facultyId) filter.facultyId = facultyId
+  if (schoolId) filter.schoolId = schoolId
+
+  if (query) {
+    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escape(query), 'i')
+    const conditions = [
+      { username: regex },
+      { firstName: regex },
+      { lastName: regex }
+    ]
+
+    const parts = query.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      const firstRegex = new RegExp(escape(parts[0]), 'i')
+      const lastRegex = new RegExp(escape(parts.slice(1).join(' ')), 'i')
+      conditions.push(
+        { firstName: firstRegex, lastName: lastRegex },
+        { firstName: lastRegex, lastName: firstRegex }
+      )
+    }
+
+    filter.$or = conditions
+  }
+
+  return usersCollection().find(filter).toArray()
+}
+
 module.exports = {
   addUser,
   deleteUser,
   getUser,
+  searchLecturers,
   updateUserInstitutions
 }

@@ -10,29 +10,32 @@ jest.mock('../../src/models/db', () => ({
 jest.mock('../../src/models/user_db', () => ({
   addUser: jest.fn(),
   deleteUser: jest.fn(),
-  getUser: jest.fn()
+  getUser: jest.fn(),
+  searchLecturers: jest.fn()
 }))
 
 const http = require('node:http')
 
-const { getUser } = require('../../src/models/user_db')
+const { connectToDatabase } = require('../../src/models/db')
+const { getUser, searchLecturers } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
+
 let baseUrl
+
 const MONTH_LABELS = Object.freeze([
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ])
+
+const MOCK_LECTURERS = [
+  { username: 'alice', firstName: 'Alice', lastName: 'Smith', facultyId: 'Engineering', schoolId: 'EIE' },
+  { username: 'bob', firstName: 'Bob', lastName: 'Jones', facultyId: 'Science', schoolId: 'Physics' }
+]
+
+const MOCK_LECTURERS_21 = Array.from({ length: 21 }, function (_, i) {
+  return { username: `lecturer${i}`, firstName: `First${i}`, lastName: `Last${i}`, facultyId: 'Engineering', schoolId: 'EIE' }
+})
 
 /**
  * Encodes form fields for URL-encoded POST requests.
@@ -121,6 +124,8 @@ describe('home route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    connectToDatabase.mockResolvedValue(undefined)
+    searchLecturers.mockResolvedValue([])
   })
 
   test('Redirects unauthenticated users to login when requesting the home page', async () => {
@@ -252,5 +257,168 @@ describe('home route', () => {
     expect(body).toContain('This page is not available yet.')
     expect(body).toContain('Scheduled consultations have not been built yet.')
     expect(body).toContain('href="/home"')
+  })
+
+  test('Renders the home page without lecturer search for a non-student user', async () => {
+    const { sessionCookie } = await loginAs({ role: 'lecturer', username: 'lectureruser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(searchLecturers).not.toHaveBeenCalled()
+    expect(body).not.toContain('No lecturers found.')
+  })
+
+  test('Renders the home page with all lecturers for a student user', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Alice Smith')
+    expect(body).toContain('Bob Jones')
+  })
+
+  test('Passes the search query string to searchLecturers', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    await fetch(`${baseUrl}/home?q=alice`, {
+      headers: { cookie: sessionCookie }
+    })
+
+    expect(searchLecturers).toHaveBeenCalledWith({ universityId: '', query: 'alice' })
+  })
+
+  test('Filters results by facultyId', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home?facultyId=Engineering`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Alice Smith')
+    expect(body).not.toContain('Bob Jones')
+  })
+
+  test('Filters results by schoolId', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home?schoolId=EIE`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Alice Smith')
+    expect(body).not.toContain('Bob Jones')
+  })
+
+  test('Shows the no results message when no lecturers match', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home?q=unknown`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('No lecturers found.')
+  })
+
+  test('Renders the home page with empty results when the database throws', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    connectToDatabase.mockRejectedValue(new Error('DB error'))
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('No lecturers found.')
+  })
+
+  test('Renders lecturer results as links to the user profile page', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('href="/user_profile?user=alice"')
+    expect(body).toContain('href="/user_profile?user=bob"')
+  })
+
+  test('Returns JSON lecturer results when requested with Accept application/json', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('application/json')
+    expect(data.lecturers).toHaveLength(2)
+    expect(data.page).toBe(1)
+    expect(data.totalPages).toBe(1)
+  })
+
+  test('Returns empty JSON results when the database throws and JSON is requested', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    connectToDatabase.mockRejectedValue(new Error('DB error'))
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.lecturers).toHaveLength(0)
+    expect(data.page).toBe(1)
+    expect(data.totalPages).toBe(0)
+  })
+
+  test('Shows only the first 20 lecturers on page 1 when there are more than 20 results', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(data.lecturers).toHaveLength(20)
+    expect(data.page).toBe(1)
+    expect(data.totalPages).toBe(2)
+  })
+
+  test('Shows the remaining lecturers on page 2', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home?page=2`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(data.lecturers).toHaveLength(1)
+    expect(data.page).toBe(2)
+    expect(data.totalPages).toBe(2)
+  })
+
+  test('Renders pagination links when there are more than 20 results', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('pagination')
+    expect(body).toContain('page=1')
+    expect(body).toContain('page=2')
   })
 })

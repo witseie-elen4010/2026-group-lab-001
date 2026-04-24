@@ -30,6 +30,7 @@ app.use('/home', requireAuthentication, homeRouter)
 app.use('/schedule_consultation', requireAuthentication, scheduleConsultationRouter)
 app.use('/scheduled_consultations', requireAuthentication, scheduledConsultationsRouter)
 app.use('/user_profile', requireAuthentication, userProfileRouter)
+// entry-point is login page. This can be changed when authentication between pages is added
 
 app.get('/', (req, res) => {
   res.redirect('/login')
