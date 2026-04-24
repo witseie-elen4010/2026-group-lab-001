@@ -7,6 +7,11 @@ const { getSession } = require('../utils/session')
 
 const ROUTER = express.Router()
 
+/**
+ * Renders the lecturer profile page for the given username.
+ * @param {import('express').Request} req - Express request object with `params.username`.
+ * @param {import('express').Response} res - Express response object.
+ */
 ROUTER.get('/:username', async (req, res) => {
   const session = getSession(req)
   if (!session) return res.redirect('/login')

@@ -5,16 +5,31 @@ const SECRET = process.env.SESSION_SECRET || 'dev-secret'
 const COOKIE_NAME = 'current_session'
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24
 
+/**
+ * Signs a base64url-encoded payload using HMAC-SHA256.
+ * @param {string} payload - The base64url-encoded string to sign.
+ * @returns {Buffer} The HMAC-SHA256 digest.
+ */
 const sign = function (payload) {
   return createHmac('sha256', SECRET).update(payload).digest()
 }
 
+/**
+ * Serialises session data into a signed cookie and sets it on the response.
+ * @param {import('express').Response} res - Express response object.
+ * @param {object} data - Session data to encode and store in the cookie.
+ */
 const setSession = function (res, data) {
   const payload = Buffer.from(JSON.stringify(data)).toString('base64url')
   const signature = sign(payload).toString('base64url')
   res.setHeader('Set-Cookie', `${COOKIE_NAME}=${payload}.${signature}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${COOKIE_MAX_AGE_SECONDS}`)
 }
 
+/**
+ * Reads, verifies, and decodes the session cookie from the request.
+ * @param {import('express').Request} req - Express request object.
+ * @returns {object|null} Parsed session data, or null if absent or tampered.
+ */
 const getSession = function (req) {
   const raw = req.headers.cookie || ''
   const entry = raw.split(';').map(c => c.trim()).find(c => c.startsWith(`${COOKIE_NAME}=`))
@@ -38,6 +53,10 @@ const getSession = function (req) {
     return null
   }
 }
+/**
+ * Clears the session cookie on the response.
+ * @param {import('express').Response} res - Express response object.
+ */
 const clearSession = function (res) {
   res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0`)
 }

@@ -7,6 +7,11 @@ const { getSession } = require('../utils/session')
 
 const ROUTER = express.Router()
 
+/**
+ * Renders the lecturer search page, filtering results by name, faculty, and school.
+ * @param {import('express').Request} req - Express request object with optional query params `q`, `facultyId`, `schoolId`.
+ * @param {import('express').Response} res - Express response object.
+ */
 ROUTER.get('/', async (req, res) => {
   const session = getSession(req)
   if (!session) return res.redirect('/login')
