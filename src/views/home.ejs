@@ -10,6 +10,7 @@
   <main class="card card_wide text_center">
     <header>
       <h1>Welcome, <%= session.firstName %></h1>
+      <a class="back_link" href="/user_profile?user=<%= encodeURIComponent(session.username) %>&viewer=<%= encodeURIComponent(session.username) %>">User Profile</a>
     </header>
     <section>
       <p>Calendar view goes here.</p>

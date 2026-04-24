@@ -4,7 +4,7 @@ const { getUser } = require('../models/user_db')
 const { verifyPassword } = require('../utils/password')
 const { setSession } = require('../utils/session')
 
-const ROUTER = express.Router()
+const router = express.Router()
 
 /**
  * Renders the login page with the supplied view state.
@@ -23,11 +23,11 @@ const renderLogin = function (res, { statusCode = 200, error = '', username = ''
   })
 }
 
-ROUTER.get('/', (req, res) => {
+router.get('/', (req, res) => {
   return renderLogin(res)
 })
 
-ROUTER.post('/', async (req, res) => {
+router.post('/', async (req, res) => {
   const username = req.body.username?.trim() || ''
   const password = req.body.password || ''
 
@@ -77,4 +77,4 @@ ROUTER.post('/', async (req, res) => {
   }
 })
 
-module.exports = ROUTER
+module.exports = router

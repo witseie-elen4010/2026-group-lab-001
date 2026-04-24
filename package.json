@@ -6,16 +6,8 @@
     "test:db": "jest tests/models",
     "lint": "standard \"src/**/*.js\" \"tests/**/*.js\""
   },
-  "standard": {
-    "globals": [
-      "afterAll",
-      "beforeAll",
-      "beforeEach",
-      "describe",
-      "expect",
-      "jest",
-      "test"
-    ]
+  "jest": {
+    "collectCoverage": true
   },
   "standard": {
     "globals": [
