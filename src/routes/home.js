@@ -10,4 +10,5 @@ ROUTER.get('/', (req, res) => {
   if (!session) return res.redirect('/login')
   return res.render('home', { title: 'Home', session })
 })
+
 module.exports = ROUTER

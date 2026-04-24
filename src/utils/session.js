@@ -53,6 +53,7 @@ const getSession = function (req) {
     return null
   }
 }
+
 /**
  * Clears the session cookie on the response.
  * @param {import('express').Response} res - Express response object.

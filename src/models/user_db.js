@@ -33,6 +33,15 @@ const deleteUser = async function (username) {
   return usersCollection().deleteOne({ username })
 }
 
+/**
+ * Searches for lecturer documents within a university, optionally filtering by name, faculty, and school.
+ * @param {object} options - Search options.
+ * @param {string} options.universityId - University to scope the search to.
+ * @param {string} [options.query=''] - Name or username substring to match (case-insensitive).
+ * @param {string} [options.facultyId=''] - Faculty to filter by.
+ * @param {string} [options.schoolId=''] - School to filter by.
+ * @returns {Promise<object[]>} Array of matching lecturer documents.
+ */
 const searchLecturers = async function ({ universityId, query = '', facultyId = '', schoolId = '' }) {
   const filter = {
     role: 'lecturer',
