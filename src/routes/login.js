@@ -57,7 +57,12 @@ router.post('/', async (req, res) => {
       })
     }
 
-    return res.redirect(`/home?username=${encodeURIComponent(username)}`)
+    req.session.user = {
+      role: user.role || '',
+      username: user.username || username
+    }
+
+    return res.redirect('/home')
   } catch (error) {
     return renderLogin(res, {
       statusCode: 500,

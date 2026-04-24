@@ -182,6 +182,54 @@ a {
   font-size: 1rem;
 }
 
+.home_navigation {
+  display: grid;
+  gap: 16px;
+  max-width: 320px;
+  margin: 24px auto 0;
+}
+
+.home_navigation_title {
+  margin: 0;
+}
+
+.home_navigation_text {
+  margin: 0;
+  color: var(--color-secondary);
+}
+
+.calendar_section {
+  margin-top: 32px;
+}
+
+.calendar_title {
+  margin: 0 0 16px;
+}
+
+.calendar_table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendar_heading {
+  padding: 12px 8px;
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+}
+
+.calendar_day {
+  height: 64px;
+  padding: 12px 8px;
+  border: 1px solid var(--color-border);
+  text-align: right;
+  vertical-align: top;
+}
+
+.calendar_day_empty {
+  background: #f8fafc;
+}
+
 @media (max-width: 640px) {
   .register_columns {
     grid-template-columns: 1fr;
@@ -189,5 +237,11 @@ a {
 
   .profile_details {
     grid-template-columns: 1fr;
+  }
+
+  .calendar_day {
+    height: 48px;
+    padding: 8px 6px;
+    font-size: 0.9rem;
   }
 }

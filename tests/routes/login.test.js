@@ -61,6 +61,7 @@ describe('login route', () => {
     connectToDatabase.mockResolvedValue(undefined)
     getUser.mockResolvedValue({
       passwordHash: await hashPassword('welovesd3'),
+      role: 'student',
       username: 'morris'
     })
   })
@@ -79,7 +80,7 @@ describe('login route', () => {
     })
 
     expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toBe('/home?username=morris')
+    expect(response.headers.get('location')).toBe('/home')
     expect(connectToDatabase).toHaveBeenCalledTimes(1)
     expect(getUser).toHaveBeenCalledWith('morris')
   })
