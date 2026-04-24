@@ -13,12 +13,56 @@
     </header>
     <section>
       <p>Calendar view goes here.</p>
-      <% if (session.role === 'student') { %>
-        <form action="/search" method="get">
-          <button type="submit">Find a Lecturer</button>
-        </form>
-      <% } %>
     </section>
+
+    <% if (session.role === 'student') { %>
+      <section>
+        <form action="/home" method="get">
+          <label>
+            Search
+            <input type="text" name="q" value="<%= query %>" placeholder="Name or username">
+          </label>
+
+          <label>
+            Faculty
+            <select name="facultyId">
+              <option value="">All faculties</option>
+              <% faculties.forEach(function (faculty) { %>
+                <option value="<%= faculty %>" <%= facultyId === faculty ? 'selected' : '' %>>
+                  <%= faculty %>
+                </option>
+              <% }) %>
+            </select>
+          </label>
+
+          <label>
+            School
+            <select name="schoolId">
+              <option value="">All schools</option>
+              <% schools.forEach(function (school) { %>
+                <option value="<%= school %>" <%= schoolId === school ? 'selected' : '' %>>
+                  <%= school %>
+                </option>
+              <% }) %>
+            </select>
+          </label>
+
+          <button type="submit">Search</button>
+        </form>
+      </section>
+
+      <section class="results">
+        <% if (lecturers.length === 0) { %>
+          <p>No lecturers found.</p>
+        <% } else { %>
+          <% lecturers.forEach(function (lecturer) { %>
+            <a href="/lecturer/<%= lecturer.username %>">
+              <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
+            </a>
+          <% }) %>
+        <% } %>
+      </section>
+    <% } %>
   </main>
 </body>
 </html>

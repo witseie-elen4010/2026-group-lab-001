@@ -3,7 +3,6 @@ const express = require('express')
 const loginRouter = require('./routes/login')
 const registerRouter = require('./routes/register')
 const homeRouter = require('./routes/home')
-const searchRouter = require('./routes/search')
 const lecturerRouter = require('./routes/lecturer')
 
 const APP = express()
@@ -17,7 +16,6 @@ APP.use(express.static(path.join(__dirname, 'public'))) // css style template
 APP.use('/login', loginRouter)
 APP.use('/register', registerRouter)
 APP.use('/home', homeRouter)
-APP.use('/search', searchRouter)
 APP.use('/lecturer', lecturerRouter)
 
 // entry-point is login page. This can be changed when authentication between pages is added
