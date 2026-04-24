@@ -4,7 +4,7 @@ const {
   DATABASE_NAME,
   getDb
 } = require('../../src/models/db')
-const { addUser, deleteUser, getUser } = require('../../src/models/user_db')
+const { addUser, deleteUser, getUser, searchLecturers } = require('../../src/models/user_db')
 
 // fetching the connection string for the LetsTalk database (MongoDB Atlas)
 const RUN_DB_TEST = process.env.MONGODB_URI ? test : test.skip
@@ -170,5 +170,35 @@ describe('MongoDB Atlas test user', () => {
       await deleteUser(originalUser.username)
       await deleteUser(duplicateUser.username)
     }
+  })
+})
+
+describe('searchLecturers', () => {
+  const lecturer = createTestUser({
+    firstName: 'Alice',
+    lastName: 'Smith',
+    role: 'lecturer'
+  })
+
+  beforeAll(async () => {
+    if (!process.env.MONGODB_URI) return
+    await addUser(lecturer)
+  })
+
+  afterAll(async () => {
+    if (!process.env.MONGODB_URI) return
+    await deleteUser(lecturer.username)
+  })
+
+  RUN_DB_TEST('Finds a lecturer when first name is entered before surname', async () => {
+    const results = await searchLecturers({ universityId: lecturer.universityId, query: 'Alice Smith' })
+    const usernames = results.map(r => r.username)
+    expect(usernames).toContain(lecturer.username)
+  })
+
+  RUN_DB_TEST('Finds a lecturer when surname is entered before first name', async () => {
+    const results = await searchLecturers({ universityId: lecturer.universityId, query: 'Smith Alice' })
+    const usernames = results.map(r => r.username)
+    expect(usernames).toContain(lecturer.username)
   })
 })

@@ -78,13 +78,25 @@ const searchLecturers = async function ({ universityId, query = '', facultyId = 
   if (schoolId) filter.schoolId = schoolId
 
   if (query) {
-    const escaped = query.replace(/[.*+?^${}()|[\]}\\]/g, '\\$&')
-    const regex = new RegExp(escaped, 'i')
-    filter.$or = [
+    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escape(query), 'i')
+    const conditions = [
       { username: regex },
       { firstName: regex },
       { lastName: regex }
     ]
+
+    const parts = query.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      const firstRegex = new RegExp(escape(parts[0]), 'i')
+      const lastRegex = new RegExp(escape(parts.slice(1).join(' ')), 'i')
+      conditions.push(
+        { firstName: firstRegex, lastName: lastRegex },
+        { firstName: lastRegex, lastName: firstRegex }
+      )
+    }
+
+    filter.$or = conditions
   }
 
   return usersCollection().find(filter).toArray()
