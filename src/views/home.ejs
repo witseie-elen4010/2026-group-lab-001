@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <script src="/scripts/lecturer_search.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
@@ -36,55 +37,6 @@
       <a class="back_link" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
     <% } %>
 
-    <% if (role === 'student') { %>
-      <section>
-        <form action="/home" method="get">
-          <label>
-            Search
-            <input type="text" name="q" value="<%= query %>" placeholder="Name or username">
-          </label>
-
-          <label>
-            Faculty
-            <select name="facultyId">
-              <option value="">All faculties</option>
-              <% faculties.forEach(function (faculty) { %>
-                <option value="<%= faculty %>" <%= facultyId === faculty ? 'selected' : '' %>>
-                  <%= faculty %>
-                </option>
-              <% }) %>
-            </select>
-          </label>
-
-          <label>
-            School
-            <select name="schoolId">
-              <option value="">All schools</option>
-              <% schools.forEach(function (school) { %>
-                <option value="<%= school %>" <%= schoolId === school ? 'selected' : '' %>>
-                  <%= school %>
-                </option>
-              <% }) %>
-            </select>
-          </label>
-
-          <button type="submit">Search</button>
-        </form>
-      </section>
-
-      <section class="results">
-        <% if (lecturers.length === 0) { %>
-          <p>No lecturers found.</p>
-        <% } else { %>
-          <% lecturers.forEach(function (lecturer) { %>
-            <a href="/lecturer/<%= lecturer.username %>">
-              <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
-            </a>
-          <% }) %>
-        <% } %>
-      </section>
-    <% } %>
-
     <section class="calendar_section">
       <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
       <table class="calendar_table">
@@ -110,6 +62,71 @@
         </tbody>
       </table>
     </section>
+
+    <% if (role === 'student') { %>
+      <h1>Find a Lecturer</h1>
+      <section>
+        <form id="lecturer_search_form" action="/home" method="get">
+          <div class="search_criteria">
+            <label class="search_filter">
+              Faculty
+              <select name="facultyId">
+                <option value="">All faculties</option>
+                <% faculties.forEach(function (faculty) { %>
+                  <option value="<%= faculty %>" <%= facultyId === faculty ? 'selected' : '' %>>
+                    <%= faculty %>
+                  </option>
+                <% }) %>
+              </select>
+            </label>
+
+            <label class="search_filter">
+              School
+              <select name="schoolId">
+                <option value="">All schools</option>
+                <% schools.forEach(function (school) { %>
+                  <option value="<%= school %>" <%= schoolId === school ? 'selected' : '' %>>
+                    <%= school %>
+                  </option>
+                <% }) %>
+              </select>
+            </label>
+          </div>
+
+          <div class="search_flex">
+            <label class="search_box">
+              Search
+              <input type="text" name="q" value="<%= query %>" placeholder="Name and/or username">
+            </label>
+
+            <button type="submit" class="search_button">Search</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="lecturer_results" class="results">
+        <% if (lecturers.length === 0) { %>
+          <p>No lecturers found.</p>
+        <% } else { %>
+          <% lecturers.forEach(function (lecturer) { %>
+            <a href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">
+              <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
+            </a>
+          <% }) %>
+
+          <% if (totalPages > 1) { %>
+            <nav class="pagination">
+              <% for (let i = 1; i <= totalPages; i++) { %>
+                <a
+                  href="/home?q=<%= encodeURIComponent(query) %>&facultyId=<%= encodeURIComponent(facultyId) %>&schoolId=<%= encodeURIComponent(schoolId) %>&page=<%= i %>"
+                  class="pagination_link<%= i === page ? ' pagination_link_active' : '' %>"
+                ><%= i %></a>
+              <% } %>
+            </nav>
+          <% } %>
+        <% } %>
+      </section>
+    <% } %>
   </main>
 </body>
 </html>

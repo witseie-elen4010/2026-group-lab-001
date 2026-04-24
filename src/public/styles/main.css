@@ -71,7 +71,7 @@ label {
   gap: 8px;
   font-weight: 600;
   position: relative;
-  padding-bottom: 1.1rem;
+  padding-bottom: 1rem;
 }
 
 input {
@@ -205,6 +205,7 @@ a {
 
 .calendar_section {
   margin-top: 32px;
+  margin-bottom: 20px;
 }
 
 .calendar_title {
@@ -233,6 +234,32 @@ a {
 
 .calendar_day_empty {
   background: #f8fafc;
+}
+
+.search_filter {
+  width: 48%;
+}
+
+.search_criteria {
+  display: flex;
+  justify-content: space-around
+}
+
+.search_box {
+  width: 70%;
+  padding-bottom: 0;
+}
+
+.search_button {
+  width: 20%;
+  height: 48px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.search_flex {
+  display: flex;
+  align-items: flex-end;
 }
 
 @media (max-width: 640px) {

@@ -33,6 +33,10 @@ const MOCK_LECTURERS = [
   { username: 'bob', firstName: 'Bob', lastName: 'Jones', facultyId: 'Science', schoolId: 'Physics' }
 ]
 
+const MOCK_LECTURERS_21 = Array.from({ length: 21 }, function (_, i) {
+  return { username: `lecturer${i}`, firstName: `First${i}`, lastName: `Last${i}`, facultyId: 'Engineering', schoolId: 'EIE' }
+})
+
 /**
  * Encodes form fields for URL-encoded POST requests.
  * @param {Record<string, string>} fields - Form fields to encode.
@@ -336,5 +340,85 @@ describe('home route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('No lecturers found.')
+  })
+
+  test('Renders lecturer results as links to the user profile page', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('href="/user_profile?user=alice"')
+    expect(body).toContain('href="/user_profile?user=bob"')
+  })
+
+  test('Returns JSON lecturer results when requested with Accept application/json', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('application/json')
+    expect(data.lecturers).toHaveLength(2)
+    expect(data.page).toBe(1)
+    expect(data.totalPages).toBe(1)
+  })
+
+  test('Returns empty JSON results when the database throws and JSON is requested', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    connectToDatabase.mockRejectedValue(new Error('DB error'))
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.lecturers).toHaveLength(0)
+    expect(data.page).toBe(1)
+    expect(data.totalPages).toBe(0)
+  })
+
+  test('Shows only the first 20 lecturers on page 1 when there are more than 20 results', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(data.lecturers).toHaveLength(20)
+    expect(data.page).toBe(1)
+    expect(data.totalPages).toBe(2)
+  })
+
+  test('Shows the remaining lecturers on page 2', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home?page=2`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(data.lecturers).toHaveLength(1)
+    expect(data.page).toBe(2)
+    expect(data.totalPages).toBe(2)
+  })
+
+  test('Renders pagination links when there are more than 20 results', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('pagination')
+    expect(body).toContain('page=1')
+    expect(body).toContain('page=2')
   })
 })

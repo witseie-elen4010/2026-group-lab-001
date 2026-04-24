@@ -12,6 +12,8 @@ const HOME_TITLES = Object.freeze({
   student: 'Student Home'
 })
 
+const PAGE_SIZE = 20
+
 router.get('/', async (req, res) => {
   const role = req.session?.user?.role || ''
   const username = req.session?.user?.username || ''
@@ -21,32 +23,43 @@ router.get('/', async (req, res) => {
   const homeTitle = HOME_TITLES[role] || 'Home'
 
   if (role !== 'student') {
-    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '' })
+    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0 })
   }
 
   const query = req.query.q?.trim() || ''
   const facultyId = req.query.facultyId?.trim() || ''
   const schoolId = req.query.schoolId?.trim() || ''
+  const page = Math.max(1, parseInt(req.query.page) || 1)
 
   try {
     await connectToDatabase()
     const allLecturers = await searchLecturers({ universityId, query })
 
     const faculties = [...new Set(allLecturers.map(l => l.facultyId).filter(Boolean))]
+    const filteredLecturers = allLecturers.filter(l =>
+      (!facultyId || l.facultyId === facultyId) &&
+      (!schoolId || l.schoolId === schoolId)
+    )
     const schools = [...new Set(
       allLecturers
         .filter(l => !facultyId || l.facultyId === facultyId)
         .map(l => l.schoolId)
         .filter(Boolean)
     )]
-    const lecturers = allLecturers.filter(l =>
-      (!facultyId || l.facultyId === facultyId) &&
-      (!schoolId || l.schoolId === schoolId)
-    )
 
-    return res.render('home', { title, homeTitle, role, username, calendar, lecturers, faculties, schools, query, facultyId, schoolId })
+    const totalPages = Math.ceil(filteredLecturers.length / PAGE_SIZE)
+    const currentPage = Math.min(page, Math.max(1, totalPages))
+    const lecturers = filteredLecturers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+    if (req.headers.accept?.includes('application/json')) {
+      return res.json({ lecturers, page: currentPage, totalPages })
+    }
+    return res.render('home', { title, homeTitle, role, username, calendar, lecturers, faculties, schools, query, facultyId, schoolId, page: currentPage, totalPages })
   } catch {
-    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId })
+    if (req.headers.accept?.includes('application/json')) {
+      return res.json({ lecturers: [], page: 1, totalPages: 0 })
+    }
+    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId, page: 1, totalPages: 0 })
   }
 })
 
