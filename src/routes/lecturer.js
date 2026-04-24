@@ -3,18 +3,15 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { getUser } = require('../models/user_db')
-const { getSession } = require('../utils/session')
-
-const ROUTER = express.Router()
+const router = express.Router()
 
 /**
  * Renders the lecturer profile page for the given username.
  * @param {import('express').Request} req - Express request object with `params.username`.
  * @param {import('express').Response} res - Express response object.
  */
-ROUTER.get('/:username', async (req, res) => {
-  const session = getSession(req)
-  if (!session) return res.redirect('/login')
+router.get('/:username', async (req, res) => {
+  const session = req.session.user
 
   try {
     await connectToDatabase()
@@ -34,4 +31,4 @@ ROUTER.get('/:username', async (req, res) => {
   }
 })
 
-module.exports = ROUTER
+module.exports = router

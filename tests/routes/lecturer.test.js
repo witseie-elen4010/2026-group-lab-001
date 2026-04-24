@@ -16,22 +16,9 @@ jest.mock('../../src/models/user_db', () => ({
 
 const http = require('node:http')
 const { connectToDatabase } = require('../../src/models/db')
-const { getUser } = require('../../src/models/user_db')
-const { setSession } = require('../../src/utils/session')
+const { getUser, searchLecturers } = require('../../src/models/user_db')
+const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
-
-/**
- * Captures the Set-Cookie header written by setSession and returns the name=value portion.
- * @param {object} data - Session payload to encode.
- * @returns {string} The cookie name=value pair ready to use as a Cookie request header.
- */
-const buildSessionCookie = function (data) {
-  let cookieHeader
-  setSession({ setHeader: (_name, value) => { cookieHeader = value } }, data)
-  return cookieHeader.split(';')[0]
-}
-
-const MOCK_SESSION = { username: 'testuser', universityId: 'wits', role: 'student' }
 
 const MOCK_LECTURER = {
   username: 'alice',
@@ -43,9 +30,57 @@ const MOCK_LECTURER = {
   schoolId: 'EIE'
 }
 
+/**
+ * Encodes form fields for URL-encoded POST requests.
+ * @param {Record<string, string>} fields - Form fields to encode.
+ * @returns {string} URL-encoded form payload.
+ */
+const encodeForm = function (fields) {
+  return new URLSearchParams(fields).toString()
+}
+
+/**
+ * Extracts the session cookie value from a Set-Cookie header.
+ * @param {string|null} setCookieHeader - Raw Set-Cookie header value.
+ * @returns {string} Session cookie header value.
+ */
+const getSessionCookie = function (setCookieHeader) {
+  return setCookieHeader?.split(';')[0] || ''
+}
+
+/**
+ * Logs in and returns the session cookie for protected route tests.
+ * @param {object} options - Login user details.
+ * @param {string} [options.role='student'] - User role to store in the session.
+ * @param {string} [options.username='testuser'] - Username used for login.
+ * @returns {Promise<{loginResponse: Response, sessionCookie: string}>} Login response and session cookie.
+ */
+const loginAs = async function ({ role = 'student', username = 'testuser' } = {}) {
+  getUser.mockResolvedValueOnce({
+    passwordHash: await hashPassword('welovesd3'),
+    role,
+    username
+  })
+
+  const loginResponse = await fetch(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: encodeForm({ password: 'welovesd3', username }),
+    redirect: 'manual'
+  })
+
+  return {
+    loginResponse,
+    sessionCookie: getSessionCookie(loginResponse.headers.get('set-cookie'))
+  }
+}
+
+let baseUrl
+
 describe('lecturer route', () => {
   let server
-  let baseUrl
   let sessionCookie
 
   beforeAll(async () => {
@@ -56,7 +91,7 @@ describe('lecturer route', () => {
         resolve()
       })
     })
-    sessionCookie = buildSessionCookie(MOCK_SESSION)
+    ;({ sessionCookie } = await loginAs({ role: 'student', username: 'testuser' }))
   })
 
   afterAll(async () => {
@@ -74,6 +109,7 @@ describe('lecturer route', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     connectToDatabase.mockResolvedValue(undefined)
+    searchLecturers.mockResolvedValue([])
     getUser.mockResolvedValue(MOCK_LECTURER)
   })
 
