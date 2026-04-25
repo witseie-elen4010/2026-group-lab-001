@@ -112,6 +112,88 @@
       </div>
     </section>
 
+    <% if (role === 'lecturer') { %>
+    <section class="consultation_preferences_section">
+      <h2 class="consultation_preferences_title">Consultation Preferences</h2>
+
+      <% if (prefError) { %>
+        <div class="error"><%= prefError %></div>
+      <% } %>
+
+      <% if (canEdit) { %>
+      <form class="consultation_preferences_form" action="/user_profile?user=<%= encodeURIComponent(username) %>" method="post">
+        <input type="hidden" name="username" value="<%= username %>">
+        <input type="hidden" name="formType" value="consultationPreferences">
+
+        <label>
+          Minimum Students per Consultation
+          <input
+            type="number"
+            name="minStudents"
+            value="<%= consultationPreferences ? consultationPreferences.minStudents : '' %>"
+            min="0"
+            required
+          >
+        </label>
+
+        <label>
+          Maximum Students per Consultation
+          <input
+            type="number"
+            name="maxStudents"
+            value="<%= consultationPreferences ? consultationPreferences.maxStudents : '' %>"
+            min="0"
+            required
+          >
+        </label>
+
+        <label>
+          Duration per Consultation (minutes)
+          <input
+            type="number"
+            name="duration"
+            value="<%= consultationPreferences ? consultationPreferences.duration : '' %>"
+            min="0"
+            required
+          >
+        </label>
+
+        <label>
+          Daily Maximum Consultations
+          <input
+            type="number"
+            name="dailyMax"
+            value="<%= consultationPreferences ? consultationPreferences.dailyMax : '' %>"
+            min="0"
+            required
+          >
+        </label>
+
+        <button type="submit">Save Consultation Preferences</button>
+      </form>
+      <% } else { %>
+      <div class="profile_details">
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Min Students per Consultation</h3>
+          <p class="profile_detail_value"><%= consultationPreferences ? consultationPreferences.minStudents : 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Max Students per Consultation</h3>
+          <p class="profile_detail_value"><%= consultationPreferences ? consultationPreferences.maxStudents : 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Duration per Consultation (minutes)</h3>
+          <p class="profile_detail_value"><%= consultationPreferences ? consultationPreferences.duration : 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Daily Maximum Consultations</h3>
+          <p class="profile_detail_value"><%= consultationPreferences ? consultationPreferences.dailyMax : 'Not set' %></p>
+        </div>
+      </div>
+      <% } %>
+    </section>
+    <% } %>
+
     <a class="back_link" href="/home">Home</a>
   </main>
 </body>
