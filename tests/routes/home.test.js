@@ -7,6 +7,10 @@ jest.mock('../../src/models/db', () => ({
   getMongoUri: jest.fn()
 }))
 
+jest.mock('../../src/models/lecturer_availability_db', () => ({
+  getLecturerAvailability: jest.fn()
+}))
+
 jest.mock('../../src/models/user_db', () => ({
   addUser: jest.fn(),
   deleteUser: jest.fn(),
@@ -17,6 +21,7 @@ jest.mock('../../src/models/user_db', () => ({
 const http = require('node:http')
 
 const { connectToDatabase } = require('../../src/models/db')
+const { getLecturerAvailability } = require('../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
@@ -96,6 +101,16 @@ const getCurrentMonthLabel = function (referenceDate = new Date()) {
   return `${MONTH_LABELS[referenceDate.getMonth()]} ${referenceDate.getFullYear()}`
 }
 
+/**
+ * Returns a YYYY-MM-DD string for the current month.
+ * @param {number} dayNumber - Day number in the current month.
+ * @param {Date} [referenceDate=new Date()] - Date used to choose the month.
+ * @returns {string} ISO date string.
+ */
+const getCurrentMonthDate = function (dayNumber, referenceDate = new Date()) {
+  return `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
+}
+
 describe('home route', () => {
   let server
 
@@ -125,6 +140,7 @@ describe('home route', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     connectToDatabase.mockResolvedValue(undefined)
+    getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
   })
 
@@ -167,6 +183,7 @@ describe('home route', () => {
     expect(body).toContain('calendar_table')
     expect(body).toContain('Sun')
     expect(body).toContain('Sat')
+    expect(getLecturerAvailability).not.toHaveBeenCalled()
   })
 
   test('Renders the lecturer home page after a successful login', async () => {
@@ -197,6 +214,31 @@ describe('home route', () => {
     expect(body).not.toContain('Schedule a Consultation')
     expect(body).toContain(currentMonthLabel)
     expect(body).toContain('calendar_table')
+  })
+
+  test('Highlights lecturer availability on the home calendar', async () => {
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+    getLecturerAvailability.mockResolvedValue({
+      weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '12:00' }],
+      exceptionDates: [getCurrentMonthDate(1)]
+    })
+
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(getLecturerAvailability).toHaveBeenCalledWith('lecturer1')
+    expect(body).toContain('calendar_day_available')
+    expect(body).toContain('calendar_day_unavailable')
+    expect(body).toContain('09:00 - 12:00')
+    expect(body).toContain('Unavailable')
   })
 
   test('Redirects unauthenticated users to login when requesting the schedule consultation page', async () => {
