@@ -1,3 +1,8 @@
+jest.mock('../../src/models/lecturer_availability_db', () => ({
+  getLecturerAvailability: jest.fn(),
+  setLecturerAvailability: jest.fn()
+}))
+
 jest.mock('../../src/models/db', () => ({
   closeDatabaseConnection: jest.fn(),
   connectToDatabase: jest.fn().mockResolvedValue(undefined),
@@ -29,6 +34,7 @@ const http = require('node:http')
 
 const { connectToDatabase } = require('../../src/models/db')
 const { getUser, updateUserInstitutions } = require('../../src/models/user_db')
+const { getLecturerAvailability, setLecturerAvailability } = require('../../src/models/lecturer_availability_db')
 const {
   getFaculty,
   getSchool,
@@ -120,6 +126,8 @@ describe('user profile route', () => {
     getUniversity.mockResolvedValue({ name: 'University of the Witwatersrand' })
     isFacultyInUniversity.mockResolvedValue(true)
     isSchoolInFaculty.mockResolvedValue(true)
+    getLecturerAvailability.mockResolvedValue(null)
+    setLecturerAvailability.mockResolvedValue(undefined)
   })
 
   test('Redirects unauthenticated users to login before rendering the profile page', async () => {
@@ -145,7 +153,7 @@ describe('user profile route', () => {
     expect(response.status).toBe(200)
     expect(connectToDatabase).toHaveBeenCalledTimes(1)
     expect(getUser).toHaveBeenCalledWith('morris')
-    expect(body).toContain('Hello morris')
+    expect(body).toContain('Hello, morris')
     expect(body).toContain('Update Institution')
     expect(body).toContain('Morris')
     expect(body).toContain('Wits')
@@ -179,7 +187,7 @@ describe('user profile route', () => {
 
     expect(response.status).toBe(200)
     expect(getUser).toHaveBeenCalledWith('alice')
-    expect(body).toContain('Hello alice')
+    expect(body).toContain('alice&#39;s Profile')
     expect(body).not.toContain('Update Institution')
     expect(body).toContain('alice@example.com')
     expect(body).toContain('href="/home"')
@@ -307,5 +315,150 @@ describe('user profile route', () => {
     expect(updateUserInstitutions).not.toHaveBeenCalled()
     expect(body).toContain('You can only edit your own profile.')
     expect(body).not.toContain('Update Institution')
+  })
+
+  test('Renders the consultation preferences form when a lecturer views their own profile', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
+    getLecturerAvailability.mockResolvedValueOnce({ minStudents: 2, maxStudents: 10, duration: 60, dailyMax: 4 })
+
+    const response = await fetch(`${baseUrl}/user_profile?user=dr_jones`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(getLecturerAvailability).toHaveBeenCalledWith('dr_jones')
+    expect(body).toContain('Consultation Preferences')
+    expect(body).toContain('Save Consultation Preferences')
+  })
+
+  test('Renders read-only consultation preferences when a student views a lecturer profile', async () => {
+    const sessionCookie = await loginAs()
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones', email: 'dr@example.com' }))
+    getLecturerAvailability.mockResolvedValueOnce({ minStudents: 2, maxStudents: 10, duration: 60, dailyMax: 4 })
+
+    const response = await fetch(`${baseUrl}/user_profile?user=dr_jones`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(getLecturerAvailability).toHaveBeenCalledWith('dr_jones')
+    expect(body).toContain('Consultation Preferences')
+    expect(body).not.toContain('Save Consultation Preferences')
+  })
+
+  test('Does not render the consultation preferences section for student profiles', async () => {
+    const sessionCookie = await loginAs()
+
+    const response = await fetch(`${baseUrl}/user_profile?user=morris`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(getLecturerAvailability).not.toHaveBeenCalled()
+    expect(body).not.toContain('Consultation Preferences')
+  })
+
+  test('Saves consultation preferences and returns JSON success for an AJAX request', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
+
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
+        cookie: sessionCookie
+      },
+      body: encodeForm({ formType: 'consultationPreferences', username: 'dr_jones', minStudents: '2', maxStudents: '10', duration: '60', dailyMax: '4' })
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(setLecturerAvailability).toHaveBeenCalledWith('dr_jones', { minStudents: 2, maxStudents: 10, duration: 60, dailyMax: 4 })
+    expect(data).toEqual({ success: true })
+  })
+
+  test('Returns a JSON error when a consultation preference value is negative', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
+
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
+        cookie: sessionCookie
+      },
+      body: encodeForm({ formType: 'consultationPreferences', username: 'dr_jones', minStudents: '-1', maxStudents: '10', duration: '60', dailyMax: '4' })
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(setLecturerAvailability).not.toHaveBeenCalled()
+    expect(data).toEqual({ success: false, error: 'Consultation settings cannot be negative.' })
+  })
+
+  test('Returns a JSON error when minimum students exceed maximum students', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
+
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
+        cookie: sessionCookie
+      },
+      body: encodeForm({ formType: 'consultationPreferences', username: 'dr_jones', minStudents: '10', maxStudents: '5', duration: '60', dailyMax: '4' })
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(setLecturerAvailability).not.toHaveBeenCalled()
+    expect(data).toEqual({ success: false, error: 'Minimum students cannot exceed maximum students.' })
+  })
+
+  test('Returns a JSON error when total daily consultation time exceeds 480 minutes', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
+
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
+        cookie: sessionCookie
+      },
+      body: encodeForm({ formType: 'consultationPreferences', username: 'dr_jones', minStudents: '2', maxStudents: '10', duration: '120', dailyMax: '5' })
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(setLecturerAvailability).not.toHaveBeenCalled()
+    expect(data.success).toBe(false)
+  })
+
+  test('Returns a 403 JSON error when the viewer is not the profile owner', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'prof_smith', email: 'prof@example.com' }))
+
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
+        cookie: sessionCookie
+      },
+      body: encodeForm({ formType: 'consultationPreferences', username: 'prof_smith', minStudents: '2', maxStudents: '10', duration: '60', dailyMax: '4' })
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(setLecturerAvailability).not.toHaveBeenCalled()
+    expect(data).toEqual({ success: false, error: 'You can only edit your own profile.' })
   })
 })
