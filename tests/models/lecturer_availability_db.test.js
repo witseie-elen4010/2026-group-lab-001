@@ -48,4 +48,52 @@ describe('lecturer availability database operations', () => {
       { upsert: true }
     )
   })
+
+  test('setLecturerAvailability upserts weekly availability and exception dates when provided', async function () {
+    mockCollection.updateOne.mockResolvedValue({ acknowledged: true })
+
+    await setLecturerAvailability('dr_jones', {
+      weeklyAvailability: [
+        { day: 'monday', startTime: '09:00', endTime: '12:00' },
+        { day: 'wednesday', startTime: '13:00', endTime: '16:00' }
+      ],
+      exceptionDates: ['2026-05-01', '2026-05-08']
+    })
+
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { username: 'dr_jones' },
+      {
+        $set: {
+          username: 'dr_jones',
+          weeklyAvailability: [
+            { day: 'monday', startTime: '09:00', endTime: '12:00' },
+            { day: 'wednesday', startTime: '13:00', endTime: '16:00' }
+          ],
+          exceptionDates: ['2026-05-01', '2026-05-08']
+        }
+      },
+      { upsert: true }
+    )
+  })
+
+  test('setLecturerAvailability only sets the fields that are provided', async function () {
+    mockCollection.updateOne.mockResolvedValue({ acknowledged: true })
+
+    await setLecturerAvailability('dr_jones', {
+      duration: 45,
+      weeklyAvailability: [{ day: 'friday', startTime: '10:00', endTime: '11:00' }]
+    })
+
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { username: 'dr_jones' },
+      {
+        $set: {
+          username: 'dr_jones',
+          duration: 45,
+          weeklyAvailability: [{ day: 'friday', startTime: '10:00', endTime: '11:00' }]
+        }
+      },
+      { upsert: true }
+    )
+  })
 })

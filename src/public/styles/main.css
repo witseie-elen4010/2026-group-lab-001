@@ -91,6 +91,16 @@ select {
   margin: 0;
 }
 
+textarea {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  margin: 0;
+  resize: vertical;
+}
+
 button,
 a {
   display: inline-block;
@@ -302,6 +312,7 @@ a {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 

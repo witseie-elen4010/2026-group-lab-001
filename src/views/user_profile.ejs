@@ -114,10 +114,27 @@
     </section>
 
     <% if (role === 'lecturer') { %>
+    <%
+      const weeklyAvailability = consultationPreferences && consultationPreferences.weeklyAvailability
+        ? consultationPreferences.weeklyAvailability
+        : []
+      const exceptionDates = consultationPreferences && consultationPreferences.exceptionDates
+        ? consultationPreferences.exceptionDates
+        : []
+      const formatDayLabel = function (day) {
+        return `${day.charAt(0).toUpperCase()}${day.slice(1)}`
+      }
+      const weeklyAvailabilityText = weeklyAvailability.length
+        ? weeklyAvailability.map(function (entry) {
+            return `${formatDayLabel(entry.day)}: ${entry.startTime} - ${entry.endTime}`
+          }).join(', ')
+        : 'Not set'
+      const exceptionDatesText = exceptionDates.length ? exceptionDates.join(', ') : 'Not set'
+    %>
     <section class="consultation_preferences_section">
       <h2 class="consultation_preferences_title">Consultation Preferences</h2>
 
-      <div class="error consult_pref_error_container" hidden></div>
+      <div class="error consult_pref_error_container"<%= prefError ? '' : ' hidden' %>><%= prefError %></div>
       <div class="success consult_pref_success_container" hidden>Consultation preferences saved successfully.</div>
 
       <% if (canEdit) { %>
@@ -176,6 +193,49 @@
           </label>
         </div>
 
+        <h3>Availability Settings</h3>
+
+        <% weekdays.forEach(function (day) { %>
+          <% const selectedAvailability = weeklyAvailability.find(function (entry) { return entry.day === day }) %>
+          <div class="consult_flex">
+            <label class="consult_input">
+              <%= formatDayLabel(day) %>
+              <select name="availability_<%= day %>">
+                <option value="unavailable"<%= selectedAvailability ? '' : ' selected' %>>Unavailable</option>
+                <option value="available"<%= selectedAvailability ? ' selected' : '' %>>Available</option>
+              </select>
+            </label>
+
+            <label class="consult_input">
+              Start Time
+              <input
+                type="time"
+                name="start_time_<%= day %>"
+                value="<%= selectedAvailability ? selectedAvailability.startTime : '' %>"
+              >
+            </label>
+
+            <label class="consult_input">
+              End Time
+              <input
+                type="time"
+                name="end_time_<%= day %>"
+                value="<%= selectedAvailability ? selectedAvailability.endTime : '' %>"
+              >
+            </label>
+          </div>
+        <% }) %>
+
+        <label class="consult_input">
+          Unavailable Dates
+          <textarea
+            class="consult_textarea"
+            name="exceptionDates"
+            rows="4"
+            placeholder="YYYY-MM-DD"
+          ><%= exceptionDates.join('\n') %></textarea>
+        </label>
+
         <button type="submit">Save Consultation Preferences</button>
       </form>
       <% } else { %>
@@ -195,6 +255,14 @@
         <div class="profile_detail">
           <h3 class="profile_detail_label">Daily Maximum Consultations</h3>
           <p class="profile_detail_value"><%= consultationPreferences ? consultationPreferences.dailyMax : 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Weekly Availability</h3>
+          <p class="profile_detail_value"><%= weeklyAvailabilityText %></p>
+        </div>
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Unavailable Dates</h3>
+          <p class="profile_detail_value"><%= exceptionDatesText %></p>
         </div>
       </div>
       <% } %>

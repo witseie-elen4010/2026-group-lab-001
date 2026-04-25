@@ -7,6 +7,19 @@ const { validateConsultationPreferences } = require('../services/consultation_pr
 
 const router = express.Router()
 
+const WEEKDAYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday'
+]
+
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
+
 /**
  * Renders the user profile page with the given view state.
  * @param {object} res - Express response object.
@@ -32,7 +45,8 @@ const renderProfile = function (res, {
   role = '',
   name = '',
   surname = '',
-  consultationPreferences = null
+  consultationPreferences = null,
+  weekdays = WEEKDAYS
 } = {}) {
   return res.status(statusCode).render('user_profile', {
     title: 'User Profile',
@@ -47,7 +61,8 @@ const renderProfile = function (res, {
     role,
     name,
     surname,
-    consultationPreferences
+    consultationPreferences,
+    weekdays
   })
 }
 
@@ -69,8 +84,108 @@ const buildProfileViewState = function (user, overrides = {}) {
     name: user?.firstName || '',
     surname: user?.lastName || '',
     consultationPreferences: null,
+    weekdays: WEEKDAYS,
     ...overrides
   }
+}
+
+/**
+ * Returns a trimmed string field from a form body.
+ * @param {object} formValues - Submitted form values.
+ * @param {string} fieldName - Field name to read.
+ * @returns {string} The trimmed field value or an empty string.
+ */
+const getTrimmedField = function (formValues, fieldName) {
+  if (typeof formValues[fieldName] !== 'string') {
+    return ''
+  }
+
+  return formValues[fieldName].trim()
+}
+
+/**
+ * Builds weekly availability entries from the lecturer settings form.
+ * @param {object} formValues - Submitted form values.
+ * @returns {Array<object>} Weekly availability entries.
+ */
+const buildWeeklyAvailability = function (formValues) {
+  const weeklyAvailability = []
+
+  for (const day of WEEKDAYS) {
+    if (getTrimmedField(formValues, `availability_${day}`) !== 'available') {
+      continue
+    }
+
+    weeklyAvailability.push({
+      day,
+      startTime: getTrimmedField(formValues, `start_time_${day}`),
+      endTime: getTrimmedField(formValues, `end_time_${day}`)
+    })
+  }
+
+  return weeklyAvailability
+}
+
+/**
+ * Builds the list of specific unavailable dates from the lecturer settings form.
+ * @param {string} rawDates - Comma-separated or line-separated date values.
+ * @returns {Array<string>} Unique ISO date strings.
+ */
+const parseExceptionDates = function (rawDates) {
+  if (!rawDates) {
+    return []
+  }
+
+  return Array.from(new Set(
+    rawDates
+      .split(/[\n,]+/)
+      .map(function (date) { return date.trim() })
+      .filter(Boolean)
+  ))
+}
+
+/**
+ * Checks whether a YYYY-MM-DD string is a real calendar date.
+ * @param {string} value - Date string to validate.
+ * @returns {boolean} True when the value is a valid ISO date.
+ */
+const isValidIsoDate = function (value) {
+  if (!ISO_DATE_PATTERN.test(value)) {
+    return false
+  }
+
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+}
+
+/**
+ * Validates lecturer availability settings submitted from the profile form.
+ * @param {Array<object>} weeklyAvailability - Weekly availability entries.
+ * @param {Array<string>} exceptionDates - Specific unavailable dates.
+ * @returns {{isValid: boolean, error: string}} Validation result.
+ */
+const validateAvailabilitySettings = function (weeklyAvailability, exceptionDates) {
+  for (const entry of weeklyAvailability) {
+    if (!TIME_PATTERN.test(entry.startTime) || !TIME_PATTERN.test(entry.endTime)) {
+      return { isValid: false, error: 'Please enter a valid start and end time for each available weekday.' }
+    }
+
+    if (entry.startTime >= entry.endTime) {
+      return { isValid: false, error: `Start time must be earlier than end time for ${entry.day}.` }
+    }
+  }
+
+  for (const exceptionDate of exceptionDates) {
+    if (!isValidIsoDate(exceptionDate)) {
+      return { isValid: false, error: 'Use valid dates in YYYY-MM-DD format for unavailable dates.' }
+    }
+  }
+
+  return { isValid: true, error: '' }
 }
 
 /**
@@ -88,6 +203,8 @@ const handleConsultationPreferences = async function (req, res, viewer, profileU
   const maxStudents = parseInt(req.body.maxStudents, 10)
   const duration = parseInt(req.body.duration, 10)
   const dailyMax = parseInt(req.body.dailyMax, 10)
+  const weeklyAvailability = buildWeeklyAvailability(req.body)
+  const exceptionDates = parseExceptionDates(getTrimmedField(req.body, 'exceptionDates'))
 
   if (isNaN(minStudents) || isNaN(maxStudents) || isNaN(duration) || isNaN(dailyMax)) {
     const error = 'Please enter valid numbers for all consultation settings.'
@@ -115,6 +232,7 @@ const handleConsultationPreferences = async function (req, res, viewer, profileU
     }
 
     const validation = validateConsultationPreferences({ minStudents, maxStudents, duration, dailyMax })
+    const availabilityValidation = validateAvailabilitySettings(weeklyAvailability, exceptionDates)
 
     if (!validation.isValid) {
       if (isAjax) return res.status(400).json({ success: false, error: validation.error })
@@ -129,7 +247,27 @@ const handleConsultationPreferences = async function (req, res, viewer, profileU
       })
     }
 
-    await setLecturerAvailability(resolvedUsername, { minStudents, maxStudents, duration, dailyMax })
+    if (!availabilityValidation.isValid) {
+      if (isAjax) return res.status(400).json({ success: false, error: availabilityValidation.error })
+      return renderProfile(res, {
+        statusCode: 400,
+        ...buildProfileViewState(user, {
+          canEdit: true,
+          username: resolvedUsername,
+          consultationPreferences: { minStudents, maxStudents, duration, dailyMax, weeklyAvailability, exceptionDates },
+          prefError: availabilityValidation.error
+        })
+      })
+    }
+
+    await setLecturerAvailability(resolvedUsername, {
+      minStudents,
+      maxStudents,
+      duration,
+      dailyMax,
+      weeklyAvailability,
+      exceptionDates
+    })
     if (isAjax) return res.json({ success: true })
     return res.redirect(`/user_profile?user=${encodeURIComponent(resolvedUsername)}`)
   } catch {
