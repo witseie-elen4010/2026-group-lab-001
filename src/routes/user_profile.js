@@ -56,13 +56,16 @@ const buildProfileViewState = function (user, overrides = {}) {
 }
 
 const handleConsultationPreferences = async function (req, res, viewer, profileUsername) {
+  const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest'
   const minStudents = parseInt(req.body.minStudents, 10)
   const maxStudents = parseInt(req.body.maxStudents, 10)
   const duration = parseInt(req.body.duration, 10)
   const dailyMax = parseInt(req.body.dailyMax, 10)
 
   if (isNaN(minStudents) || isNaN(maxStudents) || isNaN(duration) || isNaN(dailyMax)) {
-    return res.redirect(`/user_profile?user=${encodeURIComponent(profileUsername)}&prefError=${encodeURIComponent('Please enter valid numbers for all consultation settings.')}`)
+    const error = 'Please enter valid numbers for all consultation settings.'
+    if (isAjax) return res.json({ success: false, error })
+    return res.redirect(`/user_profile?user=${encodeURIComponent(profileUsername)}&prefError=${encodeURIComponent(error)}`)
   }
 
   try {
@@ -76,6 +79,7 @@ const handleConsultationPreferences = async function (req, res, viewer, profileU
     const resolvedUsername = user.username || profileUsername
 
     if (viewer !== resolvedUsername) {
+      if (isAjax) return res.status(403).json({ success: false, error: 'You can only edit your own profile.' })
       return renderProfile(res, {
         statusCode: 403,
         error: 'You can only edit your own profile.',
@@ -86,22 +90,25 @@ const handleConsultationPreferences = async function (req, res, viewer, profileU
     const validation = validateConsultationPreferences({ minStudents, maxStudents, duration, dailyMax })
 
     if (!validation.isValid) {
-      const consultationPreferences = { minStudents, maxStudents, duration, dailyMax }
+      if (isAjax) return res.status(400).json({ success: false, error: validation.error })
       return renderProfile(res, {
         statusCode: 400,
         ...buildProfileViewState(user, {
           canEdit: true,
           username: resolvedUsername,
-          consultationPreferences,
+          consultationPreferences: { minStudents, maxStudents, duration, dailyMax },
           prefError: validation.error
         })
       })
     }
 
     await setLecturerAvailability(resolvedUsername, { minStudents, maxStudents, duration, dailyMax })
+    if (isAjax) return res.json({ success: true })
     return res.redirect(`/user_profile?user=${encodeURIComponent(resolvedUsername)}`)
   } catch {
-    return res.redirect(`/user_profile?user=${encodeURIComponent(profileUsername)}&prefError=${encodeURIComponent('Sorry. We could not save your consultation preferences.')}`)
+    const error = 'Sorry. We could not save your consultation preferences.'
+    if (isAjax) return res.status(500).json({ success: false, error })
+    return res.redirect(`/user_profile?user=${encodeURIComponent(profileUsername)}&prefError=${encodeURIComponent(error)}`)
   }
 }
 

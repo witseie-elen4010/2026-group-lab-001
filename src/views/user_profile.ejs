@@ -6,6 +6,7 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
   <script src="/scripts/search.js" defer></script>
+  <script src="/scripts/consultation_preferences.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
@@ -116,9 +117,8 @@
     <section class="consultation_preferences_section">
       <h2 class="consultation_preferences_title">Consultation Preferences</h2>
 
-      <% if (prefError) { %>
-        <div class="error"><%= prefError %></div>
-      <% } %>
+      <div class="error consult_pref_error_container" hidden></div>
+      <div class="success consult_pref_success_container" hidden>Consultation preferences saved successfully.</div>
 
       <% if (canEdit) { %>
       <form class="consultation_preferences_form" action="/user_profile?user=<%= encodeURIComponent(username) %>" method="post">
