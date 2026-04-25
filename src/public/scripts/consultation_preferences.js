@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const successContainer = document.querySelector('.consult_pref_success_container')
   let successTimeout = null
 
+  /**
+   * Displays an error message and hides any visible success message.
+   * @param {string} message - Error text to display.
+   */
   const showError = function (message) {
     successContainer.hidden = true
     clearTimeout(successTimeout)
@@ -18,6 +22,9 @@ document.addEventListener('DOMContentLoaded', function () {
     errorContainer.hidden = true
   }
 
+  /**
+   * Displays a success message that auto-dismisses after 3 seconds.
+   */
   const showSuccess = function () {
     clearError()
     successContainer.hidden = false

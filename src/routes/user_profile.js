@@ -7,6 +7,18 @@ const { validateConsultationPreferences } = require('../services/consultation_pr
 
 const router = express.Router()
 
+/**
+ * Renders the user profile page with the given view state.
+ * @param {object} res - Express response object.
+ * @param {object} [options] - View state overrides.
+ * @param {number} [options.statusCode] - HTTP status code to send.
+ * @param {string} [options.error] - General error message to display.
+ * @param {string} [options.prefError] - Consultation preferences error message.
+ * @param {string} [options.username] - Profile owner's username.
+ * @param {boolean} [options.canEdit] - Whether the viewer may edit this profile.
+ * @param {object|null} [options.consultationPreferences] - Saved consultation preferences, or null.
+ * @returns {object} The Express render response.
+ */
 const renderProfile = function (res, {
   statusCode = 200,
   error = '',
@@ -39,6 +51,12 @@ const renderProfile = function (res, {
   })
 }
 
+/**
+ * Builds the default view state object for a user profile from a database user document.
+ * @param {object} user - User document from the database.
+ * @param {object} [overrides] - Values that override the defaults derived from the user document.
+ * @returns {object} View state ready to be passed to renderProfile.
+ */
 const buildProfileViewState = function (user, overrides = {}) {
   return {
     emailAddress: user?.email || '',
@@ -55,6 +73,15 @@ const buildProfileViewState = function (user, overrides = {}) {
   }
 }
 
+/**
+ * Handles saving a lecturer's consultation preferences from a POST request.
+ * Responds with JSON when the request is an AJAX call, or redirects otherwise.
+ * @param {object} req - Express request object.
+ * @param {object} res - Express response object.
+ * @param {string} viewer - Username of the currently authenticated user.
+ * @param {string} profileUsername - Username of the profile being edited.
+ * @returns {Promise<object>} The Express response.
+ */
 const handleConsultationPreferences = async function (req, res, viewer, profileUsername) {
   const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest'
   const minStudents = parseInt(req.body.minStudents, 10)
