@@ -48,11 +48,18 @@
           </tr>
         </thead>
         <tbody>
-          <% calendar.weeks.forEach((week) => { %>
+          <% calendar.weeks.forEach(function (week) { %>
             <tr>
-              <% week.forEach((dayNumber) => { %>
-                <% if (dayNumber) { %>
-                  <td class="calendar_day"><%= dayNumber %></td>
+              <% week.forEach(function (day) { %>
+                <% if (!day.isEmpty) { %>
+                  <td class="calendar_day<%= day.availabilityState === 'available' ? ' calendar_day_available' : '' %><%= day.availabilityState === 'unavailable' ? ' calendar_day_unavailable' : '' %>">
+                    <div class="calendar_day_content">
+                      <span class="calendar_day_number"><%= day.dayNumber %></span>
+                      <% if (day.availabilityText) { %>
+                        <span class="calendar_day_note"><%= day.availabilityText %></span>
+                      <% } %>
+                    </div>
+                  </td>
                 <% } else { %>
                   <td class="calendar_day calendar_day_empty"></td>
                 <% } %>

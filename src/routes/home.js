@@ -2,6 +2,7 @@
 
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
+const { getLecturerAvailability } = require('../models/lecturer_availability_db')
 const { searchLecturers } = require('../models/user_db')
 const { buildCurrentMonthCalendar } = require('../utils/calendar')
 
@@ -18,9 +19,19 @@ router.get('/', async (req, res) => {
   const role = req.session?.user?.role || ''
   const username = req.session?.user?.username || ''
   const universityId = req.session?.user?.universityId || ''
-  const calendar = buildCurrentMonthCalendar()
   const title = HOME_TITLES[role] || 'Home'
   const homeTitle = HOME_TITLES[role] || 'Home'
+  let calendar = buildCurrentMonthCalendar()
+
+  if (role === 'lecturer' && username) {
+    try {
+      await connectToDatabase()
+      const availabilityPreferences = await getLecturerAvailability(username)
+      calendar = buildCurrentMonthCalendar(new Date(), availabilityPreferences)
+    } catch {
+      calendar = buildCurrentMonthCalendar()
+    }
+  }
 
   if (role !== 'student') {
     return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0 })

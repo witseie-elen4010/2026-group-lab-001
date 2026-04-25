@@ -320,7 +320,14 @@ describe('user profile route', () => {
   test('Renders the consultation preferences form when a lecturer views their own profile', async () => {
     const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
     getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
-    getLecturerAvailability.mockResolvedValueOnce({ minStudents: 2, maxStudents: 10, duration: 60, dailyMax: 4 })
+    getLecturerAvailability.mockResolvedValueOnce({
+      minStudents: 2,
+      maxStudents: 10,
+      duration: 60,
+      dailyMax: 4,
+      weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '12:00' }],
+      exceptionDates: ['2026-05-01']
+    })
 
     const response = await fetch(`${baseUrl}/user_profile?user=dr_jones`, {
       headers: { cookie: sessionCookie }
@@ -330,13 +337,23 @@ describe('user profile route', () => {
     expect(response.status).toBe(200)
     expect(getLecturerAvailability).toHaveBeenCalledWith('dr_jones')
     expect(body).toContain('Consultation Preferences')
+    expect(body).toContain('Availability Settings')
+    expect(body).toContain('name="availability_monday"')
+    expect(body).toContain('2026-05-01')
     expect(body).toContain('Save Consultation Preferences')
   })
 
   test('Renders read-only consultation preferences when a student views a lecturer profile', async () => {
     const sessionCookie = await loginAs()
     getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones', email: 'dr@example.com' }))
-    getLecturerAvailability.mockResolvedValueOnce({ minStudents: 2, maxStudents: 10, duration: 60, dailyMax: 4 })
+    getLecturerAvailability.mockResolvedValueOnce({
+      minStudents: 2,
+      maxStudents: 10,
+      duration: 60,
+      dailyMax: 4,
+      weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '12:00' }],
+      exceptionDates: ['2026-05-01']
+    })
 
     const response = await fetch(`${baseUrl}/user_profile?user=dr_jones`, {
       headers: { cookie: sessionCookie }
@@ -346,6 +363,9 @@ describe('user profile route', () => {
     expect(response.status).toBe(200)
     expect(getLecturerAvailability).toHaveBeenCalledWith('dr_jones')
     expect(body).toContain('Consultation Preferences')
+    expect(body).toContain('Weekly Availability')
+    expect(body).toContain('Monday: 09:00 - 12:00')
+    expect(body).toContain('2026-05-01')
     expect(body).not.toContain('Save Consultation Preferences')
   })
 
@@ -373,13 +393,61 @@ describe('user profile route', () => {
         'x-requested-with': 'XMLHttpRequest',
         cookie: sessionCookie
       },
-      body: encodeForm({ formType: 'consultationPreferences', username: 'dr_jones', minStudents: '2', maxStudents: '10', duration: '60', dailyMax: '4' })
+      body: encodeForm({
+        formType: 'consultationPreferences',
+        username: 'dr_jones',
+        minStudents: '2',
+        maxStudents: '10',
+        duration: '60',
+        dailyMax: '4',
+        availability_monday: 'available',
+        start_time_monday: '09:00',
+        end_time_monday: '12:00',
+        exceptionDates: '2026-05-01\n2026-05-02'
+      })
     })
     const data = await response.json()
 
     expect(response.status).toBe(200)
-    expect(setLecturerAvailability).toHaveBeenCalledWith('dr_jones', { minStudents: 2, maxStudents: 10, duration: 60, dailyMax: 4 })
+    expect(setLecturerAvailability).toHaveBeenCalledWith('dr_jones', {
+      minStudents: 2,
+      maxStudents: 10,
+      duration: 60,
+      dailyMax: 4,
+      weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '12:00' }],
+      exceptionDates: ['2026-05-01', '2026-05-02']
+    })
     expect(data).toEqual({ success: true })
+  })
+
+  test('Returns a JSON error when an available weekday has an invalid time range', async () => {
+    const sessionCookie = await loginAs({ role: 'lecturer', username: 'dr_jones' })
+    getUser.mockResolvedValueOnce(await buildUser({ role: 'lecturer', username: 'dr_jones' }))
+
+    const response = await fetch(`${baseUrl}/user_profile`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-requested-with': 'XMLHttpRequest',
+        cookie: sessionCookie
+      },
+      body: encodeForm({
+        formType: 'consultationPreferences',
+        username: 'dr_jones',
+        minStudents: '2',
+        maxStudents: '10',
+        duration: '60',
+        dailyMax: '4',
+        availability_monday: 'available',
+        start_time_monday: '12:00',
+        end_time_monday: '09:00'
+      })
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(setLecturerAvailability).not.toHaveBeenCalled()
+    expect(data).toEqual({ success: false, error: 'Start time must be earlier than end time for monday.' })
   })
 
   test('Returns a JSON error when a consultation preference value is negative', async () => {
