@@ -10,7 +10,7 @@
 <body class="page page_home">
   <main class="card card_even_wider text_center">
     <header>
-      <h1>Hello <%= username %></h1>
+      <h1><%= canEdit ? `Hello, ${username}` : `${username}'s Profile` %></h1>
     </header>
 
     <% if (error) { %>
@@ -125,49 +125,56 @@
         <input type="hidden" name="username" value="<%= username %>">
         <input type="hidden" name="formType" value="consultationPreferences">
 
-        <label>
-          Minimum Students per Consultation
-          <input
-            type="number"
-            name="minStudents"
-            value="<%= consultationPreferences ? consultationPreferences.minStudents : '' %>"
-            min="0"
-            required
-          >
-        </label>
+        <h3>Student Attendance Range</h3>
+        <div class="consult_flex">
+          <label class="consult_range">
+            Min
+            <input
+              type="number"
+              name="minStudents"
+              value="<%= consultationPreferences ? consultationPreferences.minStudents : '' %>"
+              min="0"
+              required
+            >
+          </label>
 
-        <label>
-          Maximum Students per Consultation
-          <input
-            type="number"
-            name="maxStudents"
-            value="<%= consultationPreferences ? consultationPreferences.maxStudents : '' %>"
-            min="0"
-            required
-          >
-        </label>
+          <span class="consult_separator">–</span>
 
-        <label>
-          Duration per Consultation (minutes)
-          <input
-            type="number"
-            name="duration"
-            value="<%= consultationPreferences ? consultationPreferences.duration : '' %>"
-            min="0"
-            required
-          >
-        </label>
+          <label class="consult_range">
+            Max
+            <input
+              type="number"
+              name="maxStudents"
+              value="<%= consultationPreferences ? consultationPreferences.maxStudents : '' %>"
+              min="0"
+              required
+            >
+          </label>
+        </div>
 
-        <label>
-          Daily Maximum Consultations
-          <input
-            type="number"
-            name="dailyMax"
-            value="<%= consultationPreferences ? consultationPreferences.dailyMax : '' %>"
-            min="0"
-            required
-          >
-        </label>
+        <div class="consult_flex">
+          <label class="consult_input">
+            Duration per Consultation (minutes)
+            <input
+              type="number"
+              name="duration"
+              value="<%= consultationPreferences ? consultationPreferences.duration : '' %>"
+              min="0"
+              required
+            >
+          </label>
+
+          <label class="consult_input">
+            Daily Maximum Consultations
+            <input
+              type="number"
+              name="dailyMax"
+              value="<%= consultationPreferences ? consultationPreferences.dailyMax : '' %>"
+              min="0"
+              required
+            >
+          </label>
+        </div>
 
         <button type="submit">Save Consultation Preferences</button>
       </form>
