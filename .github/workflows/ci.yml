@@ -45,8 +45,15 @@ jobs:
       - name: Run StandardJS
         run: npm run lint
 
-      - name: Run test suite
-        run: npm test -- --runInBand
+      - name: Run test suite with coverage
+        run: npm test -- --coverage --runInBand
+
+      - name: Publish coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: coverage/lcov.info
+          format: lcov
 
       - name: Upload coverage report
         if: always()
