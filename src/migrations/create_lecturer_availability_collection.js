@@ -64,8 +64,6 @@ const runMigration = async function () {
       validationAction: 'warn'
     })
     console.log('Created collection and added validator for', COLLECTION_NAME)
-    await closeDatabaseConnection()
-    return 'created'
   } else {
     await db.command({
       collMod: COLLECTION_NAME,
@@ -73,20 +71,12 @@ const runMigration = async function () {
       validationAction: 'warn'
     })
     console.log('Updated validator for existing collection', COLLECTION_NAME)
-    await closeDatabaseConnection()
-    return 'updated'
   }
+
+  await closeDatabaseConnection()
 }
 
-if (require.main === module) {
-  runMigration().catch(err => {
-    console.error('Migration failed:', err)
-    process.exit(1)
-  })
-}
-
-module.exports = {
-  COLLECTION_NAME,
-  runMigration,
-  schema
-}
+runMigration().catch(err => {
+  console.error('Migration failed:', err)
+  process.exit(1)
+})
