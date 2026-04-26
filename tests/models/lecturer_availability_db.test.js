@@ -120,8 +120,8 @@ describe('lecturer availability database operations', () => {
         maxStudents: 5,
         duration: 30,
         dailyMax: 4,
-        weeklyAvailability: [ { day: 'monday', startTime: '09:00', endTime: '12:00' } ],
-        exceptionDates: [ '2026-12-25' ]
+        weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '12:00' }],
+        exceptionDates: ['2026-12-25']
       }
 
       expect(() => validatePreferences(prefs)).not.toThrow()
