@@ -3,6 +3,7 @@
     "start": "node src/app.js",
     "check:db": "node src/models/db.js",
     "test": "jest",
+    "test:integration": "node src/integration/run_integration_checks.js",
     "test:db": "jest tests/models",
     "lint": "standard \"src/**/*.js\" \"tests/**/*.js\""
   },
