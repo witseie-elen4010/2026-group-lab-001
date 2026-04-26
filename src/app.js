@@ -36,6 +36,7 @@ app.get('/', (req, res) => {
   res.redirect('/login')
 })
 
+/* istanbul ignore next */
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`App listening at http://localhost:${PORT}`)
