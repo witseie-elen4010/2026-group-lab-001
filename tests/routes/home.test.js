@@ -20,6 +20,31 @@ jest.mock('../../src/models/user_db', () => ({
 
 const http = require('node:http')
 
+const closeServer = async function (server) {
+  if (!server) {
+    return
+  }
+
+  await new Promise((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error)
+        return
+      }
+
+      resolve()
+    })
+
+    if (typeof server.closeIdleConnections === 'function') {
+      server.closeIdleConnections()
+    }
+
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections()
+    }
+  })
+}
+
 const { connectToDatabase } = require('../../src/models/db')
 const { getLecturerAvailability } = require('../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../src/models/user_db')
@@ -125,16 +150,7 @@ describe('home route', () => {
   })
 
   afterAll(async () => {
-    await new Promise((resolve, reject) => {
-      server.close((error) => {
-        if (error) {
-          reject(error)
-          return
-        }
-
-        resolve()
-      })
-    })
+    await closeServer(server)
   })
 
   beforeEach(() => {
