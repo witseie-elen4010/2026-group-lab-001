@@ -124,4 +124,4 @@ const setLecturerAvailability = async function (username, preferences = {}) {
   )
 }
 
-module.exports = { getLecturerAvailability, setLecturerAvailability }
+module.exports = { getLecturerAvailability, setLecturerAvailability, validatePreferences }

@@ -23,10 +23,10 @@ const timeToMinutes = function (timeStr) {
 router.get('/', (req, res) => {
   const username = req.session?.user?.username || ''
 
-  res.render('schedule_consultation', {
-    error: '',
+  res.status(501).render('schedule_consultation', {
+    error: 'This page is not available yet.',
     homePath: '/home',
-    message: 'Use the API to check availability for now.',
+    message: 'Scheduling a consultation has not been built yet.',
     title: 'Schedule a Consultation',
     username
   })

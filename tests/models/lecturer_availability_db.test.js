@@ -3,7 +3,7 @@ jest.mock('../../src/models/db', () => ({
 }))
 
 const { getCollection } = require('../../src/models/db')
-const { getLecturerAvailability, setLecturerAvailability } = require('../../src/models/lecturer_availability_db')
+const { getLecturerAvailability, setLecturerAvailability, validatePreferences } = require('../../src/models/lecturer_availability_db')
 
 describe('lecturer availability database operations', () => {
   let mockCollection
@@ -95,5 +95,36 @@ describe('lecturer availability database operations', () => {
       },
       { upsert: true }
     )
+  })
+
+  describe('validatePreferences helper', () => {
+    test('throws for negative minStudents', () => {
+      expect(() => validatePreferences({ minStudents: -1 })).toThrow('minStudents must be a non-negative integer')
+    })
+
+    test('throws for negative maxStudents', () => {
+      expect(() => validatePreferences({ maxStudents: -1 })).toThrow('maxStudents must be a non-negative integer')
+    })
+
+    test('throws when minStudents > maxStudents', () => {
+      expect(() => validatePreferences({ minStudents: 5, maxStudents: 2 })).toThrow('minStudents cannot be greater than maxStudents')
+    })
+
+    test('throws for invalid weeklyAvailability formats', () => {
+      expect(() => validatePreferences({ weeklyAvailability: 'nope' })).toThrow('weeklyAvailability must be an array')
+    })
+
+    test('accepts a valid full preferences object', () => {
+      const prefs = {
+        minStudents: 1,
+        maxStudents: 5,
+        duration: 30,
+        dailyMax: 4,
+        weeklyAvailability: [ { day: 'monday', startTime: '09:00', endTime: '12:00' } ],
+        exceptionDates: [ '2026-12-25' ]
+      }
+
+      expect(() => validatePreferences(prefs)).not.toThrow()
+    })
   })
 })
