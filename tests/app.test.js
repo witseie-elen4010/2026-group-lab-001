@@ -1,6 +1,30 @@
 const http = require('node:http')
 const app = require('../src/app')
-const { closeHttpServer } = require('./helpers/http_server')
+
+const closeServer = async function (server) {
+  if (!server) {
+    return
+  }
+
+  await new Promise((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error)
+        return
+      }
+
+      resolve()
+    })
+
+    if (typeof server.closeIdleConnections === 'function') {
+      server.closeIdleConnections()
+    }
+
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections()
+    }
+  })
+}
 // test express app deployment
 describe('app entrypoint', () => {
   let baseUrl
@@ -18,7 +42,7 @@ describe('app entrypoint', () => {
   })
 
   afterAll(async () => {
-    await closeHttpServer(server)
+    await closeServer(server)
   })
 
   test('redirects the root path to login', async () => {
