@@ -47,6 +47,7 @@ fix(router): fix payload parameter in post request // header
   - Naming consistency and the StandardJS style guide
   - Basic security (input validation)
   - Acceptance test presence
+  - Test coverage (should be atleast 80% via coveralls)
 - Reviews must be meaningful and include **substantive direct code comments** explaining any issues.
 - ⁠Approve and merge only if code is completely satisfactory and issues are corrected.
 
