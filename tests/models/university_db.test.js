@@ -96,6 +96,11 @@ describe('institution relationship lookups', () => {
     expect(universityCursor.limit).toHaveBeenCalledWith(5)
   })
 
+  test('searchUniversities returns no matches for a blank query', async () => {
+    await expect(searchUniversities('   ', 5)).resolves.toEqual([])
+    expect(collections.University.find).not.toHaveBeenCalled()
+  })
+
   test('searchFaculties filters faculties by university name', async () => {
     const facultyCursor = {
       limit: jest.fn(),
@@ -199,6 +204,21 @@ describe('institution relationship lookups', () => {
     expect(collections.School.findOne).toHaveBeenCalledWith({ _id: schoolId })
   })
 
+  test('getUniversity returns an object value without querying the database', async () => {
+    const university = {
+      _id: new ObjectId(),
+      name: 'University of the Witwatersrand'
+    }
+
+    await expect(getUniversity(university)).resolves.toBe(university)
+    expect(collections.University.findOne).not.toHaveBeenCalled()
+  })
+
+  test('getSchool returns null for unsupported input values', async () => {
+    await expect(getSchool(42)).resolves.toBeNull()
+    expect(collections.School.findOne).not.toHaveBeenCalled()
+  })
+
   test('isFacultyInUniversity returns true when the faculty belongs to the university', async () => {
     const facultyId = new ObjectId()
     const universityId = new ObjectId()
@@ -237,6 +257,13 @@ describe('institution relationship lookups', () => {
     collections.University.findOne.mockResolvedValue(university)
 
     await expect(isFacultyInUniversity(facultyId.toHexString(), universityId.toHexString())).resolves.toBe(true)
+  })
+
+  test('isFacultyInUniversity returns false when the relationship cannot be resolved', async () => {
+    collections.Faculty.findOne.mockResolvedValue(null)
+    collections.University.findOne.mockResolvedValue(null)
+
+    await expect(isFacultyInUniversity('not-an-id', 'also-not-an-id')).resolves.toBe(false)
   })
 
   test('isSchoolInFaculty returns true when the school belongs to the faculty', async () => {
@@ -279,5 +306,12 @@ describe('institution relationship lookups', () => {
     collections.Faculty.findOne.mockResolvedValue(faculty)
 
     await expect(isSchoolInFaculty(schoolId.toHexString(), facultyId.toHexString())).resolves.toBe(true)
+  })
+
+  test('isSchoolInFaculty returns false when the relationship cannot be resolved', async () => {
+    collections.School.findOne.mockResolvedValue(null)
+    collections.Faculty.findOne.mockResolvedValue(null)
+
+    await expect(isSchoolInFaculty('not-an-id', 'also-not-an-id')).resolves.toBe(false)
   })
 })

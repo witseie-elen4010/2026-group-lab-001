@@ -98,6 +98,10 @@ describe('lecturer availability database operations', () => {
   })
 
   describe('validatePreferences helper', () => {
+    test('throws when preferences are not an object', () => {
+      expect(() => validatePreferences(null)).toThrow('preferences must be an object')
+    })
+
     test('throws for negative minStudents', () => {
       expect(() => validatePreferences({ minStudents: -1 })).toThrow('minStudents must be a non-negative integer')
     })
@@ -110,8 +114,25 @@ describe('lecturer availability database operations', () => {
       expect(() => validatePreferences({ minStudents: 5, maxStudents: 2 })).toThrow('minStudents cannot be greater than maxStudents')
     })
 
+    test('throws for invalid duration and dailyMax values', () => {
+      expect(() => validatePreferences({ duration: 0 })).toThrow('duration must be a positive integer (minutes)')
+      expect(() => validatePreferences({ dailyMax: -1 })).toThrow('dailyMax must be a non-negative integer')
+    })
+
     test('throws for invalid weeklyAvailability formats', () => {
       expect(() => validatePreferences({ weeklyAvailability: 'nope' })).toThrow('weeklyAvailability must be an array')
+    })
+
+    test('throws for invalid weeklyAvailability entries and exceptionDates', () => {
+      expect(() => validatePreferences({ weeklyAvailability: [null] })).toThrow('weeklyAvailability entries must be objects')
+      expect(() => validatePreferences({ weeklyAvailability: [{ day: 'funday', startTime: '09:00', endTime: '10:00' }] })).toThrow('weeklyAvailability day is invalid')
+      expect(() => validatePreferences({ weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '09:00' }] })).toThrow('startTime must be before endTime')
+      expect(() => validatePreferences({ exceptionDates: ['2026/12/25'] })).toThrow('exceptionDates must be ISO date strings YYYY-MM-DD')
+    })
+
+    test('throws for invalid per-slot student limits', () => {
+      expect(() => validatePreferences({ weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '10:00', minStudents: -1 }] })).toThrow('weeklyAvailability.minStudents must be a non-negative integer')
+      expect(() => validatePreferences({ weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '10:00', maxStudents: -1 }] })).toThrow('weeklyAvailability.maxStudents must be a non-negative integer')
     })
 
     test('accepts a valid full preferences object', () => {

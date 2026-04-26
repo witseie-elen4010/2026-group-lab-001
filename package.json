@@ -13,6 +13,7 @@
   "standard": {
     "globals": [
       "afterAll",
+      "afterEach",
       "beforeAll",
       "beforeEach",
       "describe",
