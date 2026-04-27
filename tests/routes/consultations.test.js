@@ -54,6 +54,12 @@ const encodeForm = function (fields) {
   return new URLSearchParams(fields).toString()
 }
 
+let currentSessionUser = {
+  role: 'student',
+  universityId: 'Wits',
+  username: 'morris'
+}
+
 const createServer = async function () {
   const app = express()
   const server = http.createServer(app)
@@ -63,11 +69,7 @@ const createServer = async function () {
   app.use(express.urlencoded({ extended: true }))
   app.use((req, res, next) => {
     req.session = {
-      user: {
-        role: 'student',
-        universityId: 'Wits',
-        username: 'morris'
-      }
+      user: currentSessionUser
     }
     next()
   })
@@ -95,6 +97,11 @@ describe('consultations route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    currentSessionUser = {
+      role: 'student',
+      universityId: 'Wits',
+      username: 'morris'
+    }
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
     getUser.mockResolvedValue({ role: 'lecturer', universityId: 'Wits', username: 'lecturer1' })
@@ -109,6 +116,31 @@ describe('consultations route', () => {
     expect(body).toContain('<title>Create Consultation</title>')
     expect(body).toContain('Alice Smith')
     expect(searchLecturers).toHaveBeenCalledWith({ universityId: 'Wits' })
+  })
+
+  test('returns forbidden when a non-student requests the create consultation form', async () => {
+    currentSessionUser = {
+      role: 'lecturer',
+      universityId: 'Wits',
+      username: 'lecturer1'
+    }
+
+    const response = await fetch(`${baseUrl}/consultations/new`)
+    const body = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(body).toContain('Only students can create consultations.')
+    expect(searchLecturers).not.toHaveBeenCalled()
+  })
+
+  test('returns a server error when the create consultation form cannot load', async () => {
+    connectToDatabase.mockRejectedValueOnce(new Error('database unavailable'))
+
+    const response = await fetch(`${baseUrl}/consultations/new`)
+    const body = await response.text()
+
+    expect(response.status).toBe(500)
+    expect(body).toContain('Unable to load the consultation form right now.')
   })
 
   test('creates a consultation and redirects to home', async () => {
@@ -136,6 +168,31 @@ describe('consultations route', () => {
       organiserId: 'morris',
       title: 'Project check-in'
     })
+  })
+
+  test('returns forbidden when a non-student submits a consultation', async () => {
+    currentSessionUser = {
+      role: 'lecturer',
+      universityId: 'Wits',
+      username: 'lecturer1'
+    }
+
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        datetime: '2026-05-04T09:00',
+        lecturerId: 'lecturer2',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(body).toContain('Only students can create consultations.')
+    expect(addConsultation).not.toHaveBeenCalled()
   })
 
   test('re-renders the form when submitted fields are invalid', async () => {
@@ -176,5 +233,26 @@ describe('consultations route', () => {
     expect(response.status).toBe(400)
     expect(body).toContain('Please select a valid lecturer.')
     expect(addConsultation).not.toHaveBeenCalled()
+  })
+
+  test('re-renders the form when saving the consultation fails', async () => {
+    addConsultation.mockRejectedValueOnce(new Error('database unavailable'))
+
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        datetime: '2026-05-04T09:00',
+        lecturerId: 'lecturer1',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(500)
+    expect(body).toContain('Unable to create the consultation right now.')
+    expect(searchLecturers).toHaveBeenCalledWith({ universityId: 'Wits' })
   })
 })
