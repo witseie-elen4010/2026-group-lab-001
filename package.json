@@ -4,11 +4,11 @@
     "check:db": "node src/models/db.js",
     "test": "npm run test:coverage:all",
     "test:unit": "jest",
-    "test:e2e": "c8 --config .c8rc.json playwright test",
+    "test:e2e": "c8 --config tests/.c8rc.json playwright test",
     "test:integration:web": "jest --config tests/integration/jest.config.js --runInBand",
-    "test:integration:web:coverage": "c8 --config .c8rc.json jest --config tests/integration/jest.config.js --runInBand --coverage=false",
+    "test:integration:web:coverage": "c8 --config tests/.c8rc.json jest --config tests/integration/jest.config.js --runInBand --coverage=false",
     "test:coverage:all:run": "jest --runInBand --coverage=false && jest --config tests/integration/jest.config.js --runInBand --coverage=false && playwright test",
-    "test:coverage:all": "c8 --config .c8rc.json npm run test:coverage:all:run",
+    "test:coverage:all": "c8 --config tests/.c8rc.json npm run test:coverage:all:run",
     "lint": "standard \"src/**/*.js\" \"tests/**/*.js\""
   },
   "jest": {
