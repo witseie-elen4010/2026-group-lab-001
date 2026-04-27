@@ -3,7 +3,7 @@ const { createInstrumenter } = require('istanbul-lib-instrument')
 const path = require('node:path')
 const vm = require('node:vm')
 // lecturer availability collection tests
-const SCRIPT_PATH = path.resolve(__dirname, '../../src/migrations/create_lecturer_availability_collection.js')
+const SCRIPT_PATH = path.resolve(__dirname, '../../../src/migrations/create_lecturer_availability_collection.js')
 const instrumenter = createInstrumenter()
 
 const flushMicrotasks = function () {

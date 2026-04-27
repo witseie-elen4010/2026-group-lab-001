@@ -1,4 +1,4 @@
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   closeDatabaseConnection: jest.fn(),
   connectToDatabase: jest.fn().mockResolvedValue(undefined),
   DATABASE_NAME: 'LetsTalk',
@@ -7,11 +7,11 @@ jest.mock('../../src/models/db', () => ({
   getMongoUri: jest.fn()
 }))
 
-jest.mock('../../src/models/lecturer_availability_db', () => ({
+jest.mock('../../../src/models/lecturer_availability_db', () => ({
   getLecturerAvailability: jest.fn()
 }))
 
-jest.mock('../../src/models/user_db', () => ({
+jest.mock('../../../src/models/user_db', () => ({
   addUser: jest.fn(),
   deleteUser: jest.fn(),
   getUser: jest.fn(),
@@ -45,11 +45,11 @@ const closeServer = async function (server) {
   })
 }
 
-const { connectToDatabase } = require('../../src/models/db')
-const { getLecturerAvailability } = require('../../src/models/lecturer_availability_db')
-const { getUser, searchLecturers } = require('../../src/models/user_db')
-const { hashPassword } = require('../../src/utils/password')
-const app = require('../../src/app')
+const { connectToDatabase } = require('../../../src/models/db')
+const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
+const { getUser, searchLecturers } = require('../../../src/models/user_db')
+const { hashPassword } = require('../../../src/utils/password')
+const app = require('../../../src/app')
 
 let baseUrl
 

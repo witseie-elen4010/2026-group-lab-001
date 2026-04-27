@@ -3,7 +3,7 @@ const { createInstrumenter } = require('istanbul-lib-instrument')
 const path = require('node:path')
 const vm = require('node:vm')
 // integration checks
-const SCRIPT_PATH = path.resolve(__dirname, '../../src/integration/run_integration_checks.js')
+const SCRIPT_PATH = path.resolve(__dirname, '../../../src/integration/run_integration_checks.js')
 const instrumenter = createInstrumenter()
 
 const flushMicrotasks = function () {

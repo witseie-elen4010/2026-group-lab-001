@@ -1,4 +1,4 @@
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   closeDatabaseConnection: jest.fn(),
   connectToDatabase: jest.fn().mockResolvedValue(undefined),
   DATABASE_NAME: 'LetsTalk',
@@ -7,13 +7,13 @@ jest.mock('../../src/models/db', () => ({
   getMongoUri: jest.fn()
 }))
 
-jest.mock('../../src/models/user_db', () => ({
+jest.mock('../../../src/models/user_db', () => ({
   addUser: jest.fn(),
   deleteUser: jest.fn(),
   getUser: jest.fn()
 }))
 
-jest.mock('../../src/models/university_db', () => ({
+jest.mock('../../../src/models/university_db', () => ({
   getFaculty: jest.fn(),
   getSchool: jest.fn(),
   getUniversity: jest.fn(),
@@ -51,13 +51,13 @@ const closeServer = async function (server) {
   })
 }
 
-const { connectToDatabase } = require('../../src/models/db')
+const { connectToDatabase } = require('../../../src/models/db')
 const {
   searchFaculties,
   searchSchools,
   searchUniversities
-} = require('../../src/models/university_db')
-const app = require('../../src/app')
+} = require('../../../src/models/university_db')
+const app = require('../../../src/app')
 
 describe('institution search route', () => {
   let server
