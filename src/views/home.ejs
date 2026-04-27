@@ -24,7 +24,7 @@
         <h2 class="home_navigation_title">Navigation</h2>
         <p class="home_navigation_text">Choose an option below.</p>
         <a href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
-        <a href="/schedule_consultation">Schedule a Consultation</a>
+        <a href="/consultations/new">Create Consultation</a>
       </section>
     <% } else if (role === 'lecturer' && username) { %>
       <section class="home_navigation">
