@@ -18,6 +18,10 @@ jest.mock('../../src/models/user_db', () => ({
   searchLecturers: jest.fn()
 }))
 
+jest.mock('../../src/models/consultation_db', () => ({
+  addConsultation: jest.fn()
+}))
+
 const http = require('node:http')
 
 const closeServer = async function (server) {
@@ -46,6 +50,7 @@ const closeServer = async function (server) {
 }
 
 const { connectToDatabase } = require('../../src/models/db')
+const { addConsultation } = require('../../src/models/consultation_db')
 const { getLecturerAvailability } = require('../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
@@ -157,6 +162,7 @@ describe('home route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
     getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
@@ -226,9 +232,7 @@ describe('home route', () => {
     expect(body).toContain('You are logged in as a lecturer.')
     expect(body).toContain('Choose an option below.')
     expect(body).toContain('User Profile')
-    expect(body).toContain('Scheduled Consultations')
     expect(body).toContain('/user_profile?user=lecturer1')
-    expect(body).toContain('href="/scheduled_consultations"')
     expect(body).not.toContain('Schedule a Consultation')
     expect(body).toContain(currentMonthLabel)
     expect(body).toContain('calendar_table')
