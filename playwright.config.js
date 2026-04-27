@@ -17,7 +17,7 @@ module.exports = defineConfig({
       PORT: '4173',
       SESSION_SECRET: process.env.SESSION_SECRET || 'playwright-session-secret'
     },
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && !process.env.NODE_V8_COVERAGE,
     timeout: 120000,
     url: 'http://127.0.0.1:4173/login'
   },
