@@ -15,6 +15,31 @@ jest.mock('../../src/models/user_db', () => ({
 
 const http = require('node:http')
 
+const closeServer = async function (server) {
+  if (!server) {
+    return
+  }
+
+  await new Promise((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error)
+        return
+      }
+
+      resolve()
+    })
+
+    if (typeof server.closeIdleConnections === 'function') {
+      server.closeIdleConnections()
+    }
+
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections()
+    }
+  })
+}
+
 const { connectToDatabase } = require('../../src/models/db')
 const { getUser } = require('../../src/models/user_db')
 const { hashPassword } = require('../../src/utils/password')
@@ -44,16 +69,7 @@ describe('login route', () => {
   })
 
   afterAll(async () => {
-    await new Promise((resolve, reject) => {
-      server.close((error) => {
-        if (error) {
-          reject(error)
-          return
-        }
-
-        resolve()
-      })
-    })
+    await closeServer(server)
   })
 
   beforeEach(async () => {
