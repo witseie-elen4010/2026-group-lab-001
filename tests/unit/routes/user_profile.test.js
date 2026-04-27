@@ -57,18 +57,18 @@ const closeServer = async function (server) {
   })
 }
 
-const { connectToDatabase } = require('../../src/models/db')
-const { getUser, updateUserInstitutions } = require('../../src/models/user_db')
-const { getLecturerAvailability, setLecturerAvailability } = require('../../src/models/lecturer_availability_db')
+const { connectToDatabase } = require('../../../src/models/db')
+const { getUser, updateUserInstitutions } = require('../../../src/models/user_db')
+const { getLecturerAvailability, setLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const {
   getFaculty,
   getSchool,
   getUniversity,
   isFacultyInUniversity,
   isSchoolInFaculty
-} = require('../../src/models/university_db')
-const { hashPassword } = require('../../src/utils/password')
-const app = require('../../src/app')
+} = require('../../../src/models/university_db')
+const { hashPassword } = require('../../../src/utils/password')
+const app = require('../../../src/app')
 let baseUrl
 
 const encodeForm = function (fields) {
