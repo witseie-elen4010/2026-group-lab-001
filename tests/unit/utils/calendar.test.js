@@ -1,4 +1,4 @@
-const { buildCurrentMonthCalendar } = require('../../src/utils/calendar')
+const { buildCurrentMonthCalendar } = require('../../../src/utils/calendar')
 
 /**
  * Finds the first day number in a month for the given weekday.

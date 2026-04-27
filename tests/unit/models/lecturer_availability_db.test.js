@@ -1,9 +1,9 @@
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   getCollection: jest.fn()
 }))
 
-const { getCollection } = require('../../src/models/db')
-const { getLecturerAvailability, setLecturerAvailability, validatePreferences } = require('../../src/models/lecturer_availability_db')
+const { getCollection } = require('../../../src/models/db')
+const { getLecturerAvailability, setLecturerAvailability, validatePreferences } = require('../../../src/models/lecturer_availability_db')
 
 describe('lecturer availability database operations', () => {
   let mockCollection

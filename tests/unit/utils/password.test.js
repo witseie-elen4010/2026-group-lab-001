@@ -1,4 +1,4 @@
-const { hashPassword, verifyPassword } = require('../../src/utils/password')
+const { hashPassword, verifyPassword } = require('../../../src/utils/password')
 // test password hashing functions
 describe('password utility', () => {
   test('hashes passwords as salt and hash pairs', async () => {

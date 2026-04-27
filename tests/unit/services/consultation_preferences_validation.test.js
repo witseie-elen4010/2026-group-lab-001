@@ -1,4 +1,4 @@
-const { validateConsultationPreferences } = require('../../src/services/consultation_preferences_validation')
+const { validateConsultationPreferences } = require('../../../src/services/consultation_preferences_validation')
 
 describe('consultation preferences validation', () => {
   test('Returns invalid when minStudents is negative', () => {

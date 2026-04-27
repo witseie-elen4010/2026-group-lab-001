@@ -1,15 +1,15 @@
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   getCollection: jest.fn()
 }))
 
-const { getCollection } = require('../../src/models/db')
+const { getCollection } = require('../../../src/models/db')
 const {
   addUser,
   deleteUser,
   getUser,
   searchLecturers,
   updateUserInstitutions
-} = require('../../src/models/user_db')
+} = require('../../../src/models/user_db')
 
 describe('user database operations', () => {
   let findCursor

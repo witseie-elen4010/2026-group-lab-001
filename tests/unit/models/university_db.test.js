@@ -1,10 +1,10 @@
 const { ObjectId } = require('mongodb')
 
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   getCollection: jest.fn()
 }))
 
-const { getCollection } = require('../../src/models/db')
+const { getCollection } = require('../../../src/models/db')
 const {
   getFaculty,
   getSchool,
@@ -14,7 +14,7 @@ const {
   searchUniversities,
   isFacultyInUniversity,
   isSchoolInFaculty
-} = require('../../src/models/university_db')
+} = require('../../../src/models/university_db')
 
 describe('institution relationship lookups', () => {
   let collections

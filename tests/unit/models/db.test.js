@@ -61,7 +61,7 @@ const loadDbModule = function (options = {}) {
     connect,
     dbFactory,
     dbInstance,
-    dbModule: require('../../src/models/db'),
+    dbModule: require('../../../src/models/db'),
     MongoClient,
     setServers
   }
@@ -79,7 +79,7 @@ describe('db model', () => {
     })
 
     expect(config).toHaveBeenCalledWith({
-      path: path.resolve(__dirname, '../../.env'),
+      path: path.resolve(__dirname, '../../../.env'),
       quiet: true
     })
     expect(setServers).toHaveBeenCalledWith(['8.8.8.8', '1.1.1.1'])

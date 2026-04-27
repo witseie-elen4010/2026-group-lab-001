@@ -1,4 +1,4 @@
-const requireAuthentication = require('../../src/middleware/require_authentication')
+const requireAuthentication = require('../../../src/middleware/require_authentication')
 // authentication between pages
 describe('require authentication middleware', () => {
   test('redirects unauthenticated requests to login', () => {

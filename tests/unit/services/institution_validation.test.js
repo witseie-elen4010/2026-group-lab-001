@@ -1,4 +1,4 @@
-jest.mock('../../src/models/university_db', () => ({
+jest.mock('../../../src/models/university_db', () => ({
   getFaculty: jest.fn(),
   getSchool: jest.fn(),
   getUniversity: jest.fn(),
@@ -12,8 +12,8 @@ const {
   getUniversity,
   isFacultyInUniversity,
   isSchoolInFaculty
-} = require('../../src/models/university_db')
-const { validateSelection } = require('../../src/services/institution_validation')
+} = require('../../../src/models/university_db')
+const { validateSelection } = require('../../../src/services/institution_validation')
 
 describe('institution validation service', () => {
   beforeEach(() => {
