@@ -183,3 +183,4 @@ dist
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+.c8-tmp/
