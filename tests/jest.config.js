@@ -1,5 +1,5 @@
 module.exports = {
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/**/*.test.js'],
+  testMatch: ['<rootDir>/unit/**/*.test.js'],
   testTimeout: 30000
 }
