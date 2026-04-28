@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="page page_home">
+  <main class="card card_wide">
+    <header>
+      <h1>Create Consultation</h1>
+      <% if (username) { %>
+        <p>Hello <%= username %></p>
+      <% } %>
+    </header>
+
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <section>
+      <form action="/consultations" method="post">
+        <label>
+          Title
+          <input type="text" name="title" value="<%= consultationTitle %>" required>
+        </label>
+
+        <label>
+          Lecturer
+          <select name="lecturerId" required>
+            <option value="">Select a lecturer</option>
+            <% lecturers.forEach(function (lecturer) { %>
+              <option value="<%= lecturer.id %>" <%= selectedLecturerId === lecturer.id ? 'selected' : '' %>>
+                <%= lecturer.name %>
+              </option>
+            <% }) %>
+          </select>
+        </label>
+
+        <label>
+          Date and Time
+          <input type="datetime-local" name="datetime" value="<%= selectedDatetime %>" required>
+        </label>
+
+        <button type="submit">Create Consultation</button>
+      </form>
+    </section>
+
+    <a class="back_link" href="/home">Home</a>
+  </main>
+</body>
+</html>

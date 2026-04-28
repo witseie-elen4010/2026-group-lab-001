@@ -18,6 +18,10 @@ jest.mock('../../../src/models/user_db', () => ({
   searchLecturers: jest.fn()
 }))
 
+jest.mock('../../../src/models/consultation_db', () => ({
+  addConsultation: jest.fn()
+}))
+
 const http = require('node:http')
 
 const closeServer = async function (server) {
@@ -48,6 +52,7 @@ const closeServer = async function (server) {
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
+const { addConsultation } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 
@@ -90,12 +95,14 @@ const getSessionCookie = function (setCookieHeader) {
  * @param {object} options - Login user details.
  * @param {string} [options.role='student'] - User role to store in the session.
  * @param {string} [options.username='morris'] - Username used for login.
+ * @param {string} [options.universityId=''] - University stored in the session.
  * @returns {Promise<{loginResponse: Response, sessionCookie: string}>} Login response and session cookie.
  */
-const loginAs = async function ({ role = 'student', username = 'morris' } = {}) {
+const loginAs = async function ({ role = 'student', username = 'morris', universityId = '' } = {}) {
   getUser.mockResolvedValueOnce({
     passwordHash: await hashPassword('welovesd3'),
     role,
+    universityId,
     username
   })
 
@@ -155,6 +162,7 @@ describe('home route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
     getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
@@ -192,9 +200,9 @@ describe('home route', () => {
     expect(body).toContain('You are logged in as a student.')
     expect(body).toContain('Choose an option below.')
     expect(body).toContain('User Profile')
-    expect(body).toContain('Schedule a Consultation')
+    expect(body).toContain('Create Consultation')
     expect(body).toContain('/user_profile?user=morris')
-    expect(body).toContain('href="/schedule_consultation"')
+    expect(body).toContain('href="/consultations/new"')
     expect(body).toContain(currentMonthLabel)
     expect(body).toContain('calendar_table')
     expect(body).toContain('Sun')
@@ -224,9 +232,7 @@ describe('home route', () => {
     expect(body).toContain('You are logged in as a lecturer.')
     expect(body).toContain('Choose an option below.')
     expect(body).toContain('User Profile')
-    expect(body).toContain('Scheduled Consultations')
     expect(body).toContain('/user_profile?user=lecturer1')
-    expect(body).toContain('href="/scheduled_consultations"')
     expect(body).not.toContain('Schedule a Consultation')
     expect(body).toContain(currentMonthLabel)
     expect(body).toContain('calendar_table')
@@ -257,8 +263,8 @@ describe('home route', () => {
     expect(body).toContain('Unavailable')
   })
 
-  test('Redirects unauthenticated users to login when requesting the schedule consultation page', async () => {
-    const response = await fetch(`${baseUrl}/schedule_consultation`, {
+  test('Redirects unauthenticated users to login when requesting the create consultation page', async () => {
+    const response = await fetch(`${baseUrl}/consultations/new`, {
       redirect: 'manual'
     })
 
@@ -266,12 +272,15 @@ describe('home route', () => {
     expect(response.headers.get('location')).toBe('/login')
   })
 
-  test('Renders the schedule consultation page', async () => {
+  test('Renders the create consultation page', async () => {
     const { sessionCookie } = await loginAs({
       role: 'student',
-      username: 'morris'
+      username: 'morris',
+      universityId: 'Wits'
     })
-    const response = await fetch(`${baseUrl}/schedule_consultation`, {
+    searchLecturers.mockResolvedValueOnce(MOCK_LECTURERS)
+
+    const response = await fetch(`${baseUrl}/consultations/new`, {
       headers: {
         cookie: sessionCookie
       }
@@ -279,12 +288,18 @@ describe('home route', () => {
 
     const body = await response.text()
 
-    expect(response.status).toBe(501)
-    expect(body).toContain('<title>Schedule a Consultation</title>')
-    expect(body).toContain('Schedule a Consultation')
-    expect(body).toContain('This page is not available yet.')
-    expect(body).toContain('Scheduling a consultation has not been built yet.')
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Create Consultation</title>')
+    expect(body).toContain('Create Consultation')
+    expect(body).toContain('Hello morris')
+    expect(body).toContain('action="/consultations"')
+    expect(body).toContain('name="title"')
+    expect(body).toContain('name="lecturerId"')
+    expect(body).toContain('name="datetime"')
+    expect(body).toContain('Alice Smith')
+    expect(body).toContain('Bob Jones')
     expect(body).toContain('href="/home"')
+    expect(searchLecturers).toHaveBeenCalledWith({ universityId: 'Wits' })
   })
 
   test('Redirects unauthenticated users to login when requesting the scheduled consultations page', async () => {
