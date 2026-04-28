@@ -18,7 +18,7 @@ jest.mock('../../../src/models/user_db', () => ({
   searchLecturers: jest.fn()
 }))
 
-jest.mock('../../src/models/consultation_db', () => ({
+jest.mock('../../../src/models/consultation_db', () => ({
   addConsultation: jest.fn()
 }))
 
@@ -52,6 +52,7 @@ const closeServer = async function (server) {
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
+const { addConsultation } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 

@@ -1,12 +1,12 @@
-jest.mock('../../src/models/consultation_db', () => ({
+jest.mock('../../../src/models/consultation_db', () => ({
   addConsultation: jest.fn()
 }))
 
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   connectToDatabase: jest.fn().mockResolvedValue(undefined)
 }))
 
-jest.mock('../../src/models/user_db', () => ({
+jest.mock('../../../src/models/user_db', () => ({
   getUser: jest.fn(),
   searchLecturers: jest.fn()
 }))
@@ -15,10 +15,10 @@ const http = require('node:http')
 const path = require('node:path')
 const express = require('express')
 
-const { addConsultation } = require('../../src/models/consultation_db')
-const { connectToDatabase } = require('../../src/models/db')
-const { getUser, searchLecturers } = require('../../src/models/user_db')
-const consultationsRouter = require('../../src/routes/consultations')
+const { addConsultation } = require('../../../src/models/consultation_db')
+const { connectToDatabase } = require('../../../src/models/db')
+const { getUser, searchLecturers } = require('../../../src/models/user_db')
+const consultationsRouter = require('../../../src/routes/consultations')
 
 const closeServer = async function (server) {
   if (!server) {
@@ -65,7 +65,7 @@ const createServer = async function () {
   const server = http.createServer(app)
 
   app.set('view engine', 'ejs')
-  app.set('views', path.resolve(__dirname, '../../src/views'))
+  app.set('views', path.resolve(__dirname, '../../../src/views'))
   app.use(express.urlencoded({ extended: true }))
   app.use((req, res, next) => {
     req.session = {

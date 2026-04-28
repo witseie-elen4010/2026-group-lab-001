@@ -1,9 +1,9 @@
-jest.mock('../../src/models/db', () => ({
+jest.mock('../../../src/models/db', () => ({
   getCollection: jest.fn()
 }))
 
-const { getCollection } = require('../../src/models/db')
-const { addConsultation } = require('../../src/models/consultation_db')
+const { getCollection } = require('../../../src/models/db')
+const { addConsultation } = require('../../../src/models/consultation_db')
 
 describe('consultation database operations', () => {
   let mockCollection
