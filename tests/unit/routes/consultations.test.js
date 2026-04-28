@@ -235,6 +235,27 @@ describe('consultations route', () => {
     expect(addConsultation).not.toHaveBeenCalled()
   })
 
+  test('re-renders the form when the lecturer belongs to a different university', async () => {
+    getUser.mockResolvedValue({ role: 'lecturer', universityId: 'OtherUni', username: 'lecturer1' })
+
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        datetime: '2026-05-04T09:00',
+        lecturerId: 'lecturer1',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(body).toContain('Please select a valid lecturer.')
+    expect(addConsultation).not.toHaveBeenCalled()
+  })
+
   test('re-renders the form when saving the consultation fails', async () => {
     addConsultation.mockRejectedValueOnce(new Error('database unavailable'))
 

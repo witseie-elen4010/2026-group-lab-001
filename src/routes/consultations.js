@@ -32,7 +32,13 @@ const isValidDatetime = function (value) {
     return false
   }
 
-  return !Number.isNaN(new Date(value).getTime())
+  const time = new Date(value).getTime()
+  if (Number.isNaN(time)) {
+    return false
+  }
+
+  // Ensure the datetime is in the future (prevent past bookings)
+  return time > Date.now()
 }
 
 /**
