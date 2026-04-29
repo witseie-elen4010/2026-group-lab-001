@@ -18,25 +18,28 @@ const queryInstitutionField = async function (page, {
   value
 }) {
   const input = page.locator(`#${fieldId}`)
-  const responsePromise = page.waitForResponse(function (response) {
-    return response.request().method() === 'GET' && response.url().includes(routeFragment)
+  const inputElement = await input.elementHandle()
+
+  // Wait for the page to send the institution search request. Using request
+  // is more robust across browsers than waiting for the response.
+  const requestPromise = page.waitForRequest(function (request) {
+    return request.method() === 'GET' && request.url().includes(routeFragment)
   })
 
   await input.fill(value)
 
-  const response = await responsePromise
-  const responseBody = await response.json()
+  const request = await requestPromise
 
-  expect(responseBody.results).toContain(value)
   expectedQueryFragments.forEach(function (fragment) {
-    expect(response.url()).toContain(fragment)
+    expect(request.url()).toContain(fragment)
   })
 
+  // Ensure the datalist was populated with the expected option
   await page.waitForFunction(function ({ fieldId, value }) {
     const input = document.getElementById(fieldId)
     const optionsList = document.getElementById(input.getAttribute('list'))
 
-    return Array.from(optionsList.children).some(function (option) {
+    return optionsList && Array.from(optionsList.children).some(function (option) {
       return option.value === value
     })
   }, { fieldId, value })

@@ -239,11 +239,18 @@ router.post('/', async function (req, res) {
       const conflictTime = (typeof conflict.datetime === 'string' && conflict.datetime.length >= 16) ? conflict.datetime.slice(11, 16) : ''
       const message = `A consultation is already booked at ${conflictTime} for ${lecturerName}`
 
+      const acceptsJson = req.xhr || (req.get && typeof req.get === 'function' && (req.get('accept') || '').includes('application/json'))
+
+      if (acceptsJson) {
+        return res.status(409).json({ error: message })
+      }
+
       return renderCreateConsultationError(res, {
         consultationTitle,
         error: message,
         selectedDatetime: datetime,
         selectedLecturerId: lecturerId,
+        statusCode: 409,
         universityId,
         username: organiserId
       })
