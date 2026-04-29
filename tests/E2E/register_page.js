@@ -18,8 +18,6 @@ const queryInstitutionField = async function (page, {
   value
 }) {
   const input = page.locator(`#${fieldId}`)
-  const inputElement = await input.elementHandle()
-
   // Wait for the page to send the institution search request. Using request
   // is more robust across browsers than waiting for the response.
   const requestPromise = page.waitForRequest(function (request) {
