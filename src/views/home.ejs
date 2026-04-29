@@ -23,8 +23,11 @@
       <section class="home_navigation">
         <h2 class="home_navigation_title">Navigation</h2>
         <p class="home_navigation_text">Choose an option below.</p>
-        <a href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
-        <a href="/consultations/new">Create Consultation</a>
+        <div class="home_navigation_actions">
+          <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
+          <a href="/consultations/new">Create Consultation</a>
+          <a href="/join_consultation">Join Consultation</a>
+        </div>
       </section>
     <% } else if (role === 'lecturer' && username) { %>
       <section class="home_navigation">

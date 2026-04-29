@@ -212,6 +212,16 @@ a {
   margin: 24px auto 0;
 }
 
+.home_navigation_actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home_navigation_primary {
+  grid-column: 1 / -1;
+}
+
 .home_navigation_title {
   margin: 0;
 }
@@ -315,6 +325,39 @@ a {
 .search_flex {
   display: flex;
   align-items: flex-end;
+}
+
+.consultation_result {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.consultation_result_title {
+  margin: 0 0 12px;
+}
+
+.consultation_result p {
+  margin: 0 0 8px;
+}
+
+.join_button {
+  margin-top: 8px;
+}
+
+.is_hidden {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .home_navigation_actions {
+    grid-template-columns: 1fr;
+  }
+
+  .home_navigation_primary {
+    grid-column: auto;
+  }
 }
 
 .consultation_preferences_section {
