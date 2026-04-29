@@ -15,6 +15,23 @@ const addConsultation = async function (consultation) {
   return consultationsCollection().insertOne(consultation)
 }
 
+/**
+ * Returns consultations for a lecturer on a specific date.
+ * @param {string} lecturerId - Lecturer username.
+ * @param {string} isoDate - Date in YYYY-MM-DD format.
+ * @returns {Promise<Array<object>>} Matching consultation documents.
+ */
+const listConsultationsForLecturerOnDate = async function (lecturerId, isoDate) {
+  return consultationsCollection().find({
+    lecturerId,
+    datetime: {
+      $gte: `${isoDate}T00:00`,
+      $lt: `${isoDate}T23:59~`
+    }
+  }).toArray()
+}
+
 module.exports = {
-  addConsultation
+  addConsultation,
+  listConsultationsForLecturerOnDate
 }
