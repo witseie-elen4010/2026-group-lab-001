@@ -8,10 +8,10 @@ const PASSWORD = 'password'
 const RUN_DB_TEST = process.env.MONGODB_URI ? test : test.skip
 const STUDENT_USERNAME = 'user'
 const TEST_ID = `${process.pid}${Date.now()}`
-const FULL_TITLE = `testFullConsultation-${TEST_ID}`
-const JOINED_TITLE = `Consultation With Chuck-${TEST_ID}`
-const OPEN_TITLE = `testJoin-${TEST_ID}`
-const TEST_TITLES = [FULL_TITLE, JOINED_TITLE, OPEN_TITLE]
+const TEST_TITLE_PREFIX = 'join-consultation-integration-'
+const FULL_TITLE = `${TEST_TITLE_PREFIX}full-${TEST_ID}`
+const JOINED_TITLE = `${TEST_TITLE_PREFIX}joined-${TEST_ID}`
+const OPEN_TITLE = `${TEST_TITLE_PREFIX}open-${TEST_ID}`
 
 let baseUrl
 let server
@@ -61,6 +61,13 @@ const loginAs = async function (baseUrl, { password, username }) {
   return response.headers.get('set-cookie')?.split(';')[0] || ''
 }
 
+const deleteTestConsultations = async function () {
+  await connectToDatabase()
+  await getCollection('Consultation').deleteMany({
+    title: { $regex: `^${TEST_TITLE_PREFIX}` }
+  })
+}
+
 describe('join consultation integration flow', () => {
   beforeAll(async function () {
     if (!process.env.MONGODB_URI) {
@@ -77,13 +84,20 @@ describe('join consultation integration flow', () => {
     })
   })
 
+  beforeEach(async function () {
+    if (!process.env.MONGODB_URI) {
+      return
+    }
+
+    await deleteTestConsultations()
+  })
+
   afterEach(async function () {
     if (!process.env.MONGODB_URI) {
       return
     }
 
-    await connectToDatabase()
-    await getCollection('Consultation').deleteMany({ title: { $in: TEST_TITLES } })
+    await deleteTestConsultations()
   })
 
   afterAll(async function () {
@@ -91,8 +105,7 @@ describe('join consultation integration flow', () => {
       return
     }
 
-    await connectToDatabase()
-    await getCollection('Consultation').deleteMany({ title: { $in: TEST_TITLES } })
+    await deleteTestConsultations()
     await closeServer(server)
     await closeDatabaseConnection()
   })
@@ -119,7 +132,7 @@ describe('join consultation integration flow', () => {
       {
         attendees: [STUDENT_USERNAME],
         capacity: 1,
-        datetime: '2026-04-30T07:45',
+        datetime: '2020-01-01T08:00',
         lecturerId: LECTURER_USERNAME,
         organiserId: STUDENT_USERNAME,
         title: JOINED_TITLE
@@ -143,6 +156,7 @@ describe('join consultation integration flow', () => {
     expect(body).toContain(OPEN_TITLE)
     expect(body).toContain(FULL_TITLE)
     expect(body).toContain(JOINED_TITLE)
+    expect(body).toContain('2020-01-01')
     expect(body).toContain('1/5')
     expect(body).toContain('3/3')
     expect(body).toContain('Join')

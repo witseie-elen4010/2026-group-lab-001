@@ -7,37 +7,37 @@ const PASSWORD = 'password'
 const STUDENT_USERNAME = 'user'
 const LECTURER_USERNAME = 'user1'
 const TEST_ID = `${process.pid}${Date.now()}`
-const OPEN_TITLE = `testJoin-${TEST_ID}`
-const FULL_TITLE = `testFullConsultation-${TEST_ID}`
-const JOINED_TITLE = `Consultation With Chuck-${TEST_ID}`
-const PAST_TITLE = `Past Consultation ${TEST_ID}`
-const TEST_TITLES = [OPEN_TITLE, FULL_TITLE, JOINED_TITLE, PAST_TITLE]
+const TEST_TITLE_PREFIX = 'join-consultation-e2e-'
+const OPEN_TITLE = `${TEST_TITLE_PREFIX}open-${TEST_ID}`
+const FULL_TITLE = `${TEST_TITLE_PREFIX}full-${TEST_ID}`
+const JOINED_TITLE = `${TEST_TITLE_PREFIX}joined-${TEST_ID}`
+
+const deleteTestConsultations = async function () {
+  await connectToDatabase()
+  await getCollection('Consultation').deleteMany({
+    title: { $regex: `^${TEST_TITLE_PREFIX}` }
+  })
+}
 
 test.describe('join consultation E2E', () => {
   test.skip(!process.env.MONGODB_URI, 'Requires a writable MongoDB test database.')
 
+  test.beforeEach(async function () {
+    await deleteTestConsultations()
+  })
+
   test.afterEach(async function () {
-    await connectToDatabase()
-    await getCollection('Consultation').deleteMany({ title: { $in: TEST_TITLES } })
+    await deleteTestConsultations()
   })
 
   test.afterAll(async function () {
-    await connectToDatabase()
-    await getCollection('Consultation').deleteMany({ title: { $in: TEST_TITLES } })
+    await deleteTestConsultations()
     await closeDatabaseConnection()
   })
 
   test('student can join an open consultation from the home page', async ({ page }) => {
     await connectToDatabase()
     await getCollection('Consultation').insertMany([
-      {
-        attendees: ['user3'],
-        capacity: 2,
-        datetime: '2020-01-01T08:00',
-        lecturerId: LECTURER_USERNAME,
-        organiserId: 'user3',
-        title: PAST_TITLE
-      },
       {
         attendees: ['user3'],
         capacity: 5,
@@ -57,7 +57,7 @@ test.describe('join consultation E2E', () => {
       {
         attendees: [STUDENT_USERNAME],
         capacity: 1,
-        datetime: '2026-04-30T07:45',
+        datetime: '2020-01-01T08:00',
         lecturerId: LECTURER_USERNAME,
         organiserId: STUDENT_USERNAME,
         title: JOINED_TITLE
@@ -77,18 +77,17 @@ test.describe('join consultation E2E', () => {
     await expect(page).toHaveURL(/\/join_consultation$/)
     await expect(page.getByRole('heading', { name: 'Join Consultation' })).toBeVisible()
     const cards = page.locator('.join_consultation_item')
-    const pastCard = cards.filter({ has: page.getByRole('heading', { name: PAST_TITLE }) })
     const openCard = cards.filter({ has: page.getByRole('heading', { name: OPEN_TITLE }) })
     const fullCard = cards.filter({ has: page.getByRole('heading', { name: FULL_TITLE }) })
     const joinedCard = cards.filter({ has: page.getByRole('heading', { name: JOINED_TITLE }) })
 
-    await expect(pastCard).toBeVisible()
     await expect(openCard).toBeVisible()
     await expect(fullCard).toBeVisible()
     await expect(joinedCard).toBeVisible()
     await expect(openCard.getByText('Chuck Norris')).toBeVisible()
     await expect(openCard.getByText('2026-04-30')).toBeVisible()
-    await expect(pastCard.getByText('08:00')).toBeVisible()
+    await expect(joinedCard.getByText('2020-01-01')).toBeVisible()
+    await expect(joinedCard.getByText('08:00')).toBeVisible()
     await expect(openCard.getByText('07:45')).toBeVisible()
     await expect(openCard.getByText('1/5')).toBeVisible()
     await expect(openCard.getByRole('button', { name: 'Join' })).toBeVisible()
@@ -100,7 +99,7 @@ test.describe('join consultation E2E', () => {
       openCard.getByRole('button', { name: 'Join' }).click()
     ])
 
-    await expect(page.getByRole('heading', { name: PAST_TITLE })).toBeVisible()
+    await expect(joinedCard).toBeVisible()
     await expect(openCard.getByText('2/5')).toBeVisible()
     await expect(openCard.getByRole('button', { name: 'Joined' })).toBeDisabled()
     await expect(page.getByText('Joined consultation successfully.')).toHaveCount(0)
