@@ -101,7 +101,58 @@ const validateLecturerAvailability = function ({
   return { isValid: true, error: '' }
 }
 
+/**
+ * Finds a scheduled consultation that overlaps a proposed start time using the lecturer's duration.
+ * Cancelled consultations are ignored.
+ * Back-to-back (end == start) is not considered an overlap.
+ * @param {object} options
+ * @param {Array<object>} [options.scheduledConsultations=[]]
+ * @param {string} options.proposedStart - HH:MM format
+ * @param {number} options.duration - Duration in minutes
+ * @returns {object|null} The conflicting consultation document, or null when none found.
+ */
+const findOverlappingConsultation = function ({ scheduledConsultations = [], proposedStart, duration }) {
+  if (!Array.isArray(scheduledConsultations) || !TIME_PATTERN.test(proposedStart) || !Number.isInteger(duration) || duration <= 0) {
+    return null
+  }
+
+  const proposedEnd = addMinutesToTime(proposedStart, duration)
+  if (!proposedEnd) {
+    return null
+  }
+
+  const proposedStartMins = timeToMinutes(proposedStart)
+  const proposedEndMins = timeToMinutes(proposedEnd)
+
+  for (let i = 0; i < scheduledConsultations.length; i++) {
+    const sc = scheduledConsultations[i]
+    if (!sc || !sc.datetime) continue
+
+    // ignore explicitly cancelled consultations
+    if (sc.cancelled === true) continue
+    if (sc.status && typeof sc.status === 'string' && sc.status.toLowerCase() === 'cancelled') continue
+
+    // datetime expected as 'YYYY-MM-DDTHH:MM'
+    const existingStart = (typeof sc.datetime === 'string' && sc.datetime.length >= 16) ? sc.datetime.slice(11, 16) : ''
+    if (!TIME_PATTERN.test(existingStart)) continue
+
+    const existingEnd = addMinutesToTime(existingStart, duration)
+    if (!existingEnd) continue
+
+    const existingStartMins = timeToMinutes(existingStart)
+    const existingEndMins = timeToMinutes(existingEnd)
+
+    // overlap when existingStart < proposedEnd AND existingEnd > proposedStart
+    if (existingStartMins < proposedEndMins && existingEndMins > proposedStartMins) {
+      return sc
+    }
+  }
+
+  return null
+}
+
 module.exports = {
   addMinutesToTime,
-  validateLecturerAvailability
+  validateLecturerAvailability,
+  findOverlappingConsultation
 }

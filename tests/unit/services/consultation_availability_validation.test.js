@@ -79,4 +79,60 @@ describe('consultation availability validation', () => {
       isValid: true
     })
   })
+
+  const { findOverlappingConsultation } = require('../../../src/services/consultation_availability_validation')
+
+  test('detects overlapping consultation when times overlap', () => {
+    const scheduled = [{ datetime: '2026-05-04T10:00' }]
+
+    const conflict = findOverlappingConsultation({
+      scheduledConsultations: scheduled,
+      proposedStart: '10:30',
+      duration: 60
+    })
+
+    expect(conflict).toBe(scheduled[0])
+  })
+
+  test('allows back-to-back consultations when end equals start', () => {
+    const scheduled = [{ datetime: '2026-05-04T10:00' }]
+
+    const conflict = findOverlappingConsultation({
+      scheduledConsultations: scheduled,
+      proposedStart: '11:00',
+      duration: 60
+    })
+
+    expect(conflict).toBeNull()
+  })
+
+  test('ignores cancelled consultations with boolean flag', () => {
+    const scheduled = [{ datetime: '2026-05-04T10:00', cancelled: true }]
+
+    const conflict = findOverlappingConsultation({
+      scheduledConsultations: scheduled,
+      proposedStart: '10:30',
+      duration: 60
+    })
+
+    expect(conflict).toBeNull()
+  })
+
+  test('ignores cancelled consultations with status string', () => {
+    const scheduled = [{ datetime: '2026-05-04T10:00', status: 'cancelled' }]
+
+    const conflict = findOverlappingConsultation({
+      scheduledConsultations: scheduled,
+      proposedStart: '10:30',
+      duration: 60
+    })
+
+    expect(conflict).toBeNull()
+  })
+
+  test('returns null for invalid inputs', () => {
+    expect(findOverlappingConsultation({ scheduledConsultations: 'not-array', proposedStart: '10:00', duration: 60 })).toBeNull()
+    expect(findOverlappingConsultation({ scheduledConsultations: [], proposedStart: '25:00', duration: 60 })).toBeNull()
+    expect(findOverlappingConsultation({ scheduledConsultations: [], proposedStart: '10:00', duration: -5 })).toBeNull()
+  })
 })

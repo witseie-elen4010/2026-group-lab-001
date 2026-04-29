@@ -41,7 +41,7 @@ The application is built with a server-rendered Node.js and Express stack, backe
 ### Sprints
 1. [x] **Completed**
 
-2. [ ] **Unstarted**
+2. [ ] **In Progress**
 
 3. [ ] **Unstarted**
 

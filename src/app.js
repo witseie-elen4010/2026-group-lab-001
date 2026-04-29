@@ -1,6 +1,7 @@
 const path = require('path')
 const express = require('express')
 const session = require('express-session')
+const flashMessages = require('./middleware/flash_messages')
 const requireAuthentication = require('./middleware/require_authentication')
 const institutionSearchRouter = require('./routes/institution_search')
 const joinConsultationRouter = require('./routes/join_consultation')
@@ -25,6 +26,7 @@ app.use(session({
   saveUninitialized: false,
   secret: SESSION_SECRET
 }))
+app.use(flashMessages)
 app.use('/institutions', institutionSearchRouter)
 app.use('/login', loginRouter)
 app.use('/register', registerRouter)

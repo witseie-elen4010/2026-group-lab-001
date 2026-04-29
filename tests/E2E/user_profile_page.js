@@ -193,6 +193,12 @@ test.describe('user profile page', () => {
     await page.locator('input[name="start_time_monday"]').fill('10:00')
     await page.locator('input[name="end_time_monday"]').fill('11:00')
     await page.locator('textarea[name="exceptionDates"]').fill('2026-11-10\n2026-11-11')
+    // Ensure other weekdays are explicitly set to unavailable so the form
+    // submission only saves the monday availability we intend to test.
+    const otherDays = ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    for (const day of otherDays) {
+      await page.locator(`select[name="availability_${day}"]`).selectOption('unavailable')
+    }
 
     await Promise.all([
       page.waitForResponse(function (response) {
