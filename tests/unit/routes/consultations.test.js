@@ -1,5 +1,6 @@
 jest.mock('../../../src/models/consultation_db', () => ({
-  addConsultation: jest.fn()
+  addConsultation: jest.fn(),
+  listConsultationsForLecturerOnDate: jest.fn()
 }))
 
 jest.mock('../../../src/models/db', () => ({
@@ -11,12 +12,17 @@ jest.mock('../../../src/models/user_db', () => ({
   searchLecturers: jest.fn()
 }))
 
+jest.mock('../../../src/models/lecturer_availability_db', () => ({
+  getLecturerAvailability: jest.fn()
+}))
+
 const http = require('node:http')
 const path = require('node:path')
 const express = require('express')
 
-const { addConsultation } = require('../../../src/models/consultation_db')
+const { addConsultation, listConsultationsForLecturerOnDate } = require('../../../src/models/consultation_db')
 const { connectToDatabase } = require('../../../src/models/db')
+const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
 const consultationsRouter = require('../../../src/routes/consultations')
 
@@ -103,7 +109,14 @@ describe('consultations route', () => {
       username: 'morris'
     }
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
+    listConsultationsForLecturerOnDate.mockResolvedValue([])
     connectToDatabase.mockResolvedValue(undefined)
+    getLecturerAvailability.mockResolvedValue({
+      dailyMax: 2,
+      duration: 60,
+      exceptionDates: [],
+      weeklyAvailability: [{ day: 'monday', startTime: '08:00', endTime: '12:00' }]
+    })
     getUser.mockResolvedValue({ role: 'lecturer', universityId: 'Wits', username: 'lecturer1' })
     searchLecturers.mockResolvedValue([{ firstName: 'Alice', lastName: 'Smith', username: 'lecturer1' }])
   })
