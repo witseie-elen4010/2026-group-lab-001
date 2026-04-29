@@ -2,6 +2,7 @@
   "scripts": {
     "start": "node src/app.js",
     "check:db": "node src/models/db.js",
+    "postinstall": "npx playwright install",
     "test": "npm run test:coverage:all",
     "test:unit": "jest",
     "test:e2e": "c8 --config tests/.c8rc.json playwright test",
