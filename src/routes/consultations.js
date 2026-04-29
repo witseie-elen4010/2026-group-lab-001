@@ -75,9 +75,12 @@ const renderCreateConsultation = function (res, {
   selectedLecturerId = '',
   username = ''
 } = {}) {
+  const flashError = (res && res.locals && res.locals.flash && res.locals.flash.error) ? res.locals.flash.error : ''
+  const finalError = error || flashError
+
   return res.status(statusCode).render('create_consultation', {
     consultationTitle,
-    error,
+    error: finalError,
     lecturers,
     selectedDatetime,
     selectedLecturerId,
@@ -245,15 +248,12 @@ router.post('/', async function (req, res) {
         return res.status(409).json({ error: message })
       }
 
-      return renderCreateConsultationError(res, {
-        consultationTitle,
-        error: message,
-        selectedDatetime: datetime,
-        selectedLecturerId: lecturerId,
-        statusCode: 409,
-        universityId,
-        username: organiserId
-      })
+      // Set a flash message and redirect back to the creation form so the
+      // message is shown to the user. Use the session to persist the flash.
+      req.session = req.session || {}
+      req.session.flash = { error: message }
+
+      return res.redirect('/consultations/new')
     }
 
     await addConsultation({
