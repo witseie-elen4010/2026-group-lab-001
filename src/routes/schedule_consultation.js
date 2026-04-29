@@ -1,24 +1,13 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
+const { listConsultationsForLecturerOnDate } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
+const { validateLecturerAvailability } = require('../services/consultation_availability_validation')
 
 const router = express.Router()
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
-
-const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-
-const getWeekdayFromIso = function (isoDate) {
-  const d = new Date(`${isoDate}T00:00:00Z`)
-  if (Number.isNaN(d.getTime())) return ''
-  return WEEKDAYS[d.getUTCDay()]
-}
-
-const timeToMinutes = function (timeStr) {
-  const parts = timeStr.split(':').map(Number)
-  return parts[0] * 60 + parts[1]
-}
 
 router.get('/', (req, res) => {
   const username = req.session?.user?.username || ''
@@ -50,41 +39,19 @@ router.post('/', async (req, res) => {
   try {
     await connectToDatabase()
     const availability = await getLecturerAvailability(lecturer)
+    const scheduledConsultations = await listConsultationsForLecturerOnDate(lecturer, date)
+    const validation = validateLecturerAvailability({
+      availability,
+      date,
+      endTime,
+      scheduledConsultations,
+      startTime
+    })
 
-    if (!availability) {
-      return res.status(400).json({ success: false, error: 'Lecturer has not set availability.' })
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, error: validation.error })
     }
 
-    if (Array.isArray(availability.exceptionDates) && availability.exceptionDates.includes(date)) {
-      return res.status(400).json({ success: false, error: 'Lecturer is unavailable on this date.' })
-    }
-
-    const weekday = getWeekdayFromIso(date)
-    if (!weekday) return res.status(400).json({ success: false, error: 'Invalid date.' })
-
-    const weekly = Array.isArray(availability.weeklyAvailability) ? availability.weeklyAvailability : []
-    const requestedStart = timeToMinutes(startTime)
-    const requestedEnd = timeToMinutes(endTime)
-
-    let allowed = false
-    for (const slot of weekly) {
-      if (!slot || typeof slot !== 'object') continue
-      if ((slot.day || '').toLowerCase() !== weekday) continue
-      if (!TIME_PATTERN.test(slot.startTime) || !TIME_PATTERN.test(slot.endTime)) continue
-      const slotStart = timeToMinutes(slot.startTime)
-      const slotEnd = timeToMinutes(slot.endTime)
-      if (requestedStart >= slotStart && requestedEnd <= slotEnd) {
-        allowed = true
-        break
-      }
-    }
-
-    if (!allowed) {
-      return res.status(400).json({ success: false, error: 'Requested time is outside lecturer availability.' })
-    }
-
-    // Minimal implementation: we accept or reject based on availability only.
-    // Persisting bookings and enforcing student counts/dailyMax can be added later.
     return res.json({ success: true, message: 'Requested slot is available.' })
   } catch (err) {
     return res.status(500).json({ success: false, error: 'Server error while checking availability.' })

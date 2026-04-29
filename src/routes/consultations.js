@@ -1,6 +1,8 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
-const { addConsultation } = require('../models/consultation_db')
+const { addConsultation, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
+const { getLecturerAvailability } = require('../models/lecturer_availability_db')
+const { addMinutesToTime, validateLecturerAvailability } = require('../services/consultation_availability_validation')
 const { getUser, searchLecturers } = require('../models/user_db')
 
 const router = express.Router()
@@ -194,6 +196,30 @@ router.post('/', async function (req, res) {
       return renderCreateConsultationError(res, {
         consultationTitle,
         error: 'Please select a valid lecturer.',
+        selectedDatetime: datetime,
+        selectedLecturerId: lecturerId,
+        universityId,
+        username: organiserId
+      })
+    }
+
+    const lecturerAvailability = await getLecturerAvailability(lecturerId)
+    const consultationDate = datetime.slice(0, 10)
+    const consultationStartTime = datetime.slice(11, 16)
+    const consultationEndTime = addMinutesToTime(consultationStartTime, lecturerAvailability?.duration)
+    const scheduledConsultations = await listConsultationsForLecturerOnDate(lecturerId, consultationDate)
+    const schedulingValidation = validateLecturerAvailability({
+      availability: lecturerAvailability,
+      date: consultationDate,
+      endTime: consultationEndTime,
+      scheduledConsultations,
+      startTime: consultationStartTime
+    })
+
+    if (!schedulingValidation.isValid) {
+      return renderCreateConsultationError(res, {
+        consultationTitle,
+        error: schedulingValidation.error,
         selectedDatetime: datetime,
         selectedLecturerId: lecturerId,
         universityId,
