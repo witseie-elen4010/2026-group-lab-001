@@ -2,7 +2,7 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { addConsultation, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
-const { addMinutesToTime, validateLecturerAvailability } = require('../services/consultation_availability_validation')
+const { addMinutesToTime, validateLecturerAvailability, findOverlappingConsultation } = require('../services/consultation_availability_validation')
 const { getUser, searchLecturers } = require('../models/user_db')
 
 const router = express.Router()
@@ -220,6 +220,28 @@ router.post('/', async function (req, res) {
       return renderCreateConsultationError(res, {
         consultationTitle,
         error: schedulingValidation.error,
+        selectedDatetime: datetime,
+        selectedLecturerId: lecturerId,
+        universityId,
+        username: organiserId
+      })
+    }
+
+    // Prevent overlapping bookings based on the lecturer's configured duration
+    const conflict = findOverlappingConsultation({
+      scheduledConsultations,
+      proposedStart: consultationStartTime,
+      duration: lecturerAvailability?.duration
+    })
+
+    if (conflict) {
+      const lecturerName = `${lecturer.firstName || ''} ${lecturer.lastName || ''}`.trim() || lecturer.username || 'the lecturer'
+      const conflictTime = (typeof conflict.datetime === 'string' && conflict.datetime.length >= 16) ? conflict.datetime.slice(11, 16) : ''
+      const message = `A consultation is already booked at ${conflictTime} for ${lecturerName}`
+
+      return renderCreateConsultationError(res, {
+        consultationTitle,
+        error: message,
         selectedDatetime: datetime,
         selectedLecturerId: lecturerId,
         universityId,
