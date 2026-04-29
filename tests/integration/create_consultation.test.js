@@ -196,6 +196,27 @@ describe('create consultation integration flow', () => {
     await closeDatabaseConnection()
   })
 
+  RUN_DB_TEST('renders the create consultation form with lecturer options for a logged-in student', async function () {
+    const sessionCookie = await loginAs(baseUrl, {
+      password: PASSWORD,
+      username: TEST_STUDENT_USERNAME
+    })
+
+    const response = await fetch(`${baseUrl}/consultations/new`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Create Consultation</title>')
+    expect(body).toContain('name="title"')
+    expect(body).toContain('name="lecturerId"')
+    expect(body).toContain('name="datetime"')
+    expect(body).toContain(`value="${TEST_LECTURER_USERNAME}"`)
+  })
+
   RUN_DB_TEST('rejects creation when the selected time is outside lecturer availability', async function () {
     const title = `Outside Availability ${Date.now()}`
 
