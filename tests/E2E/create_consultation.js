@@ -146,4 +146,39 @@ test.describe('create consultation E2E', () => {
     expect(doc).not.toBeNull()
     await closeDatabaseConnection()
   })
+
+  test('prevents overlapping consultations and shows flash message', async ({ page }) => {
+    await setLecturerSchedule()
+    await loginAndOpenCreateConsultation(page)
+
+    const title1 = `E2E Consultation first ${Date.now()}`
+    await page.getByRole('textbox', { name: 'Title' }).fill(title1)
+
+    await page.locator('select[name="lecturerId"]').selectOption(TEST_LECTURER_USERNAME)
+
+    await page.locator('input[name="datetime"]').fill(toDatetimeLocal(nextMondayAtHour(10)))
+
+    await Promise.all([
+      page.waitForNavigation(),
+      page.getByRole('button', { name: 'Create Consultation' }).click()
+    ])
+
+    await expect(page).toHaveURL(/\/home$/)
+
+    // Attempt to create an overlapping consultation
+    await loginAndOpenCreateConsultation(page)
+
+    const title2 = `E2E Consultation second ${Date.now()}`
+    await page.getByRole('textbox', { name: 'Title' }).fill(title2)
+    await page.locator('select[name="lecturerId"]').selectOption(TEST_LECTURER_USERNAME)
+    await page.locator('input[name="datetime"]').fill(toDatetimeLocal(nextMondayAtHour(10)))
+
+    await Promise.all([
+      page.waitForNavigation(),
+      page.getByRole('button', { name: 'Create Consultation' }).click()
+    ])
+
+    await expect(page).toHaveURL(/\/consultations\/new$/)
+    await expect(page.locator('p.error')).toContainText('A consultation is already booked at')
+  })
 })

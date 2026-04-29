@@ -2,7 +2,7 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { addConsultation, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
-const { addMinutesToTime, validateLecturerAvailability } = require('../services/consultation_availability_validation')
+const { addMinutesToTime, validateLecturerAvailability, findOverlappingConsultation } = require('../services/consultation_availability_validation')
 const { getUser, searchLecturers } = require('../models/user_db')
 
 const router = express.Router()
@@ -75,9 +75,12 @@ const renderCreateConsultation = function (res, {
   selectedLecturerId = '',
   username = ''
 } = {}) {
+  const flashError = (res && res.locals && res.locals.flash && res.locals.flash.error) ? res.locals.flash.error : ''
+  const finalError = error || flashError
+
   return res.status(statusCode).render('create_consultation', {
     consultationTitle,
-    error,
+    error: finalError,
     lecturers,
     selectedDatetime,
     selectedLecturerId,
@@ -225,6 +228,32 @@ router.post('/', async function (req, res) {
         universityId,
         username: organiserId
       })
+    }
+
+    // Prevent overlapping bookings based on the lecturer's configured duration
+    const conflict = findOverlappingConsultation({
+      scheduledConsultations,
+      proposedStart: consultationStartTime,
+      duration: lecturerAvailability?.duration
+    })
+
+    if (conflict) {
+      const lecturerName = `${lecturer.firstName || ''} ${lecturer.lastName || ''}`.trim() || lecturer.username || 'the lecturer'
+      const conflictTime = (typeof conflict.datetime === 'string' && conflict.datetime.length >= 16) ? conflict.datetime.slice(11, 16) : ''
+      const message = `A consultation is already booked at ${conflictTime} for ${lecturerName}`
+
+      const acceptsJson = req.xhr || (req.get && typeof req.get === 'function' && (req.get('accept') || '').includes('application/json'))
+
+      if (acceptsJson) {
+        return res.status(409).json({ error: message })
+      }
+
+      // Set a flash message and redirect back to the creation form so the
+      // message is shown to the user. Use the session to persist the flash.
+      req.session = req.session || {}
+      req.session.flash = { error: message }
+
+      return res.redirect('/consultations/new')
     }
 
     await addConsultation({
