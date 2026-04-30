@@ -8,11 +8,14 @@ const {
   addConsultation,
   addStudentToConsultation,
   JOIN_RESULT_REASONS,
-  listConsultationsForLecturerOnDate
+  listConsultationsForLecturerOnDate,
+  searchConsultationsForStudent
 } = require('../../../src/models/consultation_db')
 
 describe('consultation database operations', () => {
   let mockConsultationCollection
+  let mockUserCollection
+  let mockLecturerAvailabilityCollection
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -22,9 +25,23 @@ describe('consultation database operations', () => {
       insertOne: jest.fn(),
       updateOne: jest.fn()
     }
+    mockUserCollection = {
+      find: jest.fn()
+    }
+    mockLecturerAvailabilityCollection = {
+      find: jest.fn()
+    }
     getCollection.mockImplementation(function (name) {
       if (name === 'Consultation') {
         return mockConsultationCollection
+      }
+
+      if (name === 'User') {
+        return mockUserCollection
+      }
+
+      if (name === 'LecturerAvailability') {
+        return mockLecturerAvailabilityCollection
       }
 
       return null
@@ -103,5 +120,60 @@ describe('consultation database operations', () => {
       statusCode: 400,
       success: false
     })
+  })
+
+  test('searchConsultationsForStudent only returns consultations in the future', async () => {
+    const now = new Date()
+    const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+    const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+
+    const futureId = new ObjectId()
+    const pastId = new ObjectId()
+
+    const consultationsToArray = jest.fn().mockResolvedValue([
+      {
+        _id: pastId,
+        attendees: [],
+        capacity: 1,
+        datetime: pastDate,
+        lecturerId: 'lecturer1',
+        organiserId: 'organiser1',
+        title: 'Past consultation'
+      },
+      {
+        _id: futureId,
+        attendees: [],
+        capacity: 1,
+        datetime: futureDate,
+        lecturerId: 'lecturer1',
+        organiserId: 'organiser1',
+        title: 'Future consultation'
+      }
+    ])
+
+    const usersToArray = jest.fn().mockResolvedValue([
+      { firstName: 'Lec', lastName: 'Turer', username: 'lecturer1' },
+      { firstName: 'Org', lastName: 'Aniser', username: 'organiser1' }
+    ])
+
+    const availabilityToArray = jest.fn().mockResolvedValue([
+      { duration: 30, username: 'lecturer1' }
+    ])
+
+    mockConsultationCollection.find.mockReturnValue({ toArray: consultationsToArray })
+    mockUserCollection.find.mockReturnValue({ toArray: usersToArray })
+    mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: availabilityToArray })
+
+    const result = await searchConsultationsForStudent({ username: 'student1' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      canJoin: true,
+      id: futureId.toString(),
+      name: 'Future consultation'
+    })
+    expect(result.some(function (consultation) {
+      return consultation.id === pastId.toString()
+    })).toBe(false)
   })
 })
