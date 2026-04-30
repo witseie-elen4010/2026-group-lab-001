@@ -41,7 +41,7 @@ test.describe('join consultation E2E', () => {
       {
         attendees: ['user3'],
         capacity: 5,
-        datetime: '2026-04-30T07:45',
+        datetime: '2030-04-30T07:45',
         lecturerId: LECTURER_USERNAME,
         organiserId: 'user3',
         title: OPEN_TITLE
@@ -49,7 +49,7 @@ test.describe('join consultation E2E', () => {
       {
         attendees: ['user3', 'user4', 'user5'],
         capacity: 3,
-        datetime: '2026-04-30T07:45',
+        datetime: '2030-04-30T07:45',
         lecturerId: LECTURER_USERNAME,
         organiserId: 'user3',
         title: FULL_TITLE
@@ -57,7 +57,7 @@ test.describe('join consultation E2E', () => {
       {
         attendees: [STUDENT_USERNAME],
         capacity: 1,
-        datetime: '2020-01-01T08:00',
+        datetime: '2030-01-01T08:00',
         lecturerId: LECTURER_USERNAME,
         organiserId: STUDENT_USERNAME,
         title: JOINED_TITLE
@@ -85,8 +85,8 @@ test.describe('join consultation E2E', () => {
     await expect(fullCard).toBeVisible()
     await expect(joinedCard).toBeVisible()
     await expect(openCard.getByText('Chuck Norris')).toBeVisible()
-    await expect(openCard.getByText('2026-04-30')).toBeVisible()
-    await expect(joinedCard.getByText('2020-01-01')).toBeVisible()
+    await expect(openCard.getByText('2030-04-30')).toBeVisible()
+    await expect(joinedCard.getByText('2030-01-01')).toBeVisible()
     await expect(joinedCard.getByText('08:00')).toBeVisible()
     await expect(openCard.getByText('07:45')).toBeVisible()
     await expect(openCard.getByText('1/5')).toBeVisible()

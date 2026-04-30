@@ -116,7 +116,7 @@ describe('join consultation integration flow', () => {
       {
         attendees: ['user3'],
         capacity: 5,
-        datetime: '2026-04-30T07:45',
+        datetime: '2030-04-30T07:45',
         lecturerId: LECTURER_USERNAME,
         organiserId: 'user3',
         title: OPEN_TITLE
@@ -124,7 +124,7 @@ describe('join consultation integration flow', () => {
       {
         attendees: ['user3', 'user4', 'user5'],
         capacity: 3,
-        datetime: '2026-04-30T07:45',
+        datetime: '2030-04-30T07:45',
         lecturerId: LECTURER_USERNAME,
         organiserId: 'user3',
         title: FULL_TITLE
@@ -132,7 +132,7 @@ describe('join consultation integration flow', () => {
       {
         attendees: [STUDENT_USERNAME],
         capacity: 1,
-        datetime: '2020-01-01T08:00',
+        datetime: '2030-01-01T08:00',
         lecturerId: LECTURER_USERNAME,
         organiserId: STUDENT_USERNAME,
         title: JOINED_TITLE
@@ -156,7 +156,7 @@ describe('join consultation integration flow', () => {
     expect(body).toContain(OPEN_TITLE)
     expect(body).toContain(FULL_TITLE)
     expect(body).toContain(JOINED_TITLE)
-    expect(body).toContain('2020-01-01')
+    expect(body).toContain('2030-01-01')
     expect(body).toContain('1/5')
     expect(body).toContain('3/3')
     expect(body).toContain('Join')
@@ -169,7 +169,7 @@ describe('join consultation integration flow', () => {
     const insertResult = await getCollection('Consultation').insertOne({
       attendees: ['user3', 'user4', 'user5'],
       capacity: 3,
-      datetime: '2026-04-30T07:45',
+      datetime: '2030-04-30T07:45',
       lecturerId: LECTURER_USERNAME,
       organiserId: 'user3',
       title: FULL_TITLE
