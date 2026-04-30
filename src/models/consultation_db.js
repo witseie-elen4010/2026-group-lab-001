@@ -88,6 +88,7 @@ const searchConsultationsForStudent = async function ({
     const lecturerUser = usersByUsername.get(consultation.lecturerId)
     const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
     const hasCapacity = Number.isInteger(consultation.capacity)
+    const isInFuture = new Date(consultation.datetime) > new Date()
     const startTime = consultation.datetime?.slice(11, 16) || ''
     const endTime = addMinutesToTime(startTime, availabilitiesByUsername.get(consultation.lecturerId)?.duration) || startTime
     const time = startTime ? `${startTime} to ${endTime}` : ''
@@ -96,11 +97,15 @@ const searchConsultationsForStudent = async function ({
       return null
     }
 
+    if (!isInFuture) {
+      return null
+    }
+
     const hasJoined = attendees.includes(username)
 
     return {
       attendeesCount: attendees.length,
-      canJoin: !hasJoined && (!hasCapacity || attendees.length < consultation.capacity),
+      canJoin: isInFuture && !hasJoined && (!hasCapacity || attendees.length < consultation.capacity),
       capacity: hasCapacity ? consultation.capacity : attendees.length,
       date: consultation.datetime?.slice(0, 10) || '',
       hasJoined,
