@@ -94,8 +94,37 @@ describe('student login integration flow', () => {
     expect(body).toContain(`Hello ${USERNAME}`)
     expect(body).toContain('You are logged in as a student.')
     expect(body).toContain('Create Consultation')
+    expect(body).toContain('Join Consultation')
     expect(body).toContain('href="/consultations/new"')
+    expect(body).toContain('href="/join_consultation"')
     expect(body).toContain('Find a Lecturer')
     expect(body).not.toContain('Scheduled Consultations')
+  })
+
+  RUN_DB_TEST('renders the student schedule consultation placeholder page', async function () {
+    const loginResponse = await fetch(`${baseUrl}/login`, {
+      body: encodeForm({
+        password: PASSWORD,
+        username: USERNAME
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST',
+      redirect: 'manual'
+    })
+
+    const sessionCookie = loginResponse.headers.get('set-cookie')?.split(';')[0] || ''
+    const response = await fetch(`${baseUrl}/schedule_consultation`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(501)
+    expect(body).toContain('<title>Schedule a Consultation</title>')
+    expect(body).toContain('Scheduling a consultation has not been built yet.')
+    expect(body).toContain('href="/home"')
   })
 })

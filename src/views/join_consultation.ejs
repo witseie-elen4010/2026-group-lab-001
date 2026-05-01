@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Consultation</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <script src="/scripts/join_consultation_search.js" defer></script>
+</head>
+<body class="page page_home">
+  <main class="card card_even_wider">
+    <header class="text_center">
+      <h1>Join Consultation</h1>
+    </header>
+
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+    <p id="join_consultation_feedback" class="is_hidden" aria-live="polite"></p>
+
+    <section id="join_consultation_results" class="results">
+      <% if (consultations.length === 0) { %>
+        <p>No consultations found.</p>
+      <% } else { %>
+        <% consultations.forEach(function (consultation) { %>
+          <article class="profile_detail join_consultation_item">
+            <div class="search_flex join_consultation_header">
+              <h2 class="home_navigation_title"><%= consultation.name %></h2>
+              <p class="home_navigation_text"><%= consultation.attendeesCount %>/<%= consultation.capacity %></p>
+            </div>
+            <div class="register_columns">
+              <div class="register_left_column">
+                <p class="profile_detail_value"><strong>Lecturer:</strong> <%= consultation.lecturer %></p>
+                <p class="profile_detail_value"><strong>Date:</strong> <%= consultation.date %></p>
+              </div>
+              <div class="register_middle_column">
+                <p class="profile_detail_value"><strong>Organiser:</strong> <%= consultation.organiser %></p>
+                <p class="profile_detail_value"><strong>Time:</strong> <%= consultation.time %></p>
+              </div>
+              <div class="register_right_column text_center">
+                <% if (consultation.canJoin) { %>
+                  <button type="button" class="join_button success" data-join-id="<%= consultation.id %>">Join</button>
+                <% } else if (consultation.hasJoined) { %>
+                  <button type="button" class="join_button success join_button_joined" disabled>Joined</button>
+                <% } else { %>
+                  <button type="button" class="join_button error" disabled>Closed</button>
+                <% } %>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      <% } %>
+    </section>
+
+    <a class="back_link" href="/home">Home</a>
+  </main>
+</body>
+</html>

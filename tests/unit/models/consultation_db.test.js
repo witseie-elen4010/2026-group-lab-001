@@ -2,19 +2,50 @@ jest.mock('../../../src/models/db', () => ({
   getCollection: jest.fn()
 }))
 
+const { ObjectId } = require('mongodb')
 const { getCollection } = require('../../../src/models/db')
-const { addConsultation, listConsultationsForLecturerOnDate } = require('../../../src/models/consultation_db')
+const {
+  addConsultation,
+  addStudentToConsultation,
+  JOIN_RESULT_REASONS,
+  listConsultationsForLecturerOnDate,
+  searchConsultationsForStudent
+} = require('../../../src/models/consultation_db')
 
 describe('consultation database operations', () => {
-  let mockCollection
+  let mockConsultationCollection
+  let mockUserCollection
+  let mockLecturerAvailabilityCollection
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockCollection = {
+    mockConsultationCollection = {
       find: jest.fn(),
-      insertOne: jest.fn()
+      findOne: jest.fn(),
+      insertOne: jest.fn(),
+      updateOne: jest.fn()
     }
-    getCollection.mockReturnValue(mockCollection)
+    mockUserCollection = {
+      find: jest.fn()
+    }
+    mockLecturerAvailabilityCollection = {
+      find: jest.fn()
+    }
+    getCollection.mockImplementation(function (name) {
+      if (name === 'Consultation') {
+        return mockConsultationCollection
+      }
+
+      if (name === 'User') {
+        return mockUserCollection
+      }
+
+      if (name === 'LecturerAvailability') {
+        return mockLecturerAvailabilityCollection
+      }
+
+      return null
+    })
   })
 
   test('addConsultation inserts a document into the Consultation collection', async () => {
@@ -27,23 +58,23 @@ describe('consultation database operations', () => {
       title: 'Project check-in'
     }
     const insertResult = { acknowledged: true, insertedId: 'consultation-id' }
-    mockCollection.insertOne.mockResolvedValue(insertResult)
+    mockConsultationCollection.insertOne.mockResolvedValue(insertResult)
 
     const result = await addConsultation(consultation)
 
     expect(getCollection).toHaveBeenCalledWith('Consultation')
-    expect(mockCollection.insertOne).toHaveBeenCalledWith(consultation)
+    expect(mockConsultationCollection.insertOne).toHaveBeenCalledWith(consultation)
     expect(result).toEqual(insertResult)
   })
 
   test('listConsultationsForLecturerOnDate returns the lecturer bookings for that date', async () => {
     const toArray = jest.fn().mockResolvedValue([{ title: 'Project check-in' }])
-    mockCollection.find.mockReturnValue({ toArray })
+    mockConsultationCollection.find.mockReturnValue({ toArray })
 
     const result = await listConsultationsForLecturerOnDate('lecturer1', '2026-05-04')
 
     expect(getCollection).toHaveBeenCalledWith('Consultation')
-    expect(mockCollection.find).toHaveBeenCalledWith({
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({
       lecturerId: 'lecturer1',
       datetime: {
         $gte: '2026-05-04T00:00',
@@ -52,5 +83,97 @@ describe('consultation database operations', () => {
     })
     expect(toArray).toHaveBeenCalledTimes(1)
     expect(result).toEqual([{ title: 'Project check-in' }])
+  })
+
+  test('addStudentToConsultation appends a student when the consultation is open', async () => {
+    const consultationId = new ObjectId()
+    mockConsultationCollection.findOne.mockResolvedValue({
+      _id: consultationId,
+      attendees: ['organiser1'],
+      capacity: 2
+    })
+    mockConsultationCollection.updateOne.mockResolvedValue({ acknowledged: true, modifiedCount: 1 })
+
+    const result = await addStudentToConsultation(consultationId.toString(), 'student1')
+
+    expect(mockConsultationCollection.findOne).toHaveBeenCalledWith({ _id: consultationId })
+    expect(mockConsultationCollection.updateOne).toHaveBeenCalledWith(
+      { _id: consultationId },
+      { $addToSet: { attendees: 'student1' } }
+    )
+    expect(result).toEqual({ success: true })
+  })
+
+  test('addStudentToConsultation rejects joining a full consultation', async () => {
+    const consultationId = new ObjectId()
+    mockConsultationCollection.findOne.mockResolvedValue({
+      _id: consultationId,
+      attendees: ['organiser1'],
+      capacity: 1
+    })
+
+    const result = await addStudentToConsultation(consultationId.toString(), 'student1')
+
+    expect(mockConsultationCollection.updateOne).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      reason: JOIN_RESULT_REASONS.FULL,
+      statusCode: 400,
+      success: false
+    })
+  })
+
+  test('searchConsultationsForStudent only returns consultations in the future', async () => {
+    const now = new Date()
+    const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+    const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+
+    const futureId = new ObjectId()
+    const pastId = new ObjectId()
+
+    const consultationsToArray = jest.fn().mockResolvedValue([
+      {
+        _id: pastId,
+        attendees: [],
+        capacity: 1,
+        datetime: pastDate,
+        lecturerId: 'lecturer1',
+        organiserId: 'organiser1',
+        title: 'Past consultation'
+      },
+      {
+        _id: futureId,
+        attendees: [],
+        capacity: 1,
+        datetime: futureDate,
+        lecturerId: 'lecturer1',
+        organiserId: 'organiser1',
+        title: 'Future consultation'
+      }
+    ])
+
+    const usersToArray = jest.fn().mockResolvedValue([
+      { firstName: 'Lec', lastName: 'Turer', username: 'lecturer1' },
+      { firstName: 'Org', lastName: 'Aniser', username: 'organiser1' }
+    ])
+
+    const availabilityToArray = jest.fn().mockResolvedValue([
+      { duration: 30, username: 'lecturer1' }
+    ])
+
+    mockConsultationCollection.find.mockReturnValue({ toArray: consultationsToArray })
+    mockUserCollection.find.mockReturnValue({ toArray: usersToArray })
+    mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: availabilityToArray })
+
+    const result = await searchConsultationsForStudent({ username: 'student1' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      canJoin: true,
+      id: futureId.toString(),
+      name: 'Future consultation'
+    })
+    expect(result.some(function (consultation) {
+      return consultation.id === pastId.toString()
+    })).toBe(false)
   })
 })

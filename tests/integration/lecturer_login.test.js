@@ -95,7 +95,43 @@ describe('lecturer login integration flow', () => {
     expect(body).toContain('You are logged in as a lecturer.')
     expect(body).toContain('User Profile')
     expect(body).toContain(`href="/user_profile?user=${USERNAME}"`)
-    expect(body).not.toContain('Schedule a Consultation')
+    expect(body).toContain('Scheduled Consultations')
+    expect(body).toContain('href="/scheduled_consultations"')
+    expect(body).not.toContain('Join Consultation')
     expect(body).not.toContain('Find a Lecturer')
+  })
+
+  RUN_DB_TEST('renders the lecturer scheduled consultations placeholder and blocks the create consultation form', async function () {
+    const loginResponse = await fetch(`${baseUrl}/login`, {
+      body: encodeForm({
+        password: PASSWORD,
+        username: USERNAME
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST',
+      redirect: 'manual'
+    })
+
+    const sessionCookie = loginResponse.headers.get('set-cookie')?.split(';')[0] || ''
+    const scheduledResponse = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+    const scheduledBody = await scheduledResponse.text()
+    const createResponse = await fetch(`${baseUrl}/consultations/new`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+    const createBody = await createResponse.text()
+
+    expect(scheduledResponse.status).toBe(501)
+    expect(scheduledBody).toContain('<title>Scheduled Consultations</title>')
+    expect(scheduledBody).toContain('Scheduled consultations have not been built yet.')
+    expect(createResponse.status).toBe(403)
+    expect(createBody).toContain('Only students can create consultations.')
   })
 })

@@ -19,6 +19,11 @@ jest.mock('../../../src/models/user_db', () => ({
 }))
 
 jest.mock('../../../src/models/consultation_db', () => ({
+  JOIN_RESULT_REASONS: {
+    ALREADY_JOINED: 'already_joined',
+    FULL: 'full',
+    NOT_FOUND: 'not_found'
+  },
   addConsultation: jest.fn()
 }))
 

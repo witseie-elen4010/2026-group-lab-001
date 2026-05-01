@@ -7,6 +7,7 @@
   --color-border: #cbd5e1;
   --color-error-bg: #fee2e2;
   --color-error-text: #991b1b;
+  --join-button-muted-opacity: 0.82;
   --shadow-card: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
@@ -127,7 +128,7 @@ a {
   padding: 12px;
   border-radius: 8px;
   background: #dcfce7;
-  color: #166534;
+  color: #16a34a;
 }
 
 .search_status {
@@ -210,6 +211,16 @@ a {
   gap: 16px;
   max-width: 320px;
   margin: 24px auto 0;
+}
+
+.home_navigation_actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home_navigation_primary {
+  grid-column: 1 / -1;
 }
 
 .home_navigation_title {
@@ -315,6 +326,58 @@ a {
 .search_flex {
   display: flex;
   align-items: flex-end;
+}
+
+.join_consultation_header {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.join_consultation_item h2 {
+  font-size: 1.25rem;
+}
+
+.join_consultation_item .register_left_column,
+.join_consultation_item .register_middle_column,
+.join_consultation_item .register_right_column {
+  gap: 8px;
+}
+
+.join_button {
+  width: 100%;
+  margin: 0;
+}
+
+.join_button.success {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.join_button.error {
+  background: rgb(153 27 27 / var(--join-button-muted-opacity));
+  color: #ffffff;
+}
+
+.join_button.success.join_button_joined {
+  background: rgb(95 143 114 / var(--join-button-muted-opacity));
+}
+
+.join_button_joined {
+  opacity: 0.65;
+}
+
+.is_hidden {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .home_navigation_actions {
+    grid-template-columns: 1fr;
+  }
+
+  .home_navigation_primary {
+    grid-column: auto;
+  }
 }
 
 .consultation_preferences_section {
