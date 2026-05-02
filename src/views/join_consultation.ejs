@@ -45,8 +45,7 @@
     <section id="join_consultation_results" class="results">
       <% if (consultations.length === 0) { %>
         <% if (emptyStateType === 'create') { %>
-          <p>No matching consultations. Create new consultation?</p>
-          <a href="<%= createLink %>" class="button success">Create Consultation</a>
+          <p>No matching consultations. Create new consultation? <a href="<%= createLink %>" class="button_compact">Create</a></p>
         <% } else if (emptyStateType === 'violation') { %>
           <p>No matching consultation - Violates lecturer preferences.</p>
         <% } else { %>

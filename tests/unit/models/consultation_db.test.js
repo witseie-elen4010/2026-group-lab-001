@@ -122,6 +122,44 @@ describe('consultation database operations', () => {
     })
   })
 
+  test('searchConsultationsForStudent queries all consultations when no filters are given', async () => {
+    const toArray = jest.fn().mockResolvedValue([])
+    mockConsultationCollection.find.mockReturnValue({ toArray })
+
+    await searchConsultationsForStudent({ username: 'student1' })
+
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({})
+  })
+
+  test('searchConsultationsForStudent filters by lecturerId when provided', async () => {
+    const toArray = jest.fn().mockResolvedValue([])
+    mockConsultationCollection.find.mockReturnValue({ toArray })
+
+    await searchConsultationsForStudent({ username: 'student1', lecturerId: 'lecturer1' })
+
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({ lecturerId: 'lecturer1' })
+  })
+
+  test('searchConsultationsForStudent filters by date range when only date is provided', async () => {
+    const toArray = jest.fn().mockResolvedValue([])
+    mockConsultationCollection.find.mockReturnValue({ toArray })
+
+    await searchConsultationsForStudent({ username: 'student1', date: '2026-05-04' })
+
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({
+      datetime: { $gte: '2026-05-04T00:00', $lt: '2026-05-04T23:59~' }
+    })
+  })
+
+  test('searchConsultationsForStudent filters by exact datetime when date and time are both provided', async () => {
+    const toArray = jest.fn().mockResolvedValue([])
+    mockConsultationCollection.find.mockReturnValue({ toArray })
+
+    await searchConsultationsForStudent({ username: 'student1', date: '2026-05-04', time: '09:00' })
+
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({ datetime: '2026-05-04T09:00' })
+  })
+
   test('searchConsultationsForStudent only returns consultations in the future', async () => {
     const now = new Date()
     const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
