@@ -35,6 +35,45 @@ test.describe('join consultation E2E', () => {
     await closeDatabaseConnection()
   })
 
+  test.describe('search filter and create pre-fill', function () {
+    const FILTER_LECTURER_ID = LECTURER_USERNAME
+    const MONDAY_DATE = '2030-05-06'
+
+    test.beforeEach(async function () {
+      await connectToDatabase()
+      await getCollection('LecturerAvailability').deleteOne({ username: FILTER_LECTURER_ID })
+      await getCollection('LecturerAvailability').insertOne({
+        duration: 60,
+        exceptionDates: [],
+        username: FILTER_LECTURER_ID,
+        weeklyAvailability: [{ day: 'monday', startTime: '08:00', endTime: '12:00' }]
+      })
+    })
+
+    test.afterEach(async function () {
+      await connectToDatabase()
+      await getCollection('LecturerAvailability').deleteOne({ username: FILTER_LECTURER_ID })
+    })
+
+    test('navigating to a valid search shows a create link that pre-fills the consultation form', async ({ page }) => {
+      await page.goto('/login')
+      await page.getByRole('textbox', { name: 'Username' }).fill(STUDENT_USERNAME)
+      await page.getByLabel('Password').fill(PASSWORD)
+      await page.getByRole('button', { name: 'Log In' }).click()
+      await expect(page).toHaveURL(/\/home$/)
+
+      await page.goto(`/join_consultation?lecturerId=${FILTER_LECTURER_ID}&date=${MONDAY_DATE}&time=09%3A00`)
+
+      await expect(page.getByText('No matching consultations')).toBeVisible()
+
+      await page.getByRole('link', { name: 'Create' }).click()
+
+      await expect(page).toHaveURL(/\/consultations\/new/)
+      await expect(page.locator('input[name="datetime"]')).toHaveValue(`${MONDAY_DATE}T09:00`)
+      await expect(page.locator('select[name="lecturerId"]')).toHaveValue(FILTER_LECTURER_ID)
+    })
+  })
+
   test('student can join an open consultation from the home page', async ({ page }) => {
     await connectToDatabase()
     await getCollection('Consultation').insertMany([

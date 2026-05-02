@@ -144,12 +144,19 @@ router.get('/new', async function (req, res) {
     })
   }
 
+  const prefilledLecturerId = (req.query.lecturerId || '').trim()
+  const prefilledDate = (req.query.date || '').trim()
+  const prefilledTime = (req.query.time || '').trim()
+  const selectedDatetime = prefilledDate ? `${prefilledDate}T${prefilledTime || '09:00'}` : ''
+
   try {
     await connectToDatabase()
     const lecturers = await loadLecturerOptions(universityId)
 
     return renderCreateConsultation(res, {
       lecturers,
+      selectedDatetime,
+      selectedLecturerId: prefilledLecturerId,
       username
     })
   } catch {

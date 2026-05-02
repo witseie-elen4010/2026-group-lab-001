@@ -151,8 +151,40 @@ const findOverlappingConsultation = function ({ scheduledConsultations = [], pro
   return null
 }
 
+/**
+ * Checks whether a given date and optional start time fall within a lecturer's availability.
+ * When no valid time is provided the check is date-only: any date with a matching weekly slot passes.
+ * When a valid time is provided it verifies that a consultation of the lecturer's duration fits
+ * entirely within the slot (i.e. start >= slotStart and start + duration <= slotEnd).
+ * @param {object|null} availability - Lecturer availability document.
+ * @param {string} date - Date to check in YYYY-MM-DD format.
+ * @param {string} time - Proposed start time in HH:MM format, or empty string for a date-only check.
+ * @returns {boolean} True when the date (and time, if provided) is within the lecturer's availability.
+ */
+const isDateAvailableForLecturer = function (availability, date, time) {
+  if (!availability) return false
+  if (Array.isArray(availability.exceptionDates) && availability.exceptionDates.includes(date)) return false
+  const weekday = getWeekdayFromIso(date)
+  if (!weekday) return false
+  const weeklyAvailability = Array.isArray(availability.weeklyAvailability) ? availability.weeklyAvailability : []
+  const matchingSlot = weeklyAvailability.find(function (slot) {
+    return slot && typeof slot === 'object' && (slot.day || '').toLowerCase() === weekday
+  })
+  if (!matchingSlot) return false
+  if (!TIME_PATTERN.test(time) || !TIME_PATTERN.test(matchingSlot.startTime) || !TIME_PATTERN.test(matchingSlot.endTime)) {
+    return true
+  }
+  const duration = Number.isInteger(availability.duration) ? availability.duration : 60
+  const consultationEnd = addMinutesToTime(time, duration)
+  if (!consultationEnd) return false
+  return timeToMinutes(time) >= timeToMinutes(matchingSlot.startTime) &&
+    timeToMinutes(consultationEnd) <= timeToMinutes(matchingSlot.endTime)
+}
+
 module.exports = {
   addMinutesToTime,
-  validateLecturerAvailability,
-  findOverlappingConsultation
+  findOverlappingConsultation,
+  getWeekdayFromIso,
+  isDateAvailableForLecturer,
+  validateLecturerAvailability
 }

@@ -366,6 +366,12 @@ a {
   opacity: 0.65;
 }
 
+.button_compact {
+  padding: 12px 10px;
+  margin-left: 24px;
+  vertical-align: middle;
+}
+
 .is_hidden {
   display: none;
 }

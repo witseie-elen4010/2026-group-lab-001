@@ -54,12 +54,25 @@ const listConsultationsForLecturerOnDate = async function (lecturerId, isoDate) 
  * Searches consultations for display on the join page.
  * @param {object} options - Search options.
  * @param {string} [options.username=''] - Current student username.
+ * @param {string} [options.lecturerId=''] - Filter by lecturer username.
+ * @param {string} [options.date=''] - Filter by date in YYYY-MM-DD format.
+ * @param {string} [options.time=''] - Filter by exact start time in HH:MM format; requires date.
  * @returns {Promise<Array<object>>} Matching consultations enriched for display.
  */
 const searchConsultationsForStudent = async function ({
-  username = ''
+  username = '',
+  lecturerId = '',
+  date = '',
+  time = ''
 } = {}) {
-  const consultations = await consultationsCollection().find({}).toArray()
+  const query = {}
+  if (lecturerId) query.lecturerId = lecturerId
+  if (date && time) {
+    query.datetime = `${date}T${time}`
+  } else if (date) {
+    query.datetime = { $gte: `${date}T00:00`, $lt: `${date}T23:59~` }
+  }
+  const consultations = await consultationsCollection().find(query).toArray()
 
   if (consultations.length === 0) {
     return []

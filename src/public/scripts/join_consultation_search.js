@@ -2,6 +2,32 @@ document.addEventListener('DOMContentLoaded', function () {
   const JOIN_ERROR = 'Unable to join consultation right now.'
   const feedback = document.getElementById('join_consultation_feedback')
   const resultsSection = document.getElementById('join_consultation_results')
+  const dateInput = document.getElementById('filter_date')
+  const timeInput = document.getElementById('filter_time')
+
+  /**
+   * Constrains the time input's minimum value to the current time when today's date is selected.
+   * Clears any previously entered time that would now fall in the past.
+   * Removes the constraint when a future date is selected.
+   */
+  const updateTimeMin = function () {
+    if (!dateInput || !timeInput) return
+    const today = new Date().toISOString().slice(0, 10)
+    if (dateInput.value === today) {
+      const now = new Date()
+      const hh = String(now.getHours()).padStart(2, '0')
+      const mm = String(now.getMinutes()).padStart(2, '0')
+      timeInput.min = `${hh}:${mm}`
+      if (timeInput.value && timeInput.value < timeInput.min) {
+        timeInput.value = ''
+      }
+    } else {
+      timeInput.min = ''
+    }
+  }
+
+  if (dateInput) dateInput.addEventListener('change', updateTimeMin)
+  updateTimeMin()
 
   if (!feedback || !resultsSection) {
     return
