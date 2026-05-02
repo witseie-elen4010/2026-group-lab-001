@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const dateInput = document.getElementById('filter_date')
   const timeInput = document.getElementById('filter_time')
 
+  /**
+   * Constrains the time input's minimum value to the current time when today's date is selected.
+   * Clears any previously entered time that would now fall in the past.
+   * Removes the constraint when a future date is selected.
+   */
   const updateTimeMin = function () {
     if (!dateInput || !timeInput) return
     const today = new Date().toISOString().slice(0, 10)

@@ -15,6 +15,11 @@ const JOIN_ERROR_MESSAGES = {
 
 const router = express.Router()
 
+/**
+ * Converts lecturer documents into option objects for the consultation search form.
+ * @param {Array<object>} lecturers - Lecturer documents from the database.
+ * @returns {Array<{id: string, name: string}>} Lecturer options for the dropdown.
+ */
 const buildLecturerOptions = function (lecturers = []) {
   return lecturers.map(function (lecturer) {
     const fullName = `${lecturer.firstName || ''} ${lecturer.lastName || ''}`.trim()
@@ -25,6 +30,19 @@ const buildLecturerOptions = function (lecturers = []) {
   })
 }
 
+/**
+ * Renders the join consultation page.
+ * @param {import('express').Response} res - Express response object.
+ * @param {object} [options] - View data.
+ * @param {Array<object>} [options.consultations=[]] - Enriched consultation objects for display.
+ * @param {string} [options.createLink=''] - Pre-filled URL to the create consultation form.
+ * @param {string} [options.emptyStateType=''] - Empty state variant: 'create', 'violation', or ''.
+ * @param {string} [options.error=''] - Error message to display.
+ * @param {object} [options.filters] - Active search filter values.
+ * @param {Array<object>} [options.lecturers=[]] - Lecturer options for the dropdown.
+ * @param {number} [options.statusCode=200] - HTTP status code.
+ * @returns {import('express').Response} The rendered response.
+ */
 const renderJoinConsultation = function (res, {
   consultations = [],
   createLink = '',

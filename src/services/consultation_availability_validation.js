@@ -151,6 +151,16 @@ const findOverlappingConsultation = function ({ scheduledConsultations = [], pro
   return null
 }
 
+/**
+ * Checks whether a given date and optional start time fall within a lecturer's availability.
+ * When no valid time is provided the check is date-only: any date with a matching weekly slot passes.
+ * When a valid time is provided it verifies that a consultation of the lecturer's duration fits
+ * entirely within the slot (i.e. start >= slotStart and start + duration <= slotEnd).
+ * @param {object|null} availability - Lecturer availability document.
+ * @param {string} date - Date to check in YYYY-MM-DD format.
+ * @param {string} time - Proposed start time in HH:MM format, or empty string for a date-only check.
+ * @returns {boolean} True when the date (and time, if provided) is within the lecturer's availability.
+ */
 const isDateAvailableForLecturer = function (availability, date, time) {
   if (!availability) return false
   if (Array.isArray(availability.exceptionDates) && availability.exceptionDates.includes(date)) return false
