@@ -151,8 +151,30 @@ const findOverlappingConsultation = function ({ scheduledConsultations = [], pro
   return null
 }
 
+const isDateAvailableForLecturer = function (availability, date, time) {
+  if (!availability) return false
+  if (Array.isArray(availability.exceptionDates) && availability.exceptionDates.includes(date)) return false
+  const weekday = getWeekdayFromIso(date)
+  if (!weekday) return false
+  const weeklyAvailability = Array.isArray(availability.weeklyAvailability) ? availability.weeklyAvailability : []
+  const matchingSlot = weeklyAvailability.find(function (slot) {
+    return slot && typeof slot === 'object' && (slot.day || '').toLowerCase() === weekday
+  })
+  if (!matchingSlot) return false
+  if (!TIME_PATTERN.test(time) || !TIME_PATTERN.test(matchingSlot.startTime) || !TIME_PATTERN.test(matchingSlot.endTime)) {
+    return true
+  }
+  const duration = Number.isInteger(availability.duration) ? availability.duration : 60
+  const consultationEnd = addMinutesToTime(time, duration)
+  if (!consultationEnd) return false
+  return timeToMinutes(time) >= timeToMinutes(matchingSlot.startTime) &&
+    timeToMinutes(consultationEnd) <= timeToMinutes(matchingSlot.endTime)
+}
+
 module.exports = {
   addMinutesToTime,
-  validateLecturerAvailability,
-  findOverlappingConsultation
+  findOverlappingConsultation,
+  getWeekdayFromIso,
+  isDateAvailableForLecturer,
+  validateLecturerAvailability
 }

@@ -16,11 +16,42 @@
     <% if (error) { %>
       <p class="error"><%= error %></p>
     <% } %>
+
+    <form method="get" action="/join_consultation" class="search_form">
+      <label>
+        Lecturer
+        <select name="lecturerId">
+          <option value="">All lecturers</option>
+          <% lecturers.forEach(function (lecturer) { %>
+            <option value="<%= lecturer.id %>" <%= filters.lecturerId === lecturer.id ? 'selected' : '' %>>
+              <%= lecturer.name %>
+            </option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        Date
+        <input type="date" id="filter_date" name="date" value="<%= filters.date %>" min="<%= new Date().toISOString().slice(0, 10) %>">
+      </label>
+      <label>
+        Time
+        <input type="time" id="filter_time" name="time" value="<%= filters.time %>" step="900">
+      </label>
+      <button type="submit">Search</button>
+    </form>
+
     <p id="join_consultation_feedback" class="is_hidden" aria-live="polite"></p>
 
     <section id="join_consultation_results" class="results">
       <% if (consultations.length === 0) { %>
-        <p>No consultations found.</p>
+        <% if (emptyStateType === 'create') { %>
+          <p>No matching consultations. Create new consultation?</p>
+          <a href="<%= createLink %>" class="button success">Create Consultation</a>
+        <% } else if (emptyStateType === 'violation') { %>
+          <p>No matching consultation - Violates lecturer preferences.</p>
+        <% } else { %>
+          <p>No consultations found.</p>
+        <% } %>
       <% } else { %>
         <% consultations.forEach(function (consultation) { %>
           <article class="profile_detail join_consultation_item">

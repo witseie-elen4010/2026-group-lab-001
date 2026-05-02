@@ -57,9 +57,19 @@ const listConsultationsForLecturerOnDate = async function (lecturerId, isoDate) 
  * @returns {Promise<Array<object>>} Matching consultations enriched for display.
  */
 const searchConsultationsForStudent = async function ({
-  username = ''
+  username = '',
+  lecturerId = '',
+  date = '',
+  time = ''
 } = {}) {
-  const consultations = await consultationsCollection().find({}).toArray()
+  const query = {}
+  if (lecturerId) query.lecturerId = lecturerId
+  if (date && time) {
+    query.datetime = `${date}T${time}`
+  } else if (date) {
+    query.datetime = { $gte: `${date}T00:00`, $lt: `${date}T23:59~` }
+  }
+  const consultations = await consultationsCollection().find(query).toArray()
 
   if (consultations.length === 0) {
     return []
