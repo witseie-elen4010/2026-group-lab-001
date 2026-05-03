@@ -132,10 +132,12 @@ const searchConsultationsForStudent = async function ({
 }
 
 /**
- * Adds a student attendee to an existing consultation when space remains.
- * @param {string} consultationId - Consultation id string.
- * @param {string} username - Student username.
- * @returns {Promise<{success: boolean, reason?: string, statusCode?: number}>} Join result.
+ * Returns upcoming consultations within a month range for display on the student calendar.
+ * Excludes past consultations. Each entry includes the student's join status and whether the consultation is full.
+ * @param {string} username - The student's username.
+ * @param {string} monthStart - Start of the month range in 'YYYY-MM-DDTHH:MM' format.
+ * @param {string} monthEnd - End of the month range in 'YYYY-MM-DDTHH:MM~' format.
+ * @returns {Promise<Array<object>>} Enriched consultation objects for calendar display.
  */
 const getConsultationsForCalendar = async function (username, monthStart, monthEnd) {
   const consultations = await consultationsCollection().find({
@@ -184,6 +186,12 @@ const getConsultationsForCalendar = async function (username, monthStart, monthE
   }).filter(Boolean)
 }
 
+/**
+ * Adds a student attendee to an existing consultation when space remains.
+ * @param {string} consultationId - Consultation id string.
+ * @param {string} username - Student username.
+ * @returns {Promise<{success: boolean, reason?: string, statusCode?: number}>} Join result.
+ */
 const addStudentToConsultation = async function (consultationId, username) {
   if (!ObjectId.isValid(consultationId)) {
     return { success: false, reason: JOIN_RESULT_REASONS.NOT_FOUND, statusCode: 404 }
