@@ -183,6 +183,8 @@ Key architectural decisions are documented in [`documentation/architecture/`](ht
 | [ADR 001](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/001_adr.md) | Express.js as the HTTP framework |
 | [ADR 002](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/002_adr.md) | MongoDB Atlas with the official Node.js driver |
 | [ADR 003](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/003_adr.md) | Jest for automated testing with GitHub Actions CI |
+| [ADR 004](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/004_adr.md) | Coveralls for code coverage reporting with GitHub Actions CI |
+| [ADR 005](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/005_adr.md) | Render for hosting |
 
 ---
 
