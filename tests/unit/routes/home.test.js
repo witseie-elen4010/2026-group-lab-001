@@ -489,6 +489,80 @@ describe('home route', () => {
     expect(data.totalPages).toBe(2)
   })
 
+  test('Shows consultation notes on the student calendar for the current month', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: false,
+      id: 'cons-1',
+      isFull: false,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Project Review')
+    expect(body).toContain('Jane Doe')
+    expect(body).toContain('09:00 to 10:00')
+  })
+
+  test('Shows the Joined label for a consultation the student has joined', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: true,
+      id: 'cons-1',
+      isFull: false,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(body).toContain('Joined')
+    expect(body).toContain('calendar_day_note_joined')
+  })
+
+  test('Shows the Unjoined label for a consultation the student has not joined', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: false,
+      id: 'cons-1',
+      isFull: false,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(body).toContain('Unjoined')
+    expect(body).toContain('calendar_day_note_unjoined')
+  })
+
+  test('Shows the Fully Booked label for a full unjoined consultation', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: false,
+      id: 'cons-1',
+      isFull: true,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(body).toContain('Fully Booked')
+    expect(body).toContain('calendar_day_note_full')
+  })
+
   test('Renders pagination links when there are more than 20 results', async () => {
     searchLecturers.mockResolvedValue(MOCK_LECTURERS_21)
     const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
