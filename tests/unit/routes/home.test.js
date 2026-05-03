@@ -19,6 +19,7 @@ jest.mock('../../../src/models/user_db', () => ({
 }))
 
 jest.mock('../../../src/models/consultation_db', () => ({
+  getConsultationsForCalendar: jest.fn(),
   JOIN_RESULT_REASONS: {
     ALREADY_JOINED: 'already_joined',
     FULL: 'full',
@@ -57,7 +58,7 @@ const closeServer = async function (server) {
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
-const { addConsultation } = require('../../../src/models/consultation_db')
+const { addConsultation, getConsultationsForCalendar } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 
@@ -169,6 +170,7 @@ describe('home route', () => {
     jest.clearAllMocks()
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
+    getConsultationsForCalendar.mockResolvedValue([])
     getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
   })

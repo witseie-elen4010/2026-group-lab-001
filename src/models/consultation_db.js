@@ -137,6 +137,53 @@ const searchConsultationsForStudent = async function ({
  * @param {string} username - Student username.
  * @returns {Promise<{success: boolean, reason?: string, statusCode?: number}>} Join result.
  */
+const getConsultationsForCalendar = async function (username, monthStart, monthEnd) {
+  const consultations = await consultationsCollection().find({
+    datetime: { $gte: monthStart, $lt: monthEnd }
+  }).toArray()
+
+  if (consultations.length === 0) return []
+
+  const lecturerIds = [...new Set(consultations.map(function (c) {
+    return c.lecturerId
+  }).filter(Boolean))]
+
+  const [users, availabilities] = await Promise.all([
+    usersCollection().find({ username: { $in: lecturerIds } }).toArray(),
+    getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: { $in: lecturerIds } }).toArray()
+  ])
+
+  const usersByUsername = new Map(users.map(function (u) {
+    return [u.username, u]
+  }))
+  const availabilitiesByUsername = new Map(availabilities.map(function (a) {
+    return [a.username, a]
+  }))
+
+  const now = new Date()
+
+  return consultations.map(function (consultation) {
+    if (!consultation._id) return null
+    if (new Date(consultation.datetime) <= now) return null
+
+    const startTime = consultation.datetime?.slice(11, 16) || ''
+    const endTime = addMinutesToTime(startTime, availabilitiesByUsername.get(consultation.lecturerId)?.duration) || startTime
+    const time = startTime ? `${startTime} to ${endTime}` : ''
+    const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
+    const hasCapacity = Number.isInteger(consultation.capacity)
+
+    return {
+      date: consultation.datetime?.slice(0, 10) || '',
+      hasJoined: attendees.includes(username),
+      id: consultation._id.toString(),
+      isFull: hasCapacity && attendees.length >= consultation.capacity,
+      lecturer: buildDisplayName(usersByUsername.get(consultation.lecturerId), consultation.lecturerId),
+      name: consultation.title || 'Untitled consultation',
+      time
+    }
+  }).filter(Boolean)
+}
+
 const addStudentToConsultation = async function (consultationId, username) {
   if (!ObjectId.isValid(consultationId)) {
     return { success: false, reason: JOIN_RESULT_REASONS.NOT_FOUND, statusCode: 404 }
@@ -169,6 +216,7 @@ const addStudentToConsultation = async function (consultationId, username) {
 module.exports = {
   addConsultation,
   addStudentToConsultation,
+  getConsultationsForCalendar,
   JOIN_RESULT_REASONS,
   listConsultationsForLecturerOnDate,
   searchConsultationsForStudent
