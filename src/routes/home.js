@@ -2,6 +2,7 @@
 
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
+const { getConsultationsForCalendar } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
 const { searchLecturers } = require('../models/user_db')
 const { buildCurrentMonthCalendar } = require('../utils/calendar')
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
   }
 
   if (role !== 'student') {
-    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0 })
+    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0 })
   }
 
   const query = req.query.q?.trim() || ''
@@ -42,9 +43,28 @@ router.get('/', async (req, res) => {
   const schoolId = req.query.schoolId?.trim() || ''
   const page = Math.max(1, parseInt(req.query.page) || 1)
 
+  const calendarNow = new Date()
+  const calendarYear = calendarNow.getFullYear()
+  const calendarMonth = calendarNow.getMonth()
+  const paddedMonth = String(calendarMonth + 1).padStart(2, '0')
+  const daysInCalendarMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate()
+  const monthStart = `${calendarYear}-${paddedMonth}-01T00:00`
+  const monthEnd = `${calendarYear}-${paddedMonth}-${String(daysInCalendarMonth).padStart(2, '0')}T23:59~`
+
   try {
     await connectToDatabase()
-    const allLecturers = await searchLecturers({ universityId, query })
+    const [allLecturers, calendarConsultations] = await Promise.all([
+      searchLecturers({ universityId, query }),
+      getConsultationsForCalendar(username, monthStart, monthEnd)
+    ])
+
+    const consultationsByDate = {}
+    calendarConsultations.forEach(function (consultation) {
+      if (!consultationsByDate[consultation.date]) {
+        consultationsByDate[consultation.date] = []
+      }
+      consultationsByDate[consultation.date].push(consultation)
+    })
 
     const faculties = [...new Set(allLecturers.map(l => l.facultyId).filter(Boolean))]
     const filteredLecturers = allLecturers.filter(l =>
@@ -65,12 +85,12 @@ router.get('/', async (req, res) => {
     if (req.headers.accept?.includes('application/json')) {
       return res.json({ lecturers, page: currentPage, totalPages })
     }
-    return res.render('home', { title, homeTitle, role, username, calendar, lecturers, faculties, schools, query, facultyId, schoolId, page: currentPage, totalPages })
+    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate, lecturers, faculties, schools, query, facultyId, schoolId, page: currentPage, totalPages })
   } catch {
     if (req.headers.accept?.includes('application/json')) {
       return res.json({ lecturers: [], page: 1, totalPages: 0 })
     }
-    return res.render('home', { title, homeTitle, role, username, calendar, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId, page: 1, totalPages: 0 })
+    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId, page: 1, totalPages: 0 })
   }
 })
 

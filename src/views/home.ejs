@@ -54,7 +54,20 @@
           <% calendar.weeks.forEach(function (week) { %>
             <tr>
               <% week.forEach(function (day) { %>
-                <% if (!day.isEmpty) { %>
+                <% if (day.isEmpty) { %>
+                  <td class="calendar_day calendar_day_empty"></td>
+                <% } else if (role === 'student') { %>
+                  <% const dayCons = consultationsByDate[day.isoDate] || [] %>
+                  <td class="calendar_day">
+                    <div class="calendar_day_content">
+                      <span class="calendar_day_number"><%= day.dayNumber %></span>
+                      <% dayCons.forEach(function (con) { %>
+                        <% const statusLabel = con.hasJoined ? 'Joined' : con.isFull ? 'Fully Booked' : 'Unjoined' %>
+                        <span class="calendar_day_note <%= con.hasJoined ? 'calendar_day_note_joined' : con.isFull ? 'calendar_day_note_full' : 'calendar_day_note_unjoined' %>"><%= con.name %> &middot; <%= con.lecturer %> &middot; <%= con.time %> &middot; <%= statusLabel %></span>
+                      <% }) %>
+                    </div>
+                  </td>
+                <% } else { %>
                   <td class="calendar_day<%= day.availabilityState === 'available' ? ' calendar_day_available' : '' %><%= day.availabilityState === 'unavailable' ? ' calendar_day_unavailable' : '' %>">
                     <div class="calendar_day_content">
                       <span class="calendar_day_number"><%= day.dayNumber %></span>
@@ -63,8 +76,6 @@
                       <% } %>
                     </div>
                   </td>
-                <% } else { %>
-                  <td class="calendar_day calendar_day_empty"></td>
                 <% } %>
               <% }) %>
             </tr>

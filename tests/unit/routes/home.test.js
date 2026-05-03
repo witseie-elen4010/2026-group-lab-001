@@ -19,6 +19,7 @@ jest.mock('../../../src/models/user_db', () => ({
 }))
 
 jest.mock('../../../src/models/consultation_db', () => ({
+  getConsultationsForCalendar: jest.fn(),
   JOIN_RESULT_REASONS: {
     ALREADY_JOINED: 'already_joined',
     FULL: 'full',
@@ -57,7 +58,7 @@ const closeServer = async function (server) {
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
-const { addConsultation } = require('../../../src/models/consultation_db')
+const { addConsultation, getConsultationsForCalendar } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 
@@ -169,6 +170,7 @@ describe('home route', () => {
     jest.clearAllMocks()
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
+    getConsultationsForCalendar.mockResolvedValue([])
     getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
   })
@@ -485,6 +487,80 @@ describe('home route', () => {
     expect(data.lecturers).toHaveLength(1)
     expect(data.page).toBe(2)
     expect(data.totalPages).toBe(2)
+  })
+
+  test('Shows consultation notes on the student calendar for the current month', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: false,
+      id: 'cons-1',
+      isFull: false,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Project Review')
+    expect(body).toContain('Jane Doe')
+    expect(body).toContain('09:00 to 10:00')
+  })
+
+  test('Shows the Joined label for a consultation the student has joined', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: true,
+      id: 'cons-1',
+      isFull: false,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(body).toContain('Joined')
+    expect(body).toContain('calendar_day_note_joined')
+  })
+
+  test('Shows the Unjoined label for a consultation the student has not joined', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: false,
+      id: 'cons-1',
+      isFull: false,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(body).toContain('Unjoined')
+    expect(body).toContain('calendar_day_note_unjoined')
+  })
+
+  test('Shows the Fully Booked label for a full unjoined consultation', async () => {
+    getConsultationsForCalendar.mockResolvedValue([{
+      date: getCurrentMonthDate(15),
+      hasJoined: false,
+      id: 'cons-1',
+      isFull: true,
+      lecturer: 'Jane Doe',
+      name: 'Project Review',
+      time: '09:00 to 10:00'
+    }])
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'morris' })
+    const response = await fetch(`${baseUrl}/home`, { headers: { cookie: sessionCookie } })
+    const body = await response.text()
+
+    expect(body).toContain('Fully Booked')
+    expect(body).toContain('calendar_day_note_full')
   })
 
   test('Renders pagination links when there are more than 20 results', async () => {

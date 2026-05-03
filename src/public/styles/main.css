@@ -281,6 +281,20 @@ a {
   text-align: right;
 }
 
+
+.calendar_day_note_joined {
+  color: #166534;
+  font-weight: 600;
+}
+
+.calendar_day_note_unjoined {
+  color: #9ca3af;
+}
+
+.calendar_day_note_full {
+  color: #c2410c;
+}
+
 .calendar_day_available {
   background: #dcfce7;
 }
