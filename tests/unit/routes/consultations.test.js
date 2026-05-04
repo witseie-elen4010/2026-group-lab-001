@@ -91,6 +91,7 @@ const createServer = async function () {
 describe('consultations route', () => {
   let baseUrl
   let server
+  const MONDAY_DATETIME = '2030-05-06T09:00'
 
   beforeAll(async () => {
     server = await createServer()
@@ -159,7 +160,7 @@ describe('consultations route', () => {
   test('creates a consultation and redirects to home', async () => {
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
-        datetime: '2026-05-04T09:00',
+        datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
       }),
@@ -176,7 +177,7 @@ describe('consultations route', () => {
     expect(addConsultation).toHaveBeenCalledWith({
       attendees: ['morris'],
       capacity: 1,
-      datetime: '2026-05-04T09:00',
+      datetime: MONDAY_DATETIME,
       lecturerId: 'lecturer1',
       organiserId: 'morris',
       title: 'Project check-in'
@@ -192,7 +193,7 @@ describe('consultations route', () => {
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
-        datetime: '2026-05-04T09:00',
+        datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer2',
         title: 'Project check-in'
       }),
@@ -232,7 +233,7 @@ describe('consultations route', () => {
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
-        datetime: '2026-05-04T09:00',
+        datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
       }),
@@ -253,7 +254,7 @@ describe('consultations route', () => {
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
-        datetime: '2026-05-04T09:00',
+        datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
       }),
@@ -274,7 +275,7 @@ describe('consultations route', () => {
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
-        datetime: '2026-05-04T09:00',
+        datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
       }),

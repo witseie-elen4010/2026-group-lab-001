@@ -53,7 +53,7 @@ describe('consultation database operations', () => {
     const consultation = {
       attendees: ['morris'],
       capacity: 1,
-      datetime: '2026-05-04T09:00',
+      datetime: '2030-05-04T09:00',
       lecturerId: 'lecturer1',
       organiserId: 'morris',
       title: 'Project check-in'
@@ -72,14 +72,14 @@ describe('consultation database operations', () => {
     const toArray = jest.fn().mockResolvedValue([{ title: 'Project check-in' }])
     mockConsultationCollection.find.mockReturnValue({ toArray })
 
-    const result = await listConsultationsForLecturerOnDate('lecturer1', '2026-05-04')
+    const result = await listConsultationsForLecturerOnDate('lecturer1', '2030-05-04')
 
     expect(getCollection).toHaveBeenCalledWith('Consultation')
     expect(mockConsultationCollection.find).toHaveBeenCalledWith({
       lecturerId: 'lecturer1',
       datetime: {
-        $gte: '2026-05-04T00:00',
-        $lt: '2026-05-04T23:59~'
+        $gte: '2030-05-04T00:00',
+        $lt: '2030-05-04T23:59~'
       }
     })
     expect(toArray).toHaveBeenCalledTimes(1)
@@ -145,10 +145,10 @@ describe('consultation database operations', () => {
     const toArray = jest.fn().mockResolvedValue([])
     mockConsultationCollection.find.mockReturnValue({ toArray })
 
-    await searchConsultationsForStudent({ username: 'student1', date: '2026-05-04' })
+    await searchConsultationsForStudent({ username: 'student1', date: '2030-05-04' })
 
     expect(mockConsultationCollection.find).toHaveBeenCalledWith({
-      datetime: { $gte: '2026-05-04T00:00', $lt: '2026-05-04T23:59~' }
+      datetime: { $gte: '2030-05-04T00:00', $lt: '2030-05-04T23:59~' }
     })
   })
 
@@ -156,9 +156,9 @@ describe('consultation database operations', () => {
     const toArray = jest.fn().mockResolvedValue([])
     mockConsultationCollection.find.mockReturnValue({ toArray })
 
-    await searchConsultationsForStudent({ username: 'student1', date: '2026-05-04', time: '09:00' })
+    await searchConsultationsForStudent({ username: 'student1', date: '2030-05-04', time: '09:00' })
 
-    expect(mockConsultationCollection.find).toHaveBeenCalledWith({ datetime: '2026-05-04T09:00' })
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({ datetime: '2030-05-04T09:00' })
   })
 
   describe('getConsultationsForCalendar', () => {

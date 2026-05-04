@@ -40,7 +40,7 @@ const findCalendarDay = function (calendar, dayNumber) {
 
 describe('calendar utility', () => {
   test('marks weekly availability days as available', function () {
-    const year = 2026
+    const year = 2030
     const month = 4
     const firstMonday = findFirstDayNumberForWeekday(year, month, 1)
     const calendar = buildCurrentMonthCalendar(new Date(year, month, 15), {
@@ -56,7 +56,7 @@ describe('calendar utility', () => {
   })
 
   test('marks exception dates as unavailable even when the weekday is usually available', function () {
-    const year = 2026
+    const year = 2030
     const month = 4
     const firstMonday = findFirstDayNumberForWeekday(year, month, 1)
     const calendar = buildCurrentMonthCalendar(new Date(year, month, 15), {
