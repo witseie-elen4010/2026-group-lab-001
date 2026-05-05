@@ -127,4 +127,31 @@ describe('student login integration flow', () => {
     expect(body).toContain('Scheduling a consultation has not been built yet.')
     expect(body).toContain('href="/home"')
   })
+
+  RUN_DB_TEST('blocks the seeded student user from the lecturer dashboard page', async function () {
+    const loginResponse = await fetch(`${baseUrl}/login`, {
+      body: encodeForm({
+        password: PASSWORD,
+        username: USERNAME
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST',
+      redirect: 'manual'
+    })
+
+    const sessionCookie = loginResponse.headers.get('set-cookie')?.split(';')[0] || ''
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(body).toContain('<title>Lecturer Dashboard</title>')
+    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
+    expect(body).not.toContain('No upcoming consultations yet.')
+  })
 })

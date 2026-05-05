@@ -341,6 +341,25 @@ describe('home route', () => {
     expect(body).toContain('href="/home"')
   })
 
+  test('Blocks non-lecturer users from the scheduled consultations page', async () => {
+    const { sessionCookie } = await loginAs({
+      role: 'student',
+      username: 'morris'
+    })
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(body).toContain('<title>Lecturer Dashboard</title>')
+    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
+    expect(body).not.toContain('No upcoming consultations yet.')
+  })
+
   test('Renders the home page without lecturer search for a non-student user', async () => {
     const { sessionCookie } = await loginAs({ role: 'lecturer', username: 'lectureruser' })
     const response = await fetch(`${baseUrl}/home`, {
