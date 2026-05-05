@@ -39,7 +39,37 @@
 
       <section>
         <h2>Calendar</h2>
-        <p>Your scheduled consultation calendar will appear here.</p>
+        <h3 class="calendar_title"><%= calendar.monthLabel %></h3>
+        <table class="calendar_table">
+          <thead>
+            <tr>
+              <% calendar.dayLabels.forEach(function (dayLabel) { %>
+                <th class="calendar_heading" scope="col"><%= dayLabel %></th>
+              <% }) %>
+            </tr>
+          </thead>
+          <tbody>
+            <% calendar.weeks.forEach(function (week) { %>
+              <tr>
+                <% week.forEach(function (day) { %>
+                  <% const dayConsultations = consultationsByDate[day.isoDate] || [] %>
+                  <% if (day.isEmpty) { %>
+                    <td class="calendar_day calendar_day_empty"></td>
+                  <% } else { %>
+                    <td class="calendar_day<%= dayConsultations.length > 0 ? ' calendar_day_scheduled' : '' %>">
+                      <div class="calendar_day_content">
+                        <span class="calendar_day_number"><%= day.dayNumber %></span>
+                        <% dayConsultations.forEach(function (consultation) { %>
+                          <span class="calendar_day_note calendar_day_note_dashboard"><%= consultation.name %> &middot; <%= consultation.time %></span>
+                        <% }) %>
+                      </div>
+                    </td>
+                  <% } %>
+                <% }) %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
       </section>
     <% } %>
 

@@ -355,6 +355,8 @@ describe('home route', () => {
     expect(body).toContain('morris')
     expect(body).toContain('2030-05-04')
     expect(body).toContain('09:00 to 09:30')
+    expect(body).toContain('calendar_table')
+    expect(body).toContain('calendar_day_note_dashboard')
     expect(body).toContain('href="/home"')
     expect(connectToDatabase).toHaveBeenCalledTimes(1)
     expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')

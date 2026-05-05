@@ -312,6 +312,15 @@ a {
   color: var(--color-error-text);
 }
 
+.calendar_day_scheduled {
+  background: #eff6ff;
+}
+
+.calendar_day_note_dashboard {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
 .calendar_day_empty {
   background: #f8fafc;
 }
