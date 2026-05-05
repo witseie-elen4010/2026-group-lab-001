@@ -362,6 +362,89 @@ describe('home route', () => {
     expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
   })
 
+  test('Renders an empty lecturer dashboard when there are no upcoming consultations', async () => {
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+    connectToDatabase.mockClear()
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('No upcoming consultations yet.')
+    expect(body).toContain('calendar_table')
+    expect(body).toContain(getCurrentMonthLabel())
+    expect(connectToDatabase).toHaveBeenCalledTimes(1)
+    expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
+  })
+
+  test('Renders the dashboard calendar month from the earliest upcoming consultation', async () => {
+    getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
+      {
+        date: '2030-06-05',
+        id: 'consultation-1',
+        name: 'Signals review',
+        organiser: 'morris',
+        time: '09:00 to 09:30'
+      },
+      {
+        date: '2030-06-11',
+        id: 'consultation-2',
+        name: 'Project prep',
+        organiser: 'sam',
+        time: '10:00 to 10:30'
+      }
+    ])
+
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain(getCurrentMonthLabel(new Date('2030-06-01T00:00')))
+    expect(body).toContain('Signals review')
+    expect(body).toContain('Project prep')
+    expect(body).toContain('calendar_day_note_dashboard')
+  })
+
+  test('Shows an error when the lecturer dashboard cannot be loaded', async () => {
+    getUpcomingConsultationsForLecturer.mockRejectedValueOnce(new Error('dashboard failed'))
+
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(500)
+    expect(body).toContain('Unable to load upcoming consultations right now.')
+    expect(body).not.toContain('No upcoming consultations yet.')
+    expect(body).not.toContain('dashboard_consultation_card')
+  })
+
   test('Blocks non-lecturer users from the scheduled consultations page', async () => {
     const { sessionCookie } = await loginAs({
       role: 'student',
