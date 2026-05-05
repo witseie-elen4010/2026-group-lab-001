@@ -223,7 +223,7 @@ describe('user profile integration flow', () => {
         availability_monday: 'available',
         start_time_monday: '10:00',
         end_time_monday: '11:00',
-        exceptionDates: '2026-11-10\n2026-11-11'
+        exceptionDates: '2030-11-10\n2030-11-11'
       }),
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
@@ -240,7 +240,7 @@ describe('user profile integration flow', () => {
     expect(savedPreferences).toEqual(expect.objectContaining({
       dailyMax: 2,
       duration: 45,
-      exceptionDates: ['2026-11-10', '2026-11-11'],
+      exceptionDates: ['2030-11-10', '2030-11-11'],
       maxStudents: 3,
       minStudents: 1,
       username: LECTURER_USERNAME,

@@ -192,7 +192,7 @@ test.describe('user profile page', () => {
     await page.locator('select[name="availability_monday"]').selectOption('available')
     await page.locator('input[name="start_time_monday"]').fill('10:00')
     await page.locator('input[name="end_time_monday"]').fill('11:00')
-    await page.locator('textarea[name="exceptionDates"]').fill('2026-11-10\n2026-11-11')
+    await page.locator('textarea[name="exceptionDates"]').fill('2030-11-10\n2030-11-11')
     // Ensure other weekdays are explicitly set to unavailable so the form
     // submission only saves the monday availability we intend to test.
     const otherDays = ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
@@ -214,7 +214,7 @@ test.describe('user profile page', () => {
     expect(savedPreferences).toEqual(expect.objectContaining({
       dailyMax: 2,
       duration: 45,
-      exceptionDates: ['2026-11-10', '2026-11-11'],
+      exceptionDates: ['2030-11-10', '2030-11-11'],
       maxStudents: 3,
       minStudents: 1,
       username: LECTURER_USERNAME,

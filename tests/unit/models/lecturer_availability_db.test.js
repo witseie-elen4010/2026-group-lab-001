@@ -57,7 +57,7 @@ describe('lecturer availability database operations', () => {
         { day: 'monday', startTime: '09:00', endTime: '12:00' },
         { day: 'wednesday', startTime: '13:00', endTime: '16:00' }
       ],
-      exceptionDates: ['2026-05-01', '2026-05-08']
+      exceptionDates: ['2030-05-01', '2030-05-08']
     })
 
     expect(mockCollection.updateOne).toHaveBeenCalledWith(
@@ -69,7 +69,7 @@ describe('lecturer availability database operations', () => {
             { day: 'monday', startTime: '09:00', endTime: '12:00' },
             { day: 'wednesday', startTime: '13:00', endTime: '16:00' }
           ],
-          exceptionDates: ['2026-05-01', '2026-05-08']
+          exceptionDates: ['2030-05-01', '2030-05-08']
         }
       },
       { upsert: true }
@@ -121,7 +121,7 @@ describe('lecturer availability database operations', () => {
         duration: 30,
         dailyMax: 4,
         weeklyAvailability: [{ day: 'monday', startTime: '09:00', endTime: '12:00' }],
-        exceptionDates: ['2026-12-25']
+        exceptionDates: ['2030-12-25']
       }
 
       expect(() => validatePreferences(prefs)).not.toThrow()

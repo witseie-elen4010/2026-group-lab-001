@@ -86,6 +86,7 @@ const createServer = async function () {
 describe('join consultation route', () => {
   let baseUrl
   let server
+  const MONDAY = '2030-05-06'
 
   const MONDAY_AVAILABILITY = {
     duration: 60,
@@ -145,11 +146,11 @@ describe('join consultation route', () => {
   })
 
   test('passes the date filter to searchConsultationsForStudent', async () => {
-    const response = await fetch(`${baseUrl}/join_consultation?date=2026-05-04`)
+    const response = await fetch(`${baseUrl}/join_consultation?date=${MONDAY}`)
 
     expect(response.status).toBe(200)
     expect(searchConsultationsForStudent).toHaveBeenCalledWith({
-      date: '2026-05-04',
+      date: MONDAY,
       lecturerId: '',
       time: '',
       username: 'morris'
@@ -157,18 +158,18 @@ describe('join consultation route', () => {
   })
 
   test('shows the create empty state when no consultations are found for a valid lecturer and date', async () => {
-    const response = await fetch(`${baseUrl}/join_consultation?lecturerId=lecturer1&date=2026-05-04`)
+    const response = await fetch(`${baseUrl}/join_consultation?lecturerId=lecturer1&date=${MONDAY}`)
     const body = await response.text()
 
     expect(response.status).toBe(200)
     expect(getLecturerAvailability).toHaveBeenCalledWith('lecturer1')
     expect(body).toContain('No matching consultations')
     expect(body).toContain('lecturerId=lecturer1')
-    expect(body).toContain('date=2026-05-04')
+    expect(body).toContain(`date=${MONDAY}`)
   })
 
   test('includes the time in the create link when a time filter is provided', async () => {
-    const response = await fetch(`${baseUrl}/join_consultation?lecturerId=lecturer1&date=2026-05-04&time=09%3A00`)
+    const response = await fetch(`${baseUrl}/join_consultation?lecturerId=lecturer1&date=${MONDAY}&time=09%3A00`)
     const body = await response.text()
 
     expect(response.status).toBe(200)
@@ -176,7 +177,7 @@ describe('join consultation route', () => {
   })
 
   test('shows the violation empty state when the time is outside the lecturer schedule', async () => {
-    const response = await fetch(`${baseUrl}/join_consultation?lecturerId=lecturer1&date=2026-05-04&time=13%3A00`)
+    const response = await fetch(`${baseUrl}/join_consultation?lecturerId=lecturer1&date=${MONDAY}&time=13%3A00`)
     const body = await response.text()
 
     expect(response.status).toBe(200)
@@ -184,7 +185,7 @@ describe('join consultation route', () => {
   })
 
   test('does not check availability when lecturerId is not provided', async () => {
-    const response = await fetch(`${baseUrl}/join_consultation?date=2026-05-04`)
+    const response = await fetch(`${baseUrl}/join_consultation?date=${MONDAY}`)
 
     expect(response.status).toBe(200)
     expect(getLecturerAvailability).not.toHaveBeenCalled()

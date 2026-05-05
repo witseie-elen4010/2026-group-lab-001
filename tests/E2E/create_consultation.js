@@ -19,7 +19,7 @@ test.describe('create consultation E2E', () => {
     await setLecturerAvailability(TEST_LECTURER_USERNAME, {
       dailyMax: 2,
       duration: 60,
-      exceptionDates: ['2026-04-01'],
+      exceptionDates: ['2030-04-01'],
       maxStudents: 5,
       minStudents: 1,
       weeklyAvailability: [
