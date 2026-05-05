@@ -7,16 +7,25 @@
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body class="page page_home">
-  <main class="card card_wide text_center">
+  <main class="card card_even_wider text_center">
     <header>
-      <h1>Scheduled Consultations</h1>
+      <h1>Lecturer Dashboard</h1>
       <% if (username) { %>
         <p>Hello <%= username %></p>
       <% } %>
+      <p>View your upcoming consultations and calendar in one place.</p>
     </header>
 
-    <div class="error"><%= error %></div>
-    <p><%= message %></p>
+    <section>
+      <h2>Upcoming Consultations</h2>
+      <p>No upcoming consultations yet.</p>
+    </section>
+
+    <section>
+      <h2>Calendar</h2>
+      <p>Your scheduled consultation calendar will appear here.</p>
+    </section>
+
     <a class="back_link" href="<%= homePath %>">Home</a>
   </main>
 </body>

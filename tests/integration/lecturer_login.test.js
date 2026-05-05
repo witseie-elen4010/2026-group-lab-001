@@ -101,7 +101,7 @@ describe('lecturer login integration flow', () => {
     expect(body).not.toContain('Find a Lecturer')
   })
 
-  RUN_DB_TEST('renders the lecturer scheduled consultations placeholder and blocks the create consultation form', async function () {
+  RUN_DB_TEST('renders the lecturer dashboard page and blocks the create consultation form', async function () {
     const loginResponse = await fetch(`${baseUrl}/login`, {
       body: encodeForm({
         password: PASSWORD,
@@ -128,9 +128,11 @@ describe('lecturer login integration flow', () => {
     })
     const createBody = await createResponse.text()
 
-    expect(scheduledResponse.status).toBe(501)
-    expect(scheduledBody).toContain('<title>Scheduled Consultations</title>')
-    expect(scheduledBody).toContain('Scheduled consultations have not been built yet.')
+    expect(scheduledResponse.status).toBe(200)
+    expect(scheduledBody).toContain('<title>Lecturer Dashboard</title>')
+    expect(scheduledBody).toContain('View your upcoming consultations and calendar in one place.')
+    expect(scheduledBody).toContain('Upcoming Consultations')
+    expect(scheduledBody).toContain('Calendar')
     expect(createResponse.status).toBe(403)
     expect(createBody).toContain('Only students can create consultations.')
   })

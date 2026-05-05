@@ -331,11 +331,13 @@ describe('home route', () => {
 
     const body = await response.text()
 
-    expect(response.status).toBe(501)
-    expect(body).toContain('<title>Scheduled Consultations</title>')
-    expect(body).toContain('Scheduled Consultations')
-    expect(body).toContain('This page is not available yet.')
-    expect(body).toContain('Scheduled consultations have not been built yet.')
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Lecturer Dashboard</title>')
+    expect(body).toContain('Lecturer Dashboard')
+    expect(body).toContain('View your upcoming consultations and calendar in one place.')
+    expect(body).toContain('Upcoming Consultations')
+    expect(body).toContain('Calendar')
+    expect(body).toContain('No upcoming consultations yet.')
     expect(body).toContain('href="/home"')
   })
 

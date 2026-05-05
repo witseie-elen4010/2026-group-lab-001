@@ -2,14 +2,14 @@ const express = require('express')
 
 const router = express.Router()
 
+const DASHBOARD_TITLE = 'Lecturer Dashboard'
+
 router.get('/', function (req, res) {
   const username = req.session?.user?.username || ''
 
-  return res.status(501).render('scheduled_consultations', {
-    error: 'This page is not available yet.',
+  return res.status(200).render('scheduled_consultations', {
     homePath: '/home',
-    message: 'Scheduled consultations have not been built yet.',
-    title: 'Scheduled Consultations',
+    title: DASHBOARD_TITLE,
     username
   })
 })
