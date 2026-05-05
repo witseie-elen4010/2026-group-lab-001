@@ -21,7 +21,20 @@
     <% } else { %>
       <section>
         <h2>Upcoming Consultations</h2>
-        <p>No upcoming consultations yet.</p>
+        <% if (consultations.length === 0) { %>
+          <p>No upcoming consultations yet.</p>
+        <% } else { %>
+          <div class="dashboard_consultations">
+            <% consultations.forEach(function (consultation) { %>
+              <article class="dashboard_consultation_card">
+                <h3><%= consultation.name %></h3>
+                <p class="dashboard_consultation_meta"><strong>Organiser:</strong> <%= consultation.organiser %></p>
+                <p class="dashboard_consultation_meta"><strong>Date:</strong> <%= consultation.date %></p>
+                <p class="dashboard_consultation_meta"><strong>Time:</strong> <%= consultation.time %></p>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
       </section>
 
       <section>

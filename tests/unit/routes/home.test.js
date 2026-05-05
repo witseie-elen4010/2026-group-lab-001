@@ -20,6 +20,7 @@ jest.mock('../../../src/models/user_db', () => ({
 
 jest.mock('../../../src/models/consultation_db', () => ({
   getConsultationsForCalendar: jest.fn(),
+  getUpcomingConsultationsForLecturer: jest.fn(),
   JOIN_RESULT_REASONS: {
     ALREADY_JOINED: 'already_joined',
     FULL: 'full',
@@ -58,7 +59,7 @@ const closeServer = async function (server) {
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
-const { addConsultation, getConsultationsForCalendar } = require('../../../src/models/consultation_db')
+const { addConsultation, getConsultationsForCalendar, getUpcomingConsultationsForLecturer } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 
@@ -171,6 +172,7 @@ describe('home route', () => {
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
     getConsultationsForCalendar.mockResolvedValue([])
+    getUpcomingConsultationsForLecturer.mockResolvedValue([])
     getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
   })
@@ -319,10 +321,22 @@ describe('home route', () => {
   })
 
   test('Renders the scheduled consultations page', async () => {
+    getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
+      {
+        date: '2030-05-04',
+        id: 'consultation-1',
+        name: 'Project check-in',
+        organiser: 'morris',
+        time: '09:00 to 09:30'
+      }
+    ])
+
     const { sessionCookie } = await loginAs({
       role: 'lecturer',
       username: 'lecturer1'
     })
+    connectToDatabase.mockClear()
+
     const response = await fetch(`${baseUrl}/scheduled_consultations`, {
       headers: {
         cookie: sessionCookie
@@ -337,8 +351,13 @@ describe('home route', () => {
     expect(body).toContain('View your upcoming consultations and calendar in one place.')
     expect(body).toContain('Upcoming Consultations')
     expect(body).toContain('Calendar')
-    expect(body).toContain('No upcoming consultations yet.')
+    expect(body).toContain('Project check-in')
+    expect(body).toContain('morris')
+    expect(body).toContain('2030-05-04')
+    expect(body).toContain('09:00 to 09:30')
     expect(body).toContain('href="/home"')
+    expect(connectToDatabase).toHaveBeenCalledTimes(1)
+    expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
   })
 
   test('Blocks non-lecturer users from the scheduled consultations page', async () => {
