@@ -327,6 +327,7 @@ describe('home route', () => {
         id: 'consultation-1',
         name: 'Project check-in',
         organiser: 'morris',
+        roster: ['Morris Molefe', 'Sam Student'],
         time: '09:00 to 09:30'
       }
     ])
@@ -355,6 +356,9 @@ describe('home route', () => {
     expect(body).toContain('morris')
     expect(body).toContain('2030-05-04')
     expect(body).toContain('09:00 to 09:30')
+    expect(body).toContain('Roster')
+    expect(body).toContain('Morris Molefe')
+    expect(body).toContain('Sam Student')
     expect(body).toContain('calendar_table')
     expect(body).toContain('calendar_day_note_dashboard')
     expect(body).toContain('href="/home"')
@@ -385,6 +389,37 @@ describe('home route', () => {
     expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
   })
 
+  test('Shows an empty roster message when a consultation has no booked students', async () => {
+    getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
+      {
+        date: '2030-05-04',
+        id: 'consultation-1',
+        name: 'Signals review',
+        organiser: 'morris',
+        roster: [],
+        time: '09:00 to 09:30'
+      }
+    ])
+
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Signals review')
+    expect(body).toContain('Roster')
+    expect(body).toContain('No students booked yet.')
+  })
+
   test('Renders the dashboard calendar month from the earliest upcoming consultation', async () => {
     getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
       {
@@ -392,6 +427,7 @@ describe('home route', () => {
         id: 'consultation-1',
         name: 'Signals review',
         organiser: 'morris',
+        roster: ['Morris Molefe'],
         time: '09:00 to 09:30'
       },
       {
@@ -399,6 +435,7 @@ describe('home route', () => {
         id: 'consultation-2',
         name: 'Project prep',
         organiser: 'sam',
+        roster: [],
         time: '10:00 to 10:30'
       }
     ])

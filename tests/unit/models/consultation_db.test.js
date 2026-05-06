@@ -107,6 +107,7 @@ describe('consultation database operations', () => {
       toArray: jest.fn().mockResolvedValue([
         {
           _id: secondId,
+          attendees: [],
           datetime: laterFutureDate,
           lecturerId: 'lecturer1',
           organiserId: 'student2',
@@ -114,6 +115,7 @@ describe('consultation database operations', () => {
         },
         {
           _id: firstId,
+          attendees: ['student1', 'student2'],
           datetime: futureDate,
           lecturerId: 'lecturer1',
           organiserId: 'student1',
@@ -121,6 +123,7 @@ describe('consultation database operations', () => {
         },
         {
           _id: new ObjectId(),
+          attendees: ['student3'],
           datetime: pastDate,
           lecturerId: 'lecturer1',
           organiserId: 'student3',
@@ -148,6 +151,7 @@ describe('consultation database operations', () => {
         id: firstId.toString(),
         name: 'Earlier consultation',
         organiser: 'Morris Molefe',
+        roster: ['Morris Molefe', 'student2'],
         time: '09:00 to 09:30'
       },
       {
@@ -155,6 +159,7 @@ describe('consultation database operations', () => {
         id: secondId.toString(),
         name: 'Later consultation',
         organiser: 'student2',
+        roster: [],
         time: '11:30 to 12:00'
       }
     ])

@@ -41,6 +41,14 @@ const buildConsultationTime = function (datetime, duration) {
   return endTime === startTime ? startTime : `${startTime} to ${endTime}`
 }
 
+const buildRoster = function (attendeeUsernames, usersByUsername) {
+  const bookedAttendees = Array.isArray(attendeeUsernames) ? attendeeUsernames : []
+
+  return bookedAttendees.filter(Boolean).map(function (username) {
+    return buildDisplayName(usersByUsername.get(username), username)
+  })
+}
+
 /**
  * Inserts a new consultation document.
  * @param {object} consultation - Consultation document to insert.
@@ -78,12 +86,14 @@ const getUpcomingConsultationsForLecturer = async function (lecturerId) {
     return []
   }
 
-  const organiserIds = [...new Set(consultations.map(function (consultation) {
-    return consultation.organiserId
+  const userIds = [...new Set(consultations.flatMap(function (consultation) {
+    const attendeeUsernames = Array.isArray(consultation.attendees) ? consultation.attendees : []
+
+    return [consultation.organiserId, ...attendeeUsernames]
   }).filter(Boolean))]
 
   const [users, availabilities] = await Promise.all([
-    usersCollection().find({ username: { $in: organiserIds } }).toArray(),
+    usersCollection().find({ username: { $in: userIds } }).toArray(),
     getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: lecturerId }).toArray()
   ])
 
@@ -103,6 +113,7 @@ const getUpcomingConsultationsForLecturer = async function (lecturerId) {
       id: consultation._id.toString(),
       name: consultation.title || 'Untitled consultation',
       organiser: buildDisplayName(usersByUsername.get(consultation.organiserId), consultation.organiserId),
+      roster: buildRoster(consultation.attendees, usersByUsername),
       time: buildConsultationTime(consultation.datetime, lecturerAvailability?.duration)
     }
   })

@@ -5,6 +5,7 @@ const app = require('../../src/app')
 const PASSWORD = 'password1'
 const TEST_ID = `${process.pid}${Date.now()}`
 const TEST_TITLE_PREFIX = 'lecturer-dashboard-integration-'
+const TEST_USER_PREFIX = 'lecturer-dashboard-user-'
 const USERNAME = 'user1'
 const RUN_DB_TEST = process.env.MONGODB_URI ? test : test.skip
 
@@ -42,6 +43,11 @@ const deleteTestConsultations = async function () {
   await getCollection('Consultation').deleteMany({ title: { $regex: `^${TEST_TITLE_PREFIX}` } })
 }
 
+const deleteTestUsers = async function () {
+  await connectToDatabase()
+  await getCollection('User').deleteMany({ username: { $regex: `^${TEST_USER_PREFIX}` } })
+}
+
 const getRelativeDatetime = function (offsetHours) {
   return new Date(Date.now() + offsetHours * 60 * 60 * 1000).toISOString().slice(0, 16)
 }
@@ -71,6 +77,7 @@ describe('lecturer login integration flow', () => {
     }
 
     await deleteTestConsultations()
+    await deleteTestUsers()
   })
 
   afterEach(async function () {
@@ -79,6 +86,7 @@ describe('lecturer login integration flow', () => {
     }
 
     await deleteTestConsultations()
+    await deleteTestUsers()
   })
 
   afterAll(async function () {
@@ -87,6 +95,7 @@ describe('lecturer login integration flow', () => {
     }
 
     await deleteTestConsultations()
+    await deleteTestUsers()
     await closeServer(server)
     await closeDatabaseConnection()
   })
@@ -167,20 +176,44 @@ describe('lecturer login integration flow', () => {
   })
 
   RUN_DB_TEST('shows upcoming consultations for the logged in lecturer on the dashboard', async function () {
+    const emptyRosterTitle = `${TEST_TITLE_PREFIX}empty-${TEST_ID}`
     const visibleTitle = `${TEST_TITLE_PREFIX}visible-${TEST_ID}`
     const otherLecturerTitle = `${TEST_TITLE_PREFIX}other-${TEST_ID}`
     const pastTitle = `${TEST_TITLE_PREFIX}past-${TEST_ID}`
+    const rosterStudentUsername = `${TEST_USER_PREFIX}${TEST_ID}`
+    const seededStudent = await getCollection('User').findOne({ username: 'user' })
     const visibleDatetime = getRelativeDatetime(24)
 
+    if (!seededStudent) {
+      throw new Error('Seeded student user was not found for lecturer roster integration testing.')
+    }
+
+    const { _id, email, username, ...studentFields } = seededStudent
+
     await connectToDatabase()
+    await getCollection('User').insertOne({
+      ...studentFields,
+      email: `${rosterStudentUsername}@example.test`,
+      firstName: 'Roster',
+      lastName: 'Student',
+      username: rosterStudentUsername
+    })
     await getCollection('Consultation').insertMany([
       {
-        attendees: ['student1'],
+        attendees: [rosterStudentUsername],
         capacity: 1,
         datetime: visibleDatetime,
         lecturerId: USERNAME,
         organiserId: 'dashboard-student',
         title: visibleTitle
+      },
+      {
+        attendees: [],
+        capacity: 1,
+        datetime: getRelativeDatetime(36),
+        lecturerId: USERNAME,
+        organiserId: 'dashboard-student',
+        title: emptyRosterTitle
       },
       {
         attendees: ['student2'],
@@ -225,6 +258,10 @@ describe('lecturer login integration flow', () => {
     expect(body).toContain('dashboard-student')
     expect(body).toContain(visibleDatetime.slice(0, 10))
     expect(body).toContain(visibleDatetime.slice(11, 16))
+    expect(body).toContain('Roster')
+    expect(body).toContain('Roster Student')
+    expect(body).toContain(emptyRosterTitle)
+    expect(body).toContain('No students booked yet.')
     expect(body).toContain('calendar_table')
     expect(body).toContain('calendar_day_note_dashboard')
     expect(body).not.toContain(otherLecturerTitle)
