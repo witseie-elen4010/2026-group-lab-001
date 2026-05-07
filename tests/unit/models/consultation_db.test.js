@@ -8,6 +8,7 @@ const {
   addConsultation,
   addStudentToConsultation,
   getConsultationsForCalendar,
+  getUpcomingConsultationsForLecturer,
   JOIN_RESULT_REASONS,
   listConsultationsForLecturerOnDate,
   searchConsultationsForStudent
@@ -84,6 +85,79 @@ describe('consultation database operations', () => {
     })
     expect(toArray).toHaveBeenCalledTimes(1)
     expect(result).toEqual([{ title: 'Project check-in' }])
+  })
+
+  test('getUpcomingConsultationsForLecturer returns upcoming dashboard consultations for the lecturer', async () => {
+    const buildDatetime = function (dayOffset, hours, minutes) {
+      const date = new Date()
+
+      date.setDate(date.getDate() + dayOffset)
+      date.setHours(hours, minutes, 0, 0)
+
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+    }
+
+    const futureDate = buildDatetime(1, 9, 0)
+    const laterFutureDate = buildDatetime(2, 11, 30)
+    const pastDate = buildDatetime(-1, 8, 0)
+    const firstId = new ObjectId()
+    const secondId = new ObjectId()
+
+    mockConsultationCollection.find.mockReturnValue({
+      toArray: jest.fn().mockResolvedValue([
+        {
+          _id: secondId,
+          datetime: laterFutureDate,
+          lecturerId: 'lecturer1',
+          organiserId: 'student2',
+          title: 'Later consultation'
+        },
+        {
+          _id: firstId,
+          datetime: futureDate,
+          lecturerId: 'lecturer1',
+          organiserId: 'student1',
+          title: 'Earlier consultation'
+        },
+        {
+          _id: new ObjectId(),
+          datetime: pastDate,
+          lecturerId: 'lecturer1',
+          organiserId: 'student3',
+          title: 'Past consultation'
+        }
+      ])
+    })
+    mockUserCollection.find.mockReturnValue({
+      toArray: jest.fn().mockResolvedValue([
+        { username: 'student1', firstName: 'Morris', lastName: 'Molefe' }
+      ])
+    })
+    mockLecturerAvailabilityCollection.find.mockReturnValue({
+      toArray: jest.fn().mockResolvedValue([
+        { username: 'lecturer1', duration: 30 }
+      ])
+    })
+
+    const result = await getUpcomingConsultationsForLecturer('lecturer1')
+
+    expect(mockConsultationCollection.find).toHaveBeenCalledWith({ lecturerId: 'lecturer1' })
+    expect(result).toEqual([
+      {
+        date: futureDate.slice(0, 10),
+        id: firstId.toString(),
+        name: 'Earlier consultation',
+        organiser: 'Morris Molefe',
+        time: '09:00 to 09:30'
+      },
+      {
+        date: laterFutureDate.slice(0, 10),
+        id: secondId.toString(),
+        name: 'Later consultation',
+        organiser: 'student2',
+        time: '11:30 to 12:00'
+      }
+    ])
   })
 
   test('addStudentToConsultation appends a student when the consultation is open', async () => {

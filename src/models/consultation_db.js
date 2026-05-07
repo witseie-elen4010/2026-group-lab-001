@@ -25,6 +25,22 @@ const buildDisplayName = function (user, fallback) {
   return fullName || fallback || ''
 }
 
+const buildConsultationTime = function (datetime, duration) {
+  const startTime = datetime?.slice(11, 16) || ''
+
+  if (!startTime) {
+    return ''
+  }
+
+  if (!duration) {
+    return startTime
+  }
+
+  const endTime = addMinutesToTime(startTime, duration) || startTime
+
+  return endTime === startTime ? startTime : `${startTime} to ${endTime}`
+}
+
 /**
  * Inserts a new consultation document.
  * @param {object} consultation - Consultation document to insert.
@@ -48,6 +64,48 @@ const listConsultationsForLecturerOnDate = async function (lecturerId, isoDate) 
       $lt: `${isoDate}T23:59~`
     }
   }).toArray()
+}
+
+/**
+ * Returns all upcoming consultations for a lecturer, enriched for dashboard display.
+ * @param {string} lecturerId - Lecturer username.
+ * @returns {Promise<Array<object>>} Upcoming consultations sorted by date and time.
+ */
+const getUpcomingConsultationsForLecturer = async function (lecturerId) {
+  const consultations = await consultationsCollection().find({ lecturerId }).toArray()
+
+  if (consultations.length === 0) {
+    return []
+  }
+
+  const organiserIds = [...new Set(consultations.map(function (consultation) {
+    return consultation.organiserId
+  }).filter(Boolean))]
+
+  const [users, availabilities] = await Promise.all([
+    usersCollection().find({ username: { $in: organiserIds } }).toArray(),
+    getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: lecturerId }).toArray()
+  ])
+
+  const usersByUsername = new Map(users.map(function (user) {
+    return [user.username, user]
+  }))
+  const lecturerAvailability = availabilities[0] || null
+  const now = new Date()
+
+  return consultations.filter(function (consultation) {
+    return consultation?._id && new Date(consultation.datetime) > now
+  }).sort(function (left, right) {
+    return (left.datetime || '').localeCompare(right.datetime || '')
+  }).map(function (consultation) {
+    return {
+      date: consultation.datetime?.slice(0, 10) || '',
+      id: consultation._id.toString(),
+      name: consultation.title || 'Untitled consultation',
+      organiser: buildDisplayName(usersByUsername.get(consultation.organiserId), consultation.organiserId),
+      time: buildConsultationTime(consultation.datetime, lecturerAvailability?.duration)
+    }
+  })
 }
 
 /**
@@ -102,9 +160,7 @@ const searchConsultationsForStudent = async function ({
     const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
     const hasCapacity = Number.isInteger(consultation.capacity)
     const isInFuture = new Date(consultation.datetime) > new Date()
-    const startTime = consultation.datetime?.slice(11, 16) || ''
-    const endTime = addMinutesToTime(startTime, availabilitiesByUsername.get(consultation.lecturerId)?.duration) || startTime
-    const time = startTime ? `${startTime} to ${endTime}` : ''
+    const time = buildConsultationTime(consultation.datetime, availabilitiesByUsername.get(consultation.lecturerId)?.duration)
 
     if (!consultation._id) {
       return null
@@ -168,9 +224,7 @@ const getConsultationsForCalendar = async function (username, monthStart, monthE
     if (!consultation._id) return null
     if (new Date(consultation.datetime) <= now) return null
 
-    const startTime = consultation.datetime?.slice(11, 16) || ''
-    const endTime = addMinutesToTime(startTime, availabilitiesByUsername.get(consultation.lecturerId)?.duration) || startTime
-    const time = startTime ? `${startTime} to ${endTime}` : ''
+    const time = buildConsultationTime(consultation.datetime, availabilitiesByUsername.get(consultation.lecturerId)?.duration)
     const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
     const hasCapacity = Number.isInteger(consultation.capacity)
 
@@ -225,6 +279,7 @@ module.exports = {
   addConsultation,
   addStudentToConsultation,
   getConsultationsForCalendar,
+  getUpcomingConsultationsForLecturer,
   JOIN_RESULT_REASONS,
   listConsultationsForLecturerOnDate,
   searchConsultationsForStudent

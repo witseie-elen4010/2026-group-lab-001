@@ -312,6 +312,15 @@ a {
   color: var(--color-error-text);
 }
 
+.calendar_day_scheduled {
+  background: #eff6ff;
+}
+
+.calendar_day_note_dashboard {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
 .calendar_day_empty {
   background: #f8fafc;
 }
@@ -417,6 +426,31 @@ a {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
+}
+
+.dashboard_consultations {
+  display: grid;
+  gap: 16px;
+  max-width: 760px;
+  margin: 24px auto 0;
+  text-align: left;
+}
+
+.dashboard_consultation_card {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.dashboard_consultation_card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.dashboard_consultation_meta {
+  margin: 8px 0 0;
+  color: var(--color-secondary);
 }
 
 .consultation_preferences_form h3 {

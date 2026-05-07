@@ -20,6 +20,7 @@ jest.mock('../../../src/models/user_db', () => ({
 
 jest.mock('../../../src/models/consultation_db', () => ({
   getConsultationsForCalendar: jest.fn(),
+  getUpcomingConsultationsForLecturer: jest.fn(),
   JOIN_RESULT_REASONS: {
     ALREADY_JOINED: 'already_joined',
     FULL: 'full',
@@ -58,7 +59,7 @@ const closeServer = async function (server) {
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
-const { addConsultation, getConsultationsForCalendar } = require('../../../src/models/consultation_db')
+const { addConsultation, getConsultationsForCalendar, getUpcomingConsultationsForLecturer } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 
@@ -171,6 +172,7 @@ describe('home route', () => {
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
     getConsultationsForCalendar.mockResolvedValue([])
+    getUpcomingConsultationsForLecturer.mockResolvedValue([])
     getLecturerAvailability.mockResolvedValue(null)
     searchLecturers.mockResolvedValue([])
   })
@@ -319,9 +321,134 @@ describe('home route', () => {
   })
 
   test('Renders the scheduled consultations page', async () => {
+    getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
+      {
+        date: '2030-05-04',
+        id: 'consultation-1',
+        name: 'Project check-in',
+        organiser: 'morris',
+        time: '09:00 to 09:30'
+      }
+    ])
+
     const { sessionCookie } = await loginAs({
       role: 'lecturer',
       username: 'lecturer1'
+    })
+    connectToDatabase.mockClear()
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Lecturer Dashboard</title>')
+    expect(body).toContain('Lecturer Dashboard')
+    expect(body).toContain('View your upcoming consultations and calendar in one place.')
+    expect(body).toContain('Upcoming Consultations')
+    expect(body).toContain('Calendar')
+    expect(body).toContain('Project check-in')
+    expect(body).toContain('morris')
+    expect(body).toContain('2030-05-04')
+    expect(body).toContain('09:00 to 09:30')
+    expect(body).toContain('calendar_table')
+    expect(body).toContain('calendar_day_note_dashboard')
+    expect(body).toContain('href="/home"')
+    expect(connectToDatabase).toHaveBeenCalledTimes(1)
+    expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
+  })
+
+  test('Renders an empty lecturer dashboard when there are no upcoming consultations', async () => {
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+    connectToDatabase.mockClear()
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('No upcoming consultations yet.')
+    expect(body).toContain('calendar_table')
+    expect(body).toContain(getCurrentMonthLabel())
+    expect(connectToDatabase).toHaveBeenCalledTimes(1)
+    expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
+  })
+
+  test('Renders the dashboard calendar month from the earliest upcoming consultation', async () => {
+    getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
+      {
+        date: '2030-06-05',
+        id: 'consultation-1',
+        name: 'Signals review',
+        organiser: 'morris',
+        time: '09:00 to 09:30'
+      },
+      {
+        date: '2030-06-11',
+        id: 'consultation-2',
+        name: 'Project prep',
+        organiser: 'sam',
+        time: '10:00 to 10:30'
+      }
+    ])
+
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain(getCurrentMonthLabel(new Date('2030-06-01T00:00')))
+    expect(body).toContain('Signals review')
+    expect(body).toContain('Project prep')
+    expect(body).toContain('calendar_day_note_dashboard')
+  })
+
+  test('Shows an error when the lecturer dashboard cannot be loaded', async () => {
+    getUpcomingConsultationsForLecturer.mockRejectedValueOnce(new Error('dashboard failed'))
+
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(500)
+    expect(body).toContain('Unable to load upcoming consultations right now.')
+    expect(body).not.toContain('No upcoming consultations yet.')
+    expect(body).not.toContain('dashboard_consultation_card')
+  })
+
+  test('Blocks non-lecturer users from the scheduled consultations page', async () => {
+    const { sessionCookie } = await loginAs({
+      role: 'student',
+      username: 'morris'
     })
     const response = await fetch(`${baseUrl}/scheduled_consultations`, {
       headers: {
@@ -331,12 +458,10 @@ describe('home route', () => {
 
     const body = await response.text()
 
-    expect(response.status).toBe(501)
-    expect(body).toContain('<title>Scheduled Consultations</title>')
-    expect(body).toContain('Scheduled Consultations')
-    expect(body).toContain('This page is not available yet.')
-    expect(body).toContain('Scheduled consultations have not been built yet.')
-    expect(body).toContain('href="/home"')
+    expect(response.status).toBe(403)
+    expect(body).toContain('<title>Lecturer Dashboard</title>')
+    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
+    expect(body).not.toContain('No upcoming consultations yet.')
   })
 
   test('Renders the home page without lecturer search for a non-student user', async () => {
