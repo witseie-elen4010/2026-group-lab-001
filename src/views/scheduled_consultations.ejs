@@ -26,11 +26,24 @@
         <% } else { %>
           <div class="dashboard_consultations">
             <% consultations.forEach(function (consultation) { %>
+              <% const roster = Array.isArray(consultation.roster) ? consultation.roster : [] %>
               <article class="dashboard_consultation_card">
                 <h3><%= consultation.name %></h3>
                 <p class="dashboard_consultation_meta"><strong>Organiser:</strong> <%= consultation.organiser %></p>
                 <p class="dashboard_consultation_meta"><strong>Date:</strong> <%= consultation.date %></p>
                 <p class="dashboard_consultation_meta"><strong>Time:</strong> <%= consultation.time %></p>
+                <section class="dashboard_roster">
+                  <h4 class="dashboard_roster_title">Attendee roster</h4>
+                  <% if (roster.length === 0) { %>
+                    <p class="dashboard_roster_empty">No confirmed students booked for this session yet.</p>
+                  <% } else { %>
+                    <ul class="dashboard_roster_list">
+                      <% roster.forEach(function (attendee) { %>
+                        <li><%= attendee %></li>
+                      <% }) %>
+                    </ul>
+                  <% } %>
+                </section>
               </article>
             <% }) %>
           </div>
