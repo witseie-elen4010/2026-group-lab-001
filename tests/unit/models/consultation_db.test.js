@@ -107,6 +107,7 @@ describe('consultation database operations', () => {
       toArray: jest.fn().mockResolvedValue([
         {
           _id: secondId,
+          attendees: ['student4'],
           datetime: laterFutureDate,
           lecturerId: 'lecturer1',
           organiserId: 'student2',
@@ -114,6 +115,7 @@ describe('consultation database operations', () => {
         },
         {
           _id: firstId,
+          attendees: ['student1', 'student3'],
           datetime: futureDate,
           lecturerId: 'lecturer1',
           organiserId: 'student1',
@@ -121,6 +123,7 @@ describe('consultation database operations', () => {
         },
         {
           _id: new ObjectId(),
+          attendees: ['student5'],
           datetime: pastDate,
           lecturerId: 'lecturer1',
           organiserId: 'student3',
@@ -130,7 +133,8 @@ describe('consultation database operations', () => {
     })
     mockUserCollection.find.mockReturnValue({
       toArray: jest.fn().mockResolvedValue([
-        { username: 'student1', firstName: 'Morris', lastName: 'Molefe' }
+        { username: 'student1', firstName: 'Morris', lastName: 'Molefe' },
+        { username: 'student3', firstName: 'Sam', lastName: 'Nkosi' }
       ])
     })
     mockLecturerAvailabilityCollection.find.mockReturnValue({
@@ -142,12 +146,18 @@ describe('consultation database operations', () => {
     const result = await getUpcomingConsultationsForLecturer('lecturer1')
 
     expect(mockConsultationCollection.find).toHaveBeenCalledWith({ lecturerId: 'lecturer1' })
+    expect(mockUserCollection.find).toHaveBeenCalledWith({
+      username: {
+        $in: expect.arrayContaining(['student1', 'student2', 'student3', 'student4', 'student5'])
+      }
+    })
     expect(result).toEqual([
       {
         date: futureDate.slice(0, 10),
         id: firstId.toString(),
         name: 'Earlier consultation',
         organiser: 'Morris Molefe',
+        roster: ['Morris Molefe', 'Sam Nkosi'],
         time: '09:00 to 09:30'
       },
       {
@@ -155,6 +165,7 @@ describe('consultation database operations', () => {
         id: secondId.toString(),
         name: 'Later consultation',
         organiser: 'student2',
+        roster: ['student4'],
         time: '11:30 to 12:00'
       }
     ])

@@ -25,6 +25,16 @@ const buildDisplayName = function (user, fallback) {
   return fullName || fallback || ''
 }
 
+const buildAttendeeRoster = function (attendees, usersByUsername) {
+  if (!Array.isArray(attendees) || attendees.length === 0) {
+    return []
+  }
+
+  return attendees.map(function (username) {
+    return buildDisplayName(usersByUsername.get(username), username)
+  })
+}
+
 const buildConsultationTime = function (datetime, duration) {
   const startTime = datetime?.slice(11, 16) || ''
 
@@ -78,12 +88,14 @@ const getUpcomingConsultationsForLecturer = async function (lecturerId) {
     return []
   }
 
-  const organiserIds = [...new Set(consultations.map(function (consultation) {
-    return consultation.organiserId
+  const userIds = [...new Set(consultations.flatMap(function (consultation) {
+    const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
+
+    return [consultation.organiserId, ...attendees]
   }).filter(Boolean))]
 
   const [users, availabilities] = await Promise.all([
-    usersCollection().find({ username: { $in: organiserIds } }).toArray(),
+    usersCollection().find({ username: { $in: userIds } }).toArray(),
     getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: lecturerId }).toArray()
   ])
 
@@ -103,6 +115,7 @@ const getUpcomingConsultationsForLecturer = async function (lecturerId) {
       id: consultation._id.toString(),
       name: consultation.title || 'Untitled consultation',
       organiser: buildDisplayName(usersByUsername.get(consultation.organiserId), consultation.organiserId),
+      roster: buildAttendeeRoster(consultation.attendees, usersByUsername),
       time: buildConsultationTime(consultation.datetime, lecturerAvailability?.duration)
     }
   })

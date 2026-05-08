@@ -173,9 +173,18 @@ describe('lecturer login integration flow', () => {
     const visibleDatetime = getRelativeDatetime(24)
 
     await connectToDatabase()
+    const users = getCollection('User')
+    const seededStudent = await users.findOne({ username: 'user' })
+
+    if (!seededStudent) {
+      throw new Error('Seeded student user for lecturer dashboard integration tests was not found.')
+    }
+
+    const rosterAttendeeName = `${seededStudent.firstName || ''} ${seededStudent.lastName || ''}`.trim() || seededStudent.username
+
     await getCollection('Consultation').insertMany([
       {
-        attendees: ['student1'],
+        attendees: [seededStudent.username],
         capacity: 1,
         datetime: visibleDatetime,
         lecturerId: USERNAME,
@@ -225,6 +234,8 @@ describe('lecturer login integration flow', () => {
     expect(body).toContain('dashboard-student')
     expect(body).toContain(visibleDatetime.slice(0, 10))
     expect(body).toContain(visibleDatetime.slice(11, 16))
+    expect(body).toContain('Attendee roster')
+    expect(body).toContain(rosterAttendeeName)
     expect(body).toContain('calendar_table')
     expect(body).toContain('calendar_day_note_dashboard')
     expect(body).not.toContain(otherLecturerTitle)

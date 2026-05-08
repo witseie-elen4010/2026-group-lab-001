@@ -3,11 +3,11 @@ const { test, expect } = require('@playwright/test')
 const { connectToDatabase, closeDatabaseConnection, getCollection } = require('../../src/models/db')
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), quiet: true })
 
+const TEST_ID = `${process.pid}${Date.now()}`
 const LECTURER_PASSWORD = 'password1'
 const LECTURER_USERNAME = 'user1'
 const STUDENT_PASSWORD = 'password'
 const STUDENT_USERNAME = 'user'
-const TEST_ID = `${process.pid}${Date.now()}`
 const TEST_TITLE_PREFIX = 'lecturer-dashboard-e2e-'
 
 /**
@@ -72,9 +72,18 @@ test.describe('lecturer dashboard E2E', () => {
     const datetime = getFutureDatetime(24)
 
     await connectToDatabase()
+    const users = getCollection('User')
+    const seededStudent = await users.findOne({ username: 'user' })
+
+    if (!seededStudent) {
+      throw new Error('Seeded student user for lecturer dashboard E2E tests was not found.')
+    }
+
+    const rosterAttendeeName = `${seededStudent.firstName || ''} ${seededStudent.lastName || ''}`.trim() || seededStudent.username
+
     await getCollection('Consultation').insertMany([
       {
-        attendees: ['student1'],
+        attendees: [seededStudent.username],
         capacity: 1,
         datetime,
         lecturerId: LECTURER_USERNAME,
@@ -108,6 +117,8 @@ test.describe('lecturer dashboard E2E', () => {
     await expect(consultationCard).toContainText('dashboard-student')
     await expect(consultationCard).toContainText(datetime.slice(0, 10))
     await expect(consultationCard).toContainText(datetime.slice(11, 16))
+    await expect(consultationCard).toContainText('Attendee roster')
+    await expect(consultationCard).toContainText(rosterAttendeeName)
 
     await expect(calendarNote).toBeVisible()
     await expect(calendarNote).toContainText(datetime.slice(11, 16))

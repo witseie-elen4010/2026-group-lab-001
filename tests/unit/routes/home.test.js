@@ -327,6 +327,7 @@ describe('home route', () => {
         id: 'consultation-1',
         name: 'Project check-in',
         organiser: 'morris',
+        roster: ['Alice Smith', 'Brian Molefe'],
         time: '09:00 to 09:30'
       }
     ])
@@ -355,11 +356,43 @@ describe('home route', () => {
     expect(body).toContain('morris')
     expect(body).toContain('2030-05-04')
     expect(body).toContain('09:00 to 09:30')
+    expect(body).toContain('Attendee roster')
+    expect(body).toContain('Alice Smith')
+    expect(body).toContain('Brian Molefe')
     expect(body).toContain('calendar_table')
     expect(body).toContain('calendar_day_note_dashboard')
     expect(body).toContain('href="/home"')
     expect(connectToDatabase).toHaveBeenCalledTimes(1)
     expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
+  })
+
+  test('Renders an empty roster message when a consultation has no confirmed attendees', async () => {
+    getUpcomingConsultationsForLecturer.mockResolvedValueOnce([
+      {
+        date: '2030-05-04',
+        id: 'consultation-1',
+        name: 'Project check-in',
+        organiser: 'morris',
+        roster: [],
+        time: '09:00 to 09:30'
+      }
+    ])
+
+    const { sessionCookie } = await loginAs({
+      role: 'lecturer',
+      username: 'lecturer1'
+    })
+
+    const response = await fetch(`${baseUrl}/scheduled_consultations`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('No confirmed students booked for this session yet.')
   })
 
   test('Renders an empty lecturer dashboard when there are no upcoming consultations', async () => {
