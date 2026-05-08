@@ -93,7 +93,7 @@ const ACTION_MAP = [
         return 'School not found in search results'
       }
       const school = req.query.query?.trim() || ''
-      return `Searched Universities for ${school}.`
+      return `Searched Schools for ${school}.`
     }
   }
 ]
