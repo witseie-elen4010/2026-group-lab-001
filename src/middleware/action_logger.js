@@ -30,7 +30,17 @@ const ACTION_MAP = [
   },
   { method: 'GET', pattern: /^\/scheduled_consultations$/, label: 'Viewed lecturer dashboard' },
   { method: 'GET', pattern: /^\/schedule_consultation$/, label: 'Viewed Schedule Consultation page' },
-  { method: 'POST', pattern: /^\/schedule_consultation$/, label: 'Checked lecturer availability' },
+  {
+    method: 'POST',
+    pattern: /^\/schedule_consultation$/,
+    label: function (req, res) {
+      if (res.statusCode !== 302) {
+        return 'Could not check Lecturer Availability.'
+      }
+      const lecturer = (req.body.lecturer || req.body.username || '').trim()
+      return `Checked availability of Lecturer ${lecturer}.`
+    }
+  },
   {
     method: 'GET',
     pattern: /^\/user_profile$/,
