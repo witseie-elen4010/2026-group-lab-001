@@ -54,12 +54,55 @@ const ACTION_MAP = [
     }
   },
   { method: 'POST', pattern: /^\/user_profile$/, label: 'Updated user profile' },
-  { method: 'GET', pattern: /^\/institutions\/universities$/, label: 'Searched universities' },
-  { method: 'GET', pattern: /^\/institutions\/faculties$/, label: 'Searched faculties' },
-  { method: 'GET', pattern: /^\/institutions\/schools$/, label: 'Searched schools' }
+  {
+    method: 'GET',
+    pattern: /^\/institutions\/universities$/,
+    label: function (req, res) {
+      if (res.statusCode !== 302) {
+        if (res.statusCode === 500) {
+          return 'Could not check Universities.'
+        }
+        return 'University not found in search results'
+      }
+      const university = req.query.query?.trim() || ''
+      return `Searched Universities for ${university}.`
+    }
+  },
+  {
+    method: 'GET',
+    pattern: /^\/institutions\/faculties$/,
+    label: function (req, res) {
+      if (res.statusCode !== 302) {
+        if (res.statusCode === 500) {
+          return 'Could not check Faculties.'
+        }
+        return 'Faculty not found in search results'
+      }
+      const faculty = req.query.query?.trim() || ''
+      return `Searched Faculties for ${faculty}.`
+    }
+  },
+  {
+    method: 'GET',
+    pattern: /^\/institutions\/schools$/,
+    label: function (req, res) {
+      if (res.statusCode !== 302) {
+        if (res.statusCode === 500) {
+          return 'Could not check Schools.'
+        }
+        return 'School not found in search results'
+      }
+      const school = req.query.query?.trim() || ''
+      return `Searched Universities for ${school}.`
+    }
+  }
 ]
-// ^ add here per http method asseblief. I repeat ADD HERE PER HTTP METHOD
-
+/* ^ add here per http method asseblief. I repeat ADD HERE PER HTTP METHOD
+Use static labels when user is not accessing another database item or (as like
+with updating universities/faculties/schools on user profile) when the relevant
+data item cannot be separated (cannot determine which institution detail is changed).
+Add corresponding unit tests in tests/unit/middleware/action_logger.test.js
+*/
 const getActionLabel = function (method, path, req, res) {
   for (const entry of ACTION_MAP) {
     if (entry.method === method && entry.pattern.test(path)) {
