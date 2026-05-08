@@ -213,7 +213,7 @@ describe('actionLogger middleware', () => {
       const req = makeReq({ url: '/institutions/schools', query: { query: 'EECE' }, session: { user: { username: 'u', role: 'student' } } })
       const res = makeRes(302)
       runLogger(req, res)
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Universities for EECE.'))
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Schools for EECE.'))
     })
 
     test('logs not-found message on non-302/non-500', () => {
