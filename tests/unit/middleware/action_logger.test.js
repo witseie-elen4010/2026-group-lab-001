@@ -96,11 +96,7 @@ describe('actionLogger middleware', () => {
       ['GET', '/join_consultation', 'Viewed Join Consultation page'],
       ['GET', '/scheduled_consultations', 'Viewed lecturer dashboard'],
       ['GET', '/schedule_consultation', 'Viewed Schedule Consultation page'],
-      ['POST', '/schedule_consultation', 'Checked lecturer availability'],
-      ['POST', '/user_profile', 'Updated user profile'],
-      ['GET', '/institutions/universities', 'Searched universities'],
-      ['GET', '/institutions/faculties', 'Searched faculties'],
-      ['GET', '/institutions/schools', 'Searched schools']
+      ['POST', '/user_profile', 'Updated user profile']
     ]
 
     test.each(cases)('%s %s logs "%s"', (method, url, expectedLabel) => {
@@ -134,12 +130,104 @@ describe('actionLogger middleware', () => {
     })
   })
 
+  describe('POST /schedule_consultation', () => {
+    test('logs lecturer username on successful availability check (302)', () => {
+      const req = makeReq({ method: 'POST', url: '/schedule_consultation', body: { lecturer: 'drjones' }, session: { user: { username: 'u', role: 'lecturer' } } })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Checked availability of Lecturer drjones.'))
+    })
+
+    test('logs failure message when availability check fails', () => {
+      const req = makeReq({ method: 'POST', url: '/schedule_consultation', body: { lecturer: 'drjones' }, session: { user: { username: 'u', role: 'lecturer' } } })
+      const res = makeRes(400)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not check Lecturer Availability.'))
+    })
+  })
+
   describe('POST /join_consultation/:id/join', () => {
+    test('logs consultation id on successful join (302)', () => {
+      const req = makeReq({ method: 'POST', url: '/join_consultation/abc123/join', params: { consultationId: 'abc123' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Joined consultation abc123.'))
+    })
+
     test('logs failure when join fails', () => {
       const req = makeReq({ method: 'POST', url: '/join_consultation/abc123/join', session: { user: { username: 'u', role: 'student' } } })
       const res = makeRes(400)
       runLogger(req, res)
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not join the consultation.'))
+    })
+  })
+
+  describe('GET /institutions/universities', () => {
+    test('logs search term on success (302)', () => {
+      const req = makeReq({ url: '/institutions/universities', query: { query: 'Wits' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Universities for Wits.'))
+    })
+
+    test('logs not-found message on non-302/non-500', () => {
+      const req = makeReq({ url: '/institutions/universities', query: { query: 'Wits' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('University not found in search results'))
+    })
+
+    test('logs server error message on 500', () => {
+      const req = makeReq({ url: '/institutions/universities', query: {}, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(500)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not check Universities.'))
+    })
+  })
+
+  describe('GET /institutions/faculties', () => {
+    test('logs search term on success (302)', () => {
+      const req = makeReq({ url: '/institutions/faculties', query: { query: 'Engineering' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Faculties for Engineering.'))
+    })
+
+    test('logs not-found message on non-302/non-500', () => {
+      const req = makeReq({ url: '/institutions/faculties', query: { query: 'Engineering' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Faculty not found in search results'))
+    })
+
+    test('logs server error message on 500', () => {
+      const req = makeReq({ url: '/institutions/faculties', query: {}, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(500)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not check Faculties.'))
+    })
+  })
+
+  describe('GET /institutions/schools', () => {
+    test('logs search term on success (302)', () => {
+      const req = makeReq({ url: '/institutions/schools', query: { query: 'EECE' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Universities for EECE.'))
+    })
+
+    test('logs not-found message on non-302/non-500', () => {
+      const req = makeReq({ url: '/institutions/schools', query: { query: 'EECE' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('School not found in search results'))
+    })
+
+    test('logs server error message on 500', () => {
+      const req = makeReq({ url: '/institutions/schools', query: {}, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(500)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not check Schools.'))
     })
   })
 
