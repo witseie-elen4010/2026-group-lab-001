@@ -171,18 +171,18 @@ describe('actionLogger middleware', () => {
   })
 
   describe('GET /institutions/universities', () => {
-    test('logs search term on success (302)', () => {
+    test('logs search term on success (200)', () => {
       const req = makeReq({ url: '/institutions/universities', query: { query: 'Wits' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(302)
+      const res = makeRes(200)
       runLogger(req, res)
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Universities for Wits.'))
     })
 
-    test('logs not-found message on non-302/non-500', () => {
+    test('logs search term when response is 304 (browser cache hit)', () => {
       const req = makeReq({ url: '/institutions/universities', query: { query: 'Wits' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(200)
+      const res = makeRes(304)
       runLogger(req, res)
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('University not found in search results'))
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Universities for Wits.'))
     })
 
     test('logs server error message on 500', () => {
@@ -194,18 +194,18 @@ describe('actionLogger middleware', () => {
   })
 
   describe('GET /institutions/faculties', () => {
-    test('logs search term on success (302)', () => {
+    test('logs search term on success (200)', () => {
       const req = makeReq({ url: '/institutions/faculties', query: { query: 'Engineering' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(302)
+      const res = makeRes(200)
       runLogger(req, res)
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Faculties for Engineering.'))
     })
 
-    test('logs not-found message on non-302/non-500', () => {
+    test('logs search term when response is 304 (browser cache hit)', () => {
       const req = makeReq({ url: '/institutions/faculties', query: { query: 'Engineering' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(200)
+      const res = makeRes(304)
       runLogger(req, res)
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Faculty not found in search results'))
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Faculties for Engineering.'))
     })
 
     test('logs server error message on 500', () => {
@@ -217,18 +217,18 @@ describe('actionLogger middleware', () => {
   })
 
   describe('GET /institutions/schools', () => {
-    test('logs search term on success (302)', () => {
+    test('logs search term on success (200)', () => {
       const req = makeReq({ url: '/institutions/schools', query: { query: 'EECE' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(302)
+      const res = makeRes(200)
       runLogger(req, res)
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Schools for EECE.'))
     })
 
-    test('logs not-found message on non-302/non-500', () => {
+    test('logs search term when response is 304 (browser cache hit)', () => {
       const req = makeReq({ url: '/institutions/schools', query: { query: 'EECE' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(200)
+      const res = makeRes(304)
       runLogger(req, res)
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('School not found in search results'))
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Searched Schools for EECE.'))
     })
 
     test('logs server error message on 500', () => {

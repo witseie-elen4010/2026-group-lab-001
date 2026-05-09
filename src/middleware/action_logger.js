@@ -61,13 +61,13 @@ const ACTION_MAP = [
     method: 'GET',
     pattern: /^\/institutions\/universities$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
-        if (res.statusCode === 500) {
-          return 'Could not check Universities.'
-        }
-        return 'University not found in search results'
+      if (res.statusCode === 500) {
+        return 'Could not check Universities.'
       }
       const university = req.query.query?.trim() || ''
+      if (!university) {
+        return 'Searched Universities.'
+      }
       return `Searched Universities for ${university}.`
     }
   },
@@ -75,13 +75,13 @@ const ACTION_MAP = [
     method: 'GET',
     pattern: /^\/institutions\/faculties$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
-        if (res.statusCode === 500) {
-          return 'Could not check Faculties.'
-        }
-        return 'Faculty not found in search results'
+      if (res.statusCode === 500) {
+        return 'Could not check Faculties.'
       }
       const faculty = req.query.query?.trim() || ''
+      if (!faculty) {
+        return 'Searched Faculties.'
+      }
       return `Searched Faculties for ${faculty}.`
     }
   },
@@ -89,13 +89,13 @@ const ACTION_MAP = [
     method: 'GET',
     pattern: /^\/institutions\/schools$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
-        if (res.statusCode === 500) {
-          return 'Could not check Schools.'
-        }
-        return 'School not found in search results'
+      if (res.statusCode === 500) {
+        return 'Could not check Schools.'
       }
       const school = req.query.query?.trim() || ''
+      if (!school) {
+        return 'Searched Schools.'
+      }
       return `Searched Schools for ${school}.`
     }
   }
