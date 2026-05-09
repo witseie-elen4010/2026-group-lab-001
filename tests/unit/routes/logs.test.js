@@ -9,7 +9,7 @@ jest.mock('../../../src/models/db', () => ({
 
 jest.mock('../../../src/models/logs_db', () => ({
   addLog: jest.fn().mockResolvedValue(undefined),
-  getAllLogs: jest.fn()
+  getLogsPage: jest.fn()
 }))
 
 jest.mock('../../../src/models/user_db', () => ({
@@ -20,7 +20,7 @@ jest.mock('../../../src/models/user_db', () => ({
 
 const http = require('node:http')
 const { connectToDatabase } = require('../../../src/models/db')
-const { getAllLogs } = require('../../../src/models/logs_db')
+const { getLogsPage } = require('../../../src/models/logs_db')
 const { getUser } = require('../../../src/models/user_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
@@ -106,7 +106,7 @@ describe('logs route', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     connectToDatabase.mockResolvedValue(undefined)
-    getAllLogs.mockResolvedValue([])
+    getLogsPage.mockResolvedValue({ logs: [], hasNextPage: false })
   })
 
   test('Redirects unauthenticated users to login when requesting the logs page', async () => {
@@ -137,7 +137,7 @@ describe('logs route', () => {
   })
 
   test('Renders the logs page with logs for an admin user', async () => {
-    getAllLogs.mockResolvedValueOnce(MOCK_LOGS)
+    getLogsPage.mockResolvedValueOnce({ logs: MOCK_LOGS, hasNextPage: false })
 
     const { sessionCookie } = await loginAs({
       role: 'admin',
@@ -158,11 +158,11 @@ describe('logs route', () => {
     expect(body).toContain('[2026-05-09 13:00:00] user1 | Logged in | HTTP 302')
     expect(body).toContain('[2026-05-09 12:55:00] user2 | Viewed Home page | HTTP 200')
     expect(connectToDatabase).toHaveBeenCalled()
-    expect(getAllLogs).toHaveBeenCalled()
+    expect(getLogsPage).toHaveBeenCalledWith(1, 50)
   })
 
   test('Renders the logs page with empty message when no logs exist', async () => {
-    getAllLogs.mockResolvedValueOnce([])
+    getLogsPage.mockResolvedValueOnce({ logs: [], hasNextPage: false })
 
     const { sessionCookie } = await loginAs({
       role: 'admin',
@@ -181,8 +181,49 @@ describe('logs route', () => {
     expect(body).toContain('No logs available.')
   })
 
+  test('Renders pagination links when additional pages are available', async () => {
+    getLogsPage.mockResolvedValueOnce({ logs: MOCK_LOGS, hasNextPage: true })
+
+    const { sessionCookie } = await loginAs({
+      role: 'admin',
+      username: 'user'
+    })
+
+    const response = await fetch(`${baseUrl}/logs?page=2`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('href="/logs?page=1"')
+    expect(body).toContain('href="/logs?page=3"')
+    expect(body).toContain('Page 2')
+    expect(getLogsPage).toHaveBeenCalledWith(2, 50)
+  })
+
+  test('Defaults to page 1 for invalid page query values', async () => {
+    getLogsPage.mockResolvedValueOnce({ logs: MOCK_LOGS, hasNextPage: false })
+
+    const { sessionCookie } = await loginAs({
+      role: 'admin',
+      username: 'user'
+    })
+
+    const response = await fetch(`${baseUrl}/logs?page=banana`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    expect(response.status).toBe(200)
+    expect(getLogsPage).toHaveBeenCalledWith(1, 50)
+  })
+
   test('Returns a server error when loading logs fails', async () => {
-    getAllLogs.mockRejectedValueOnce(new Error('database unavailable'))
+    getLogsPage.mockRejectedValueOnce(new Error('database unavailable'))
 
     const { sessionCookie } = await loginAs({
       role: 'admin',

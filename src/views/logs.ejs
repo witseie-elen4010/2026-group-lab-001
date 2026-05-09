@@ -31,10 +31,38 @@
       color: #64748b;
       font-style: italic;
     }
+    .logs_top_actions {
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .logs_pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+    .logs_pagination_link {
+      color: #1d4ed8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .logs_pagination_link:hover {
+      text-decoration: underline;
+    }
+    .logs_pagination_current {
+      color: #334155;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <div class="logs_top_actions">
+      <a class="back_link" href="/home">Back to Home</a>
+    </div>
+
     <header>
       <h1>View Logs</h1>
       <% if (username) { %>
@@ -56,9 +84,17 @@
           <div class="logs_empty">No logs available.</div>
         <% } %>
       </div>
-    <% } %>
 
-    <a class="back_link" href="/home">Back to Home</a>
+      <div class="logs_pagination">
+        <% if (hasPreviousPage) { %>
+          <a class="logs_pagination_link" href="/logs?page=<%= page - 1 %>">Previous</a>
+        <% } %>
+        <span class="logs_pagination_current">Page <%= page %></span>
+        <% if (hasNextPage) { %>
+          <a class="logs_pagination_link" href="/logs?page=<%= page + 1 %>">Next</a>
+        <% } %>
+      </div>
+    <% } %>
   </main>
 </body>
 </html>
