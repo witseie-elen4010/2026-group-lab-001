@@ -1,5 +1,13 @@
 const actionLogger = require('../../../src/middleware/action_logger')
 
+jest.mock('../../../src/models/db', () => ({
+  connectToDatabase: jest.fn().mockResolvedValue(undefined)
+}))
+
+jest.mock('../../../src/models/logs_db', () => ({
+  addLog: jest.fn().mockResolvedValue({ acknowledged: true })
+}))
+
 const makeReq = function ({ method = 'GET', url = '/', session = {}, body = {}, query = {}, params = {} } = {}) {
   return { method, originalUrl: url, session, body, query, params }
 }
@@ -251,6 +259,15 @@ describe('actionLogger middleware', () => {
       const res = makeRes()
       runLogger(req, res)
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Viewed profile of drjones'))
+    })
+  })
+
+  describe('GET /logs', () => {
+    test('does not log the logs page', () => {
+      const req = makeReq({ url: '/logs', session: { user: { username: 'admin_user', role: 'admin' } } })
+      const res = makeRes()
+      runLogger(req, res)
+      expect(consoleSpy).not.toHaveBeenCalled()
     })
   })
 })

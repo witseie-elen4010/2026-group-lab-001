@@ -14,6 +14,8 @@ module.exports = defineConfig({
     command: 'node src/app.js',
     env: {
       ...process.env,
+      DISABLE_ACTION_LOG_DB_WRITES: 'true',
+      NODE_ENV: 'test',
       PORT: '4173',
       SESSION_SECRET: process.env.SESSION_SECRET || 'playwright-session-secret'
     },

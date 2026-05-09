@@ -63,7 +63,7 @@ describe('student login integration flow', () => {
     await closeDatabaseConnection()
   })
 
-  RUN_DB_TEST('logs in with the seeded student user and renders student-specific home navigation', async function () {
+  RUN_DB_TEST('logs in with the seeded admin user and renders admin-specific home navigation', async function () {
     const loginResponse = await fetch(`${baseUrl}/login`, {
       body: encodeForm({
         password: PASSWORD,
@@ -90,13 +90,15 @@ describe('student login integration flow', () => {
     const body = await homeResponse.text()
 
     expect(homeResponse.status).toBe(200)
-    expect(body).toContain('<title>Student Home</title>')
+    expect(body).toContain('<title>Admin Home</title>')
     expect(body).toContain(`Hello ${USERNAME}`)
-    expect(body).toContain('You are logged in as a student.')
+    expect(body).toContain('You are logged in as a admin.')
     expect(body).toContain('Create Consultation')
     expect(body).toContain('Join Consultation')
+    expect(body).toContain('View Logs')
     expect(body).toContain('href="/consultations/new"')
     expect(body).toContain('href="/join_consultation"')
+    expect(body).toContain('href="/logs"')
     expect(body).toContain('Find a Lecturer')
     expect(body).not.toContain('Scheduled Consultations')
   })
