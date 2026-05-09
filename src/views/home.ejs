@@ -19,7 +19,7 @@
       <% } %>
     </header>
 
-    <% if (role === 'student' && username) { %>
+    <% if ((role === 'student' || role === 'admin') && username) { %>
       <section class="home_navigation">
         <h2 class="home_navigation_title">Navigation</h2>
         <p class="home_navigation_text">Choose an option below.</p>
@@ -28,6 +28,9 @@
           <a href="/consultations/new">Create Consultation</a>
           <a href="/join_consultation">Join Consultation</a>
         </div>
+        <% if (role === 'admin') { %>
+          <a href="/logs" style="width: fit-content; margin: 4px auto 0; padding: 8px 14px; background: var(--color-secondary); font-size: 0.92rem;">View Logs</a>
+        <% } %>
       </section>
     <% } else if (role === 'lecturer' && username) { %>
       <section class="home_navigation">
@@ -56,7 +59,7 @@
               <% week.forEach(function (day) { %>
                 <% if (day.isEmpty) { %>
                   <td class="calendar_day calendar_day_empty"></td>
-                <% } else if (role === 'student') { %>
+                <% } else if (role === 'student' || role === 'admin') { %>
                   <% const dayCons = consultationsByDate[day.isoDate] || [] %>
                   <td class="calendar_day">
                     <div class="calendar_day_content">
@@ -84,7 +87,7 @@
       </table>
     </section>
 
-    <% if (role === 'student') { %>
+    <% if (role === 'student' || role === 'admin') { %>
       <h1>Find a Lecturer</h1>
       <section>
         <form id="lecturer_search_form" action="/home" method="get">

@@ -136,7 +136,7 @@ router.get('/new', async function (req, res) {
   const username = req.session?.user?.username || ''
   const universityId = req.session?.user?.universityId || ''
 
-  if (role !== 'student') {
+  if (role !== 'student' && role !== 'admin') {
     return renderCreateConsultation(res, {
       error: 'Only students can create consultations.',
       statusCode: 403,
@@ -176,7 +176,7 @@ router.post('/', async function (req, res) {
   const organiserId = req.session?.user?.username || ''
   const universityId = req.session?.user?.universityId || ''
 
-  if (role !== 'student') {
+  if (role !== 'student' && role !== 'admin') {
     return renderCreateConsultation(res, {
       consultationTitle,
       error: 'Only students can create consultations.',
