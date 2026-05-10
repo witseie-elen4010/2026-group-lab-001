@@ -253,6 +253,81 @@ const getConsultationsForCalendar = async function (username, monthStart, monthE
   }).filter(Boolean)
 }
 
+const CANCEL_RESULT_REASONS = {
+  NOT_FOUND: 'not-found',
+  NOT_ORGANISER: 'not-organiser',
+  PAST_CONSULTATION: 'past-consultation'
+}
+
+/**
+ * Returns upcoming consultations for a student, with an isOrganiser flag for each.
+ * @param {string} username - Student username.
+ * @returns {Promise<Array<object>>} Upcoming consultations sorted by datetime ascending.
+ */
+const getConsultationsForStudent = async function (username) {
+  const consultations = await consultationsCollection().find({ attendees: username }).toArray()
+  if (consultations.length === 0) return []
+
+  const now = new Date()
+  const upcoming = consultations.filter(function (c) {
+    return c._id && new Date(c.datetime) > now
+  })
+
+  if (upcoming.length === 0) return []
+
+  const lecturerIds = [...new Set(upcoming.map(function (c) { return c.lecturerId }).filter(Boolean))]
+  const [users, availabilities] = await Promise.all([
+    usersCollection().find({ username: { $in: lecturerIds } }).toArray(),
+    getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: { $in: lecturerIds } }).toArray()
+  ])
+
+  const usersByUsername = new Map(users.map(function (u) { return [u.username, u] }))
+  const availabilitiesByUsername = new Map(availabilities.map(function (a) { return [a.username, a] }))
+
+  return upcoming.sort(function (a, b) {
+    return (a.datetime || '').localeCompare(b.datetime || '')
+  }).map(function (consultation) {
+    return {
+      date: consultation.datetime?.slice(0, 10) || '',
+      id: consultation._id.toString(),
+      isOrganiser: consultation.organiserId === username,
+      lecturer: buildDisplayName(usersByUsername.get(consultation.lecturerId), consultation.lecturerId),
+      name: consultation.title || 'Untitled consultation',
+      time: buildConsultationTime(consultation.datetime, availabilitiesByUsername.get(consultation.lecturerId)?.duration)
+    }
+  })
+}
+
+/**
+ * Deletes a future consultation if the requesting user is its organiser.
+ * @param {string} consultationId - Consultation id string.
+ * @param {string} organiserId - Username of the requester.
+ * @returns {Promise<{success: boolean, statusCode?: number, reason?: string}>} Cancel result.
+ */
+const cancelConsultation = async function (consultationId, organiserId) {
+  if (!ObjectId.isValid(consultationId)) {
+    return { success: false, statusCode: 404, reason: CANCEL_RESULT_REASONS.NOT_FOUND }
+  }
+
+  const objectId = new ObjectId(consultationId)
+  const consultation = await consultationsCollection().findOne({ _id: objectId })
+
+  if (!consultation) {
+    return { success: false, statusCode: 404, reason: CANCEL_RESULT_REASONS.NOT_FOUND }
+  }
+
+  if (consultation.organiserId !== organiserId) {
+    return { success: false, statusCode: 403, reason: CANCEL_RESULT_REASONS.NOT_ORGANISER }
+  }
+
+  if (new Date(consultation.datetime) <= new Date()) {
+    return { success: false, statusCode: 400, reason: CANCEL_RESULT_REASONS.PAST_CONSULTATION }
+  }
+
+  await consultationsCollection().deleteOne({ _id: objectId })
+  return { success: true }
+}
+
 /**
  * Adds a student attendee to an existing consultation when space remains.
  * @param {string} consultationId - Consultation id string.
@@ -291,7 +366,10 @@ const addStudentToConsultation = async function (consultationId, username) {
 module.exports = {
   addConsultation,
   addStudentToConsultation,
+  cancelConsultation,
+  CANCEL_RESULT_REASONS,
   getConsultationsForCalendar,
+  getConsultationsForStudent,
   getUpcomingConsultationsForLecturer,
   JOIN_RESULT_REASONS,
   listConsultationsForLecturerOnDate,

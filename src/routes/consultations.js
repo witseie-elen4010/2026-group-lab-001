@@ -1,12 +1,17 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
-const { addConsultation, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
+const { addConsultation, cancelConsultation, getConsultationsForStudent, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
 const { addMinutesToTime, validateLecturerAvailability, findOverlappingConsultation } = require('../services/consultation_availability_validation')
 const { getUser, searchLecturers } = require('../models/user_db')
 
 const router = express.Router()
 const DATETIME_LOCAL_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
+const CANCEL_ERROR_MESSAGES = {
+  'not-found': 'Consultation not found.',
+  'not-organiser': 'Only the organiser can cancel this consultation.',
+  'past-consultation': 'Past consultations cannot be cancelled.'
+}
 
 /**
  * Converts lecturer documents into option objects for the consultation form.
@@ -283,6 +288,44 @@ router.post('/', async function (req, res) {
       universityId,
       username: organiserId
     })
+  }
+})
+
+router.get('/', async function (req, res) {
+  const { username = '', role = '' } = req.session?.user || {}
+
+  if (role !== 'student' && role !== 'admin') {
+    return res.status(403).json({ error: 'Only students can view their consultations.' })
+  }
+
+  try {
+    await connectToDatabase()
+    const consultations = await getConsultationsForStudent(username)
+    return res.json({ consultations })
+  } catch {
+    return res.status(500).json({ error: 'Unable to load consultations right now.' })
+  }
+})
+
+router.delete('/:id', async function (req, res) {
+  const { username = '', role = '' } = req.session?.user || {}
+
+  if (role !== 'student' && role !== 'admin') {
+    return res.status(403).json({ error: 'Only students can cancel consultations.' })
+  }
+
+  try {
+    await connectToDatabase()
+    const result = await cancelConsultation(req.params.id, username)
+
+    return result.success
+      ? res.json({ success: true })
+      : res.status(result.statusCode || 400).json({
+        success: false,
+        error: CANCEL_ERROR_MESSAGES[result.reason] || 'Unable to cancel consultation.'
+      })
+  } catch {
+    return res.status(500).json({ success: false, error: 'Unable to cancel consultation right now.' })
   }
 })
 
