@@ -5,7 +5,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), quiet: t
 
 const SEEDED_STUDENT_USERNAME = 'user'
 const SEEDED_LECTURER_USERNAME = 'user1'
-const PASSWORD = 'password'
+const LECTURER_PASSWORD = 'password1'
 const TEST_ID = `${process.pid}${Date.now()}`
 const TEST_STUDENT_USERNAME = `e2estud${TEST_ID}lectcancel`
 const TEST_LECTURER_USERNAME = `e2elect${TEST_ID}lectcancel`
@@ -24,7 +24,7 @@ test.describe('lecturer cancel consultation E2E', () => {
   const loginAsLecturer = async function (page) {
     await page.goto('/login')
     await page.getByRole('textbox', { name: 'Username' }).fill(TEST_LECTURER_USERNAME)
-    await page.getByLabel('Password').fill(PASSWORD)
+    await page.getByLabel('Password').fill(LECTURER_PASSWORD)
     await page.getByRole('button', { name: 'Log In' }).click()
     await expect(page).toHaveURL(/\/home$/)
   }

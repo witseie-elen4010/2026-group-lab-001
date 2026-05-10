@@ -2,7 +2,8 @@ const http = require('node:http')
 const { closeDatabaseConnection, connectToDatabase, getCollection } = require('../../src/models/db')
 const app = require('../../src/app')
 
-const PASSWORD = 'password'
+const STUDENT_PASSWORD = 'password'
+const LECTURER_PASSWORD = 'password1'
 const SEEDED_STUDENT_USERNAME = 'user'
 const SEEDED_LECTURER_USERNAME = 'user1'
 const TEST_ID = `${process.pid}${Date.now()}`
@@ -129,7 +130,7 @@ describe('cancel consultation integration flow', () => {
       title: 'Integration cancel test consultation'
     })
 
-    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_STUDENT_USERNAME })
+    const sessionCookie = await loginAs(baseUrl, { password: STUDENT_PASSWORD, username: TEST_STUDENT_USERNAME })
     const response = await fetch(`${baseUrl}/consultations`, {
       headers: { cookie: sessionCookie }
     })
@@ -151,7 +152,7 @@ describe('cancel consultation integration flow', () => {
       title: 'Integration lecturer cancel test consultation'
     })
 
-    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_LECTURER_USERNAME })
+    const sessionCookie = await loginAs(baseUrl, { password: LECTURER_PASSWORD, username: TEST_LECTURER_USERNAME })
     const response = await fetch(`${baseUrl}/consultations`, {
       headers: { cookie: sessionCookie }
     })
@@ -173,7 +174,7 @@ describe('cancel consultation integration flow', () => {
       title: 'Consultation to be cancelled by lecturer'
     })
 
-    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_LECTURER_USERNAME })
+    const sessionCookie = await loginAs(baseUrl, { password: LECTURER_PASSWORD, username: TEST_LECTURER_USERNAME })
     const response = await fetch(`${baseUrl}/consultations/${insertedId.toString()}`, {
       headers: { cookie: sessionCookie },
       method: 'DELETE'
@@ -199,7 +200,7 @@ describe('cancel consultation integration flow', () => {
       title: 'Consultation to be cancelled'
     })
 
-    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_STUDENT_USERNAME })
+    const sessionCookie = await loginAs(baseUrl, { password: STUDENT_PASSWORD, username: TEST_STUDENT_USERNAME })
     const response = await fetch(`${baseUrl}/consultations/${insertedId.toString()}`, {
       headers: { cookie: sessionCookie },
       method: 'DELETE'
