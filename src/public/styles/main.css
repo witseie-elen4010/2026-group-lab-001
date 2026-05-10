@@ -399,6 +399,39 @@ a {
   display: none;
 }
 
+.manage_dialog {
+  width: min(90vw, 600px);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.manage_dialog::backdrop {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.manage_dialog_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.manage_dialog_title {
+  margin: 0;
+}
+
+.manage_dialog_close {
+  background: var(--color-secondary);
+}
+
+.btn_danger {
+  background: var(--color-error-text);
+}
+
 @media (max-width: 700px) {
   .home_navigation_actions {
     grid-template-columns: 1fr;

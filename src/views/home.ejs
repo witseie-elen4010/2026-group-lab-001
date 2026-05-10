@@ -6,6 +6,7 @@
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
   <script src="/scripts/lecturer_search.js" defer></script>
+  <script src="/scripts/manage_consultations.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
@@ -27,11 +28,21 @@
           <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
           <a href="/consultations/new">Create Consultation</a>
           <a href="/join_consultation">Join Consultation</a>
+          <button type="button" id="manage_consultations_btn" class="home_navigation_primary">Manage Consultations</button>
         </div>
         <% if (role === 'admin') { %>
           <a href="/logs" style="width: fit-content; margin: 4px auto 0; padding: 8px 14px; background: var(--color-secondary); font-size: 0.92rem;">View Logs</a>
         <% } %>
       </section>
+
+      <dialog id="manage_consultations_dialog" class="manage_dialog">
+        <div class="manage_dialog_header">
+          <h2 class="manage_dialog_title">My Consultations</h2>
+          <button type="button" id="close_manage_dialog" class="manage_dialog_close">Close</button>
+        </div>
+        <p id="manage_consultations_msg" class="is_hidden" aria-live="polite"></p>
+        <div id="manage_consultations_list"></div>
+      </dialog>
     <% } else if (role === 'lecturer' && username) { %>
       <section class="home_navigation">
         <h2 class="home_navigation_title">Navigation</h2>
