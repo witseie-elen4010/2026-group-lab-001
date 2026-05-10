@@ -289,8 +289,8 @@ describe('consultations route', () => {
       expect(getConsultationsForStudent).toHaveBeenCalledWith('morris')
     })
 
-    test('returns 403 when a non-student requests the consultation list', async () => {
-      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+    test('returns 403 when an unauthorized role requests the consultation list', async () => {
+      currentSessionUser = { role: 'guest', universityId: 'Wits', username: 'guest1' }
 
       const response = await fetch(`${baseUrl}/consultations`)
       const data = await response.json()
@@ -318,11 +318,11 @@ describe('consultations route', () => {
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(cancelConsultation).toHaveBeenCalledWith('abc123', 'morris')
+      expect(cancelConsultation).toHaveBeenCalledWith('abc123', 'morris', 'student')
     })
 
-    test('returns 403 when a non-student tries to cancel', async () => {
-      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+    test('returns 403 when an unauthorized role tries to cancel', async () => {
+      currentSessionUser = { role: 'guest', universityId: 'Wits', username: 'guest1' }
 
       const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
       const data = await response.json()
