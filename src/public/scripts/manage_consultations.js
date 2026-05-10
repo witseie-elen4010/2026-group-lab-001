@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
     msg.className = 'is_hidden'
   }
 
+  /**
+   * Builds a card element for a single consultation.
+   * @param {object} consultation - Enriched consultation object from GET /consultations.
+   * @returns {HTMLElement} Article element ready to insert into the list.
+   */
   const buildConsultationCard = function (consultation) {
     const article = document.createElement('article')
     article.className = 'dashboard_consultation_card'
@@ -51,6 +56,9 @@ document.addEventListener('DOMContentLoaded', function () {
     return article
   }
 
+  /**
+   * Fetches the student's upcoming consultations and renders them into the modal list.
+   */
   const loadConsultations = async function () {
     list.innerHTML = '<p>Loading…</p>'
     hideMsg()
@@ -78,6 +86,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  /**
+   * Prompts the user for confirmation then sends a DELETE request for the consultation.
+   * Reloads the page on success so the calendar reflects the removed slot.
+   * @param {string} consultationId - The id of the consultation to cancel.
+   */
   const handleCancel = async function (consultationId) {
     if (!window.confirm('Are you sure you want to cancel this consultation? This cannot be undone.')) {
       return
@@ -89,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (response.ok && data.success) {
         showMsg('Consultation cancelled successfully.', false)
+        // Delay gives the user time to read the success message before the page refreshes
         setTimeout(function () { window.location.reload() }, 1000)
       } else {
         showMsg(data.error || 'Unable to cancel consultation.', true)
