@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (consultation.isOrganiser) {
       const cancelBtn = document.createElement('button')
       cancelBtn.type = 'button'
-      cancelBtn.className = 'back_link'
+      cancelBtn.className = 'btn_danger'
       cancelBtn.style.marginTop = '12px'
       cancelBtn.textContent = 'Cancel Consultation'
       cancelBtn.dataset.cancelId = consultation.id

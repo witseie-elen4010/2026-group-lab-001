@@ -428,6 +428,10 @@ a {
   background: var(--color-secondary);
 }
 
+.btn_danger {
+  background: var(--color-error-text);
+}
+
 @media (max-width: 700px) {
   .home_navigation_actions {
     grid-template-columns: 1fr;
