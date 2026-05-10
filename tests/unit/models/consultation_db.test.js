@@ -517,6 +517,29 @@ describe('consultation database operations', () => {
       expect(mockConsultationCollection.deleteOne).toHaveBeenCalledWith({ _id: id })
       expect(result).toEqual({ success: true })
     })
+
+    test('returns not-lecturer when the requesting lecturer is not assigned to the consultation', async () => {
+      const id = new ObjectId()
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      mockConsultationCollection.findOne.mockResolvedValue({ _id: id, datetime: futureDate, lecturerId: 'lecturer2', organiserId: 'student1' })
+
+      const result = await cancelConsultation(id.toString(), 'lecturer1', 'lecturer')
+
+      expect(result).toEqual({ success: false, statusCode: 403, reason: CANCEL_RESULT_REASONS.NOT_LECTURER })
+      expect(mockConsultationCollection.deleteOne).not.toHaveBeenCalled()
+    })
+
+    test('deletes the consultation and returns success when the assigned lecturer cancels', async () => {
+      const id = new ObjectId()
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      mockConsultationCollection.findOne.mockResolvedValue({ _id: id, datetime: futureDate, lecturerId: 'lecturer1', organiserId: 'student1' })
+      mockConsultationCollection.deleteOne.mockResolvedValue({ deletedCount: 1 })
+
+      const result = await cancelConsultation(id.toString(), 'lecturer1', 'lecturer')
+
+      expect(mockConsultationCollection.deleteOne).toHaveBeenCalledWith({ _id: id })
+      expect(result).toEqual({ success: true })
+    })
   })
 
   test('searchConsultationsForStudent only returns consultations in the future', async () => {

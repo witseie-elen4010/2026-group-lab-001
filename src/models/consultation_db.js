@@ -255,6 +255,7 @@ const getConsultationsForCalendar = async function (username, monthStart, monthE
 
 const CANCEL_RESULT_REASONS = {
   NOT_FOUND: 'not-found',
+  NOT_LECTURER: 'not-lecturer',
   NOT_ORGANISER: 'not-organiser',
   PAST_CONSULTATION: 'past-consultation'
 }
@@ -299,12 +300,14 @@ const getConsultationsForStudent = async function (username) {
 }
 
 /**
- * Deletes a future consultation if the requesting user is its organiser.
+ * Deletes a future consultation if the requesting user owns it.
+ * Students and admins must be the organiser; lecturers must be the assigned lecturer.
  * @param {string} consultationId - Consultation id string.
- * @param {string} organiserId - Username of the requester.
+ * @param {string} userId - Username of the requester.
+ * @param {string} role - Role of the requester ('lecturer' | 'student' | 'admin').
  * @returns {Promise<{success: boolean, statusCode?: number, reason?: string}>} Cancel result.
  */
-const cancelConsultation = async function (consultationId, organiserId) {
+const cancelConsultation = async function (consultationId, userId, role) {
   if (!ObjectId.isValid(consultationId)) {
     return { success: false, statusCode: 404, reason: CANCEL_RESULT_REASONS.NOT_FOUND }
   }
@@ -316,7 +319,11 @@ const cancelConsultation = async function (consultationId, organiserId) {
     return { success: false, statusCode: 404, reason: CANCEL_RESULT_REASONS.NOT_FOUND }
   }
 
-  if (consultation.organiserId !== organiserId) {
+  if (role === 'lecturer') {
+    if (consultation.lecturerId !== userId) {
+      return { success: false, statusCode: 403, reason: CANCEL_RESULT_REASONS.NOT_LECTURER }
+    }
+  } else if (consultation.organiserId !== userId) {
     return { success: false, statusCode: 403, reason: CANCEL_RESULT_REASONS.NOT_ORGANISER }
   }
 

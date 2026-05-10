@@ -1,6 +1,6 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
-const { addConsultation, cancelConsultation, getConsultationsForStudent, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
+const { addConsultation, cancelConsultation, getConsultationsForStudent, getUpcomingConsultationsForLecturer, listConsultationsForLecturerOnDate } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
 const { addMinutesToTime, validateLecturerAvailability, findOverlappingConsultation } = require('../services/consultation_availability_validation')
 const { getUser, searchLecturers } = require('../models/user_db')
@@ -9,6 +9,7 @@ const router = express.Router()
 const DATETIME_LOCAL_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
 const CANCEL_ERROR_MESSAGES = {
   'not-found': 'Consultation not found.',
+  'not-lecturer': 'Only the assigned lecturer can cancel this consultation.',
   'not-organiser': 'Only the organiser can cancel this consultation.',
   'past-consultation': 'Past consultations cannot be cancelled.'
 }
@@ -294,12 +295,18 @@ router.post('/', async function (req, res) {
 router.get('/', async function (req, res) {
   const { username = '', role = '' } = req.session?.user || {}
 
-  if (role !== 'student' && role !== 'admin') {
-    return res.status(403).json({ error: 'Only students can view their consultations.' })
+  if (role !== 'student' && role !== 'admin' && role !== 'lecturer') {
+    return res.status(403).json({ error: 'Access denied.' })
   }
 
   try {
     await connectToDatabase()
+
+    if (role === 'lecturer') {
+      const consultations = await getUpcomingConsultationsForLecturer(username)
+      return res.json({ consultations: consultations.map(function (c) { return { ...c, isOrganiser: true } }) })
+    }
+
     const consultations = await getConsultationsForStudent(username)
     return res.json({ consultations })
   } catch {
@@ -310,13 +317,13 @@ router.get('/', async function (req, res) {
 router.delete('/:id', async function (req, res) {
   const { username = '', role = '' } = req.session?.user || {}
 
-  if (role !== 'student' && role !== 'admin') {
-    return res.status(403).json({ error: 'Only students can cancel consultations.' })
+  if (role !== 'student' && role !== 'admin' && role !== 'lecturer') {
+    return res.status(403).json({ error: 'Access denied.' })
   }
 
   try {
     await connectToDatabase()
-    const result = await cancelConsultation(req.params.id, username)
+    const result = await cancelConsultation(req.params.id, username, role)
 
     return result.success
       ? res.json({ success: true })

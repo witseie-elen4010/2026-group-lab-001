@@ -35,7 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const lecturer = document.createElement('p')
     lecturer.className = 'dashboard_consultation_meta'
-    lecturer.textContent = `Lecturer: ${consultation.lecturer}`
+    lecturer.textContent = consultation.organiser
+      ? `Organiser: ${consultation.organiser}`
+      : `Lecturer: ${consultation.lecturer}`
     article.appendChild(lecturer)
 
     const dateTime = document.createElement('p')

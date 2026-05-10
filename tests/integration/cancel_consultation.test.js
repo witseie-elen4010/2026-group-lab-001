@@ -2,7 +2,8 @@ const http = require('node:http')
 const { closeDatabaseConnection, connectToDatabase, getCollection } = require('../../src/models/db')
 const app = require('../../src/app')
 
-const PASSWORD = 'password'
+const STUDENT_PASSWORD = 'password'
+const LECTURER_PASSWORD = 'password1'
 const SEEDED_STUDENT_USERNAME = 'user'
 const SEEDED_LECTURER_USERNAME = 'user1'
 const TEST_ID = `${process.pid}${Date.now()}`
@@ -129,7 +130,7 @@ describe('cancel consultation integration flow', () => {
       title: 'Integration cancel test consultation'
     })
 
-    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_STUDENT_USERNAME })
+    const sessionCookie = await loginAs(baseUrl, { password: STUDENT_PASSWORD, username: TEST_STUDENT_USERNAME })
     const response = await fetch(`${baseUrl}/consultations`, {
       headers: { cookie: sessionCookie }
     })
@@ -138,6 +139,54 @@ describe('cancel consultation integration flow', () => {
     expect(response.status).toBe(200)
     expect(Array.isArray(data.consultations)).toBe(true)
     expect(data.consultations.some(function (c) { return c.id === insertedId.toString() })).toBe(true)
+  })
+
+  RUN_DB_TEST('returns the lecturer upcoming consultations', async function () {
+    await connectToDatabase()
+    const { insertedId } = await getCollection('Consultation').insertOne({
+      attendees: [TEST_STUDENT_USERNAME],
+      capacity: 1,
+      datetime: futureDatetime(),
+      lecturerId: TEST_LECTURER_USERNAME,
+      organiserId: TEST_STUDENT_USERNAME,
+      title: 'Integration lecturer cancel test consultation'
+    })
+
+    const sessionCookie = await loginAs(baseUrl, { password: LECTURER_PASSWORD, username: TEST_LECTURER_USERNAME })
+    const response = await fetch(`${baseUrl}/consultations`, {
+      headers: { cookie: sessionCookie }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(Array.isArray(data.consultations)).toBe(true)
+    expect(data.consultations.some(function (c) { return c.id === insertedId.toString() })).toBe(true)
+  })
+
+  RUN_DB_TEST('deletes the consultation and returns success when the lecturer cancels', async function () {
+    await connectToDatabase()
+    const { insertedId } = await getCollection('Consultation').insertOne({
+      attendees: [TEST_STUDENT_USERNAME],
+      capacity: 1,
+      datetime: futureDatetime(),
+      lecturerId: TEST_LECTURER_USERNAME,
+      organiserId: TEST_STUDENT_USERNAME,
+      title: 'Consultation to be cancelled by lecturer'
+    })
+
+    const sessionCookie = await loginAs(baseUrl, { password: LECTURER_PASSWORD, username: TEST_LECTURER_USERNAME })
+    const response = await fetch(`${baseUrl}/consultations/${insertedId.toString()}`, {
+      headers: { cookie: sessionCookie },
+      method: 'DELETE'
+    })
+    const data = await response.json()
+
+    await connectToDatabase()
+    const remaining = await getCollection('Consultation').findOne({ _id: insertedId })
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(remaining).toBeNull()
   })
 
   RUN_DB_TEST('deletes the consultation and returns success when the organiser cancels', async function () {
@@ -151,7 +200,7 @@ describe('cancel consultation integration flow', () => {
       title: 'Consultation to be cancelled'
     })
 
-    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_STUDENT_USERNAME })
+    const sessionCookie = await loginAs(baseUrl, { password: STUDENT_PASSWORD, username: TEST_STUDENT_USERNAME })
     const response = await fetch(`${baseUrl}/consultations/${insertedId.toString()}`, {
       headers: { cookie: sessionCookie },
       method: 'DELETE'
