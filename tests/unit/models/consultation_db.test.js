@@ -7,7 +7,10 @@ const { getCollection } = require('../../../src/models/db')
 const {
   addConsultation,
   addStudentToConsultation,
+  cancelConsultation,
+  CANCEL_RESULT_REASONS,
   getConsultationsForCalendar,
+  getConsultationsForStudent,
   getUpcomingConsultationsForLecturer,
   JOIN_RESULT_REASONS,
   listConsultationsForLecturerOnDate,
@@ -22,6 +25,7 @@ describe('consultation database operations', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockConsultationCollection = {
+      deleteOne: jest.fn(),
       find: jest.fn(),
       findOne: jest.fn(),
       insertOne: jest.fn(),
@@ -358,6 +362,160 @@ describe('consultation database operations', () => {
       const result = await getConsultationsForCalendar('student1', MONTH_START, MONTH_END)
 
       expect(result[0].time).toBe('10:00 to 11:00')
+    })
+  })
+
+  describe('getConsultationsForStudent', () => {
+    test('returns an empty array when the student has no consultations', async () => {
+      mockConsultationCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+
+      const result = await getConsultationsForStudent('student1')
+
+      expect(result).toEqual([])
+    })
+
+    test('returns only future consultations', async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      const futureId = new ObjectId()
+
+      mockConsultationCollection.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { _id: futureId, attendees: ['student1'], datetime: futureDate, lecturerId: 'lecturer1', organiserId: 'student1', title: 'Future' },
+          { _id: new ObjectId(), attendees: ['student1'], datetime: pastDate, lecturerId: 'lecturer1', organiserId: 'student1', title: 'Past' }
+        ])
+      })
+      mockUserCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+      mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+
+      const result = await getConsultationsForStudent('student1')
+
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe(futureId.toString())
+    })
+
+    test('sets isOrganiser to true when the student is the organiser', async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+
+      mockConsultationCollection.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { _id: new ObjectId(), attendees: ['student1'], datetime: futureDate, lecturerId: 'lecturer1', organiserId: 'student1', title: 'My consultation' }
+        ])
+      })
+      mockUserCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+      mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+
+      const result = await getConsultationsForStudent('student1')
+
+      expect(result[0].isOrganiser).toBe(true)
+    })
+
+    test('sets isOrganiser to false when the student joined but did not organise', async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+
+      mockConsultationCollection.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { _id: new ObjectId(), attendees: ['student1'], datetime: futureDate, lecturerId: 'lecturer1', organiserId: 'student2', title: 'Someone elses consultation' }
+        ])
+      })
+      mockUserCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+      mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+
+      const result = await getConsultationsForStudent('student1')
+
+      expect(result[0].isOrganiser).toBe(false)
+    })
+
+    test('builds the lecturer display name from the user document', async () => {
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+
+      mockConsultationCollection.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { _id: new ObjectId(), attendees: ['student1'], datetime: futureDate, lecturerId: 'lecturer1', organiserId: 'student1', title: 'DS Review' }
+        ])
+      })
+      mockUserCollection.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([{ username: 'lecturer1', firstName: 'Jane', lastName: 'Doe' }])
+      })
+      mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+
+      const result = await getConsultationsForStudent('student1')
+
+      expect(result[0].lecturer).toBe('Jane Doe')
+    })
+
+    test('returns consultations sorted by datetime ascending', async () => {
+      const firstDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      const secondDate = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      const firstId = new ObjectId()
+      const secondId = new ObjectId()
+
+      mockConsultationCollection.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          { _id: secondId, attendees: ['student1'], datetime: secondDate, lecturerId: 'lecturer1', organiserId: 'student1', title: 'Later' },
+          { _id: firstId, attendees: ['student1'], datetime: firstDate, lecturerId: 'lecturer1', organiserId: 'student1', title: 'Earlier' }
+        ])
+      })
+      mockUserCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+      mockLecturerAvailabilityCollection.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) })
+
+      const result = await getConsultationsForStudent('student1')
+
+      expect(result[0].id).toBe(firstId.toString())
+      expect(result[1].id).toBe(secondId.toString())
+    })
+  })
+
+  describe('cancelConsultation', () => {
+    test('returns not-found for an invalid ObjectId', async () => {
+      const result = await cancelConsultation('not-a-valid-id', 'student1')
+
+      expect(result).toEqual({ success: false, statusCode: 404, reason: CANCEL_RESULT_REASONS.NOT_FOUND })
+      expect(mockConsultationCollection.findOne).not.toHaveBeenCalled()
+    })
+
+    test('returns not-found when the consultation does not exist', async () => {
+      const id = new ObjectId()
+      mockConsultationCollection.findOne.mockResolvedValue(null)
+
+      const result = await cancelConsultation(id.toString(), 'student1')
+
+      expect(result).toEqual({ success: false, statusCode: 404, reason: CANCEL_RESULT_REASONS.NOT_FOUND })
+      expect(mockConsultationCollection.deleteOne).not.toHaveBeenCalled()
+    })
+
+    test('returns not-organiser when the requester did not create the consultation', async () => {
+      const id = new ObjectId()
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      mockConsultationCollection.findOne.mockResolvedValue({ _id: id, datetime: futureDate, organiserId: 'student2' })
+
+      const result = await cancelConsultation(id.toString(), 'student1')
+
+      expect(result).toEqual({ success: false, statusCode: 403, reason: CANCEL_RESULT_REASONS.NOT_ORGANISER })
+      expect(mockConsultationCollection.deleteOne).not.toHaveBeenCalled()
+    })
+
+    test('returns past-consultation when the consultation datetime has already passed', async () => {
+      const id = new ObjectId()
+      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      mockConsultationCollection.findOne.mockResolvedValue({ _id: id, datetime: pastDate, organiserId: 'student1' })
+
+      const result = await cancelConsultation(id.toString(), 'student1')
+
+      expect(result).toEqual({ success: false, statusCode: 400, reason: CANCEL_RESULT_REASONS.PAST_CONSULTATION })
+      expect(mockConsultationCollection.deleteOne).not.toHaveBeenCalled()
+    })
+
+    test('deletes the consultation and returns success when all checks pass', async () => {
+      const id = new ObjectId()
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+      mockConsultationCollection.findOne.mockResolvedValue({ _id: id, datetime: futureDate, organiserId: 'student1' })
+      mockConsultationCollection.deleteOne.mockResolvedValue({ deletedCount: 1 })
+
+      const result = await cancelConsultation(id.toString(), 'student1')
+
+      expect(mockConsultationCollection.deleteOne).toHaveBeenCalledWith({ _id: id })
+      expect(result).toEqual({ success: true })
     })
   })
 

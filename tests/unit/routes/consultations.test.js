@@ -1,5 +1,7 @@
 jest.mock('../../../src/models/consultation_db', () => ({
   addConsultation: jest.fn(),
+  cancelConsultation: jest.fn(),
+  getConsultationsForStudent: jest.fn(),
   listConsultationsForLecturerOnDate: jest.fn()
 }))
 
@@ -20,7 +22,7 @@ const http = require('node:http')
 const path = require('node:path')
 const express = require('express')
 
-const { addConsultation, listConsultationsForLecturerOnDate } = require('../../../src/models/consultation_db')
+const { addConsultation, cancelConsultation, getConsultationsForStudent, listConsultationsForLecturerOnDate } = require('../../../src/models/consultation_db')
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
@@ -110,6 +112,8 @@ describe('consultations route', () => {
       username: 'morris'
     }
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
+    cancelConsultation.mockResolvedValue({ success: true })
+    getConsultationsForStudent.mockResolvedValue([])
     listConsultationsForLecturerOnDate.mockResolvedValue([])
     connectToDatabase.mockResolvedValue(undefined)
     getLecturerAvailability.mockResolvedValue({
@@ -268,6 +272,109 @@ describe('consultations route', () => {
     expect(response.status).toBe(400)
     expect(body).toContain('Please select a valid lecturer.')
     expect(addConsultation).not.toHaveBeenCalled()
+  })
+
+  describe('GET /consultations', () => {
+    test('returns JSON list of the students consultations', async () => {
+      const consultations = [
+        { id: 'abc123', name: 'Project check-in', lecturer: 'Alice Smith', date: '2030-05-06', time: '09:00', isOrganiser: true }
+      ]
+      getConsultationsForStudent.mockResolvedValue(consultations)
+
+      const response = await fetch(`${baseUrl}/consultations`)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.consultations).toEqual(consultations)
+      expect(getConsultationsForStudent).toHaveBeenCalledWith('morris')
+    })
+
+    test('returns 403 when a non-student requests the consultation list', async () => {
+      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+
+      const response = await fetch(`${baseUrl}/consultations`)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.error).toBeDefined()
+      expect(getConsultationsForStudent).not.toHaveBeenCalled()
+    })
+
+    test('returns 500 when the database fails', async () => {
+      connectToDatabase.mockRejectedValueOnce(new Error('database unavailable'))
+
+      const response = await fetch(`${baseUrl}/consultations`)
+      const data = await response.json()
+
+      expect(response.status).toBe(500)
+      expect(data.error).toBeDefined()
+    })
+  })
+
+  describe('DELETE /consultations/:id', () => {
+    test('returns success when cancellation succeeds', async () => {
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(cancelConsultation).toHaveBeenCalledWith('abc123', 'morris')
+    })
+
+    test('returns 403 when a non-student tries to cancel', async () => {
+      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.error).toBeDefined()
+      expect(cancelConsultation).not.toHaveBeenCalled()
+    })
+
+    test('returns 404 when the consultation is not found', async () => {
+      cancelConsultation.mockResolvedValue({ success: false, statusCode: 404, reason: 'not-found' })
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data.success).toBe(false)
+      expect(data.error).toBe('Consultation not found.')
+    })
+
+    test('returns 403 when the student is not the organiser', async () => {
+      cancelConsultation.mockResolvedValue({ success: false, statusCode: 403, reason: 'not-organiser' })
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.success).toBe(false)
+      expect(data.error).toBe('Only the organiser can cancel this consultation.')
+    })
+
+    test('returns 400 when the consultation is in the past', async () => {
+      cancelConsultation.mockResolvedValue({ success: false, statusCode: 400, reason: 'past-consultation' })
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.success).toBe(false)
+      expect(data.error).toBe('Past consultations cannot be cancelled.')
+    })
+
+    test('returns 500 when the database throws', async () => {
+      connectToDatabase.mockRejectedValueOnce(new Error('database unavailable'))
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(500)
+      expect(data.success).toBe(false)
+      expect(data.error).toBeDefined()
+    })
   })
 
   test('re-renders the form when saving the consultation fails', async () => {
