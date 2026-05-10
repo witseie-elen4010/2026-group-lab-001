@@ -12,6 +12,7 @@ const consultationsRouter = require('./routes/consultations')
 const homeRouter = require('./routes/home')
 const scheduleConsultationRouter = require('./routes/schedule_consultation')
 const scheduledConsultationsRouter = require('./routes/scheduled_consultations')
+const logsRouter = require('./routes/logs')
 const userProfileRouter = require('./routes/user_profile')
 const app = express()
 const PORT = process.env.PORT || 8080
@@ -37,6 +38,7 @@ app.use('/home', requireAuthentication, homeRouter)
 app.use('/join_consultation', requireAuthentication, joinConsultationRouter)
 app.use('/schedule_consultation', requireAuthentication, scheduleConsultationRouter)
 app.use('/scheduled_consultations', requireAuthentication, scheduledConsultationsRouter)
+app.use('/logs', requireAuthentication, logsRouter)
 app.use('/user_profile', requireAuthentication, userProfileRouter)
 // entry-point is login page. This can be changed when authentication between pages is added
 

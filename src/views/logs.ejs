@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .logs_container {
+      max-width: 900px;
+      margin: 24px auto 0;
+      text-align: left;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      max-height: 600px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .logs_entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .logs_entry:last-child {
+      border-bottom: none;
+    }
+    .logs_empty {
+      color: #64748b;
+      font-style: italic;
+    }
+    .logs_top_actions {
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .logs_pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+    .logs_pagination_link {
+      color: #1d4ed8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .logs_pagination_link:hover {
+      text-decoration: underline;
+    }
+    .logs_pagination_current {
+      color: #334155;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="page page_home">
+  <main class="card card_even_wider text_center">
+    <div class="logs_top_actions">
+      <a class="back_link" href="/home">Back to Home</a>
+    </div>
+
+    <header>
+      <h1>View Logs</h1>
+      <% if (username) { %>
+        <p>Hello <%= username %></p>
+      <% } %>
+    </header>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } else { %>
+      <div class="logs_container">
+        <% if (logs && logs.length > 0) { %>
+          <% logs.forEach(function (log) { %>
+            <div class="logs_entry">
+              [<%= log.date %> <%= log.time %>] <%= log.username %> | <%= log.label %> | HTTP <%= log.httpCode %>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="logs_empty">No logs available.</div>
+        <% } %>
+      </div>
+
+      <div class="logs_pagination">
+        <% if (hasPreviousPage) { %>
+          <a class="logs_pagination_link" href="/logs?page=<%= page - 1 %>">Previous</a>
+        <% } %>
+        <span class="logs_pagination_current">Page <%= page %></span>
+        <% if (hasNextPage) { %>
+          <a class="logs_pagination_link" href="/logs?page=<%= page + 1 %>">Next</a>
+        <% } %>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

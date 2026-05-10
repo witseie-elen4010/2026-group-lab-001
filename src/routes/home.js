@@ -10,6 +10,7 @@ const { buildCurrentMonthCalendar } = require('../utils/calendar')
 const router = express.Router()
 
 const HOME_TITLES = Object.freeze({
+  admin: 'Admin Home',
   lecturer: 'Lecturer Home',
   student: 'Student Home'
 })
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
     }
   }
 
-  if (role !== 'student') {
+  if (role !== 'student' && role !== 'admin') {
     return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0 })
   }
 

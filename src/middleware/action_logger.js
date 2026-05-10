@@ -1,3 +1,6 @@
+const { connectToDatabase } = require('../models/db')
+const { addLog } = require('../models/logs_db')
+
 const ACTION_MAP = [
   { method: 'GET', pattern: /^\/login$/, label: 'Viewed Login page' },
   { method: 'POST', pattern: /^\/login$/, label: 'Logged in' },
@@ -58,13 +61,13 @@ const ACTION_MAP = [
     method: 'GET',
     pattern: /^\/institutions\/universities$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
-        if (res.statusCode === 500) {
-          return 'Could not check Universities.'
-        }
-        return 'University not found in search results'
+      if (res.statusCode === 500) {
+        return 'Could not check Universities.'
       }
       const university = req.query.query?.trim() || ''
+      if (!university) {
+        return 'Searched Universities.'
+      }
       return `Searched Universities for ${university}.`
     }
   },
@@ -72,13 +75,13 @@ const ACTION_MAP = [
     method: 'GET',
     pattern: /^\/institutions\/faculties$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
-        if (res.statusCode === 500) {
-          return 'Could not check Faculties.'
-        }
-        return 'Faculty not found in search results'
+      if (res.statusCode === 500) {
+        return 'Could not check Faculties.'
       }
       const faculty = req.query.query?.trim() || ''
+      if (!faculty) {
+        return 'Searched Faculties.'
+      }
       return `Searched Faculties for ${faculty}.`
     }
   },
@@ -86,13 +89,13 @@ const ACTION_MAP = [
     method: 'GET',
     pattern: /^\/institutions\/schools$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
-        if (res.statusCode === 500) {
-          return 'Could not check Schools.'
-        }
-        return 'School not found in search results'
+      if (res.statusCode === 500) {
+        return 'Could not check Schools.'
       }
       const school = req.query.query?.trim() || ''
+      if (!school) {
+        return 'Searched Schools.'
+      }
       return `Searched Schools for ${school}.`
     }
   }
@@ -119,19 +122,63 @@ const formatTimestamp = function () {
          `${pad(rightNow.getHours())}:${pad(rightNow.getMinutes())}:${pad(rightNow.getSeconds())}`
 }
 
+const shouldSkipDatabaseWrite = function () {
+  return process.env.NODE_ENV === 'test' || process.env.DISABLE_ACTION_LOG_DB_WRITES === 'true'
+}
+
 const actionLogger = function (req, res, next) {
   res.on('finish', function () {
     const cleanPath = req.originalUrl.split('?')[0]
+
+    // Skip logging for the logs page itself
+    if (req.method === 'GET' && cleanPath === '/logs') {
+      return
+    }
+
     const label = getActionLabel(req.method, cleanPath, req, res)
     if (!label) {
       return
     }
     const sessionUser = req.session && req.session.user
-    const identity = sessionUser
-      ? `${sessionUser.username} [${sessionUser.role || 'unknown'}]`
+    const username = sessionUser
+      ? sessionUser.username
       : 'anonymous'
+    const role = sessionUser ? (sessionUser.role || 'unknown') : 'unknown'
+    const identity = `${username} [${role}]`
+    const logMessage = `[${formatTimestamp()}] ${identity} | ${label} | HTTP ${res.statusCode}`
 
-    console.log(`[${formatTimestamp()}] ${identity} | ${label} | HTTP ${res.statusCode}`)
+    console.log(logMessage)
+
+    if (shouldSkipDatabaseWrite()) {
+      return
+    }
+
+    // Save to database
+    try {
+      connectToDatabase().then(function () {
+        const now = new Date()
+        const pad = (n) => String(n).padStart(2, '0')
+        const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+        const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+
+        addLog({
+          date,
+          time,
+          username,
+          label,
+          httpCode: res.statusCode
+        }).catch(function (error) {
+          // Silently fail if database write fails - don't interrupt response
+          console.error('Failed to write log to database:', error.message)
+        })
+      }).catch(function (error) {
+        // Silently fail if database connection fails
+        console.error('Failed to connect to database for logging:', error.message)
+      })
+    } catch (error) {
+      // Silently fail if any error occurs during logging
+      console.error('Error during log write:', error.message)
+    }
   })
   next()
 }

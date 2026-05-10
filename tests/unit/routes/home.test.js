@@ -212,11 +212,37 @@ describe('home route', () => {
     expect(body).toContain('Create Consultation')
     expect(body).toContain('/user_profile?user=morris')
     expect(body).toContain('href="/consultations/new"')
+    expect(body).not.toContain('View Logs')
     expect(body).toContain(currentMonthLabel)
     expect(body).toContain('calendar_table')
     expect(body).toContain('Sun')
     expect(body).toContain('Sat')
     expect(getLecturerAvailability).not.toHaveBeenCalled()
+  })
+
+  test('Renders the admin home page with the logs button', async () => {
+    const { loginResponse, sessionCookie } = await loginAs({
+      role: 'admin',
+      username: 'user'
+    })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(loginResponse.status).toBe(302)
+    expect(loginResponse.headers.get('location')).toBe('/home')
+    expect(response.status).toBe(200)
+    expect(body).toContain('<title>Admin Home</title>')
+    expect(body).toContain('Hello user')
+    expect(body).toContain('You are logged in as a admin.')
+    expect(body).toContain('Create Consultation')
+    expect(body).toContain('Join Consultation')
+    expect(body).toContain('View Logs')
+    expect(body).toContain('href="/logs"')
   })
 
   test('Renders the lecturer home page after a successful login', async () => {
@@ -242,9 +268,27 @@ describe('home route', () => {
     expect(body).toContain('Choose an option below.')
     expect(body).toContain('User Profile')
     expect(body).toContain('/user_profile?user=lecturer1')
-    expect(body).not.toContain('Schedule a Consultation')
+    expect(body).not.toContain('View Logs')
     expect(body).toContain(currentMonthLabel)
     expect(body).toContain('calendar_table')
+  })
+
+  test('Denies non-admin users access to the logs page', async () => {
+    const { sessionCookie } = await loginAs({
+      role: 'student',
+      username: 'morris'
+    })
+
+    const response = await fetch(`${baseUrl}/logs`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    const body = await response.text()
+
+    expect(response.status).toBe(403)
+    expect(body).toContain('Only the admin can view logs.')
   })
 
   test('Highlights lecturer availability on the home calendar', async () => {

@@ -24,6 +24,10 @@ jest.mock('../../../src/models/university_db', () => ({
   searchUniversities: jest.fn()
 }))
 
+jest.mock('../../../src/models/logs_db', () => ({
+  addLog: jest.fn().mockResolvedValue(undefined)
+}))
+
 const http = require('node:http')
 
 const closeServer = async function (server) {
@@ -115,7 +119,7 @@ describe('institution search route', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ results: [] })
-    expect(connectToDatabase).not.toHaveBeenCalled()
+    expect(connectToDatabase).toHaveBeenCalledTimes(0)
     expect(searchUniversities).not.toHaveBeenCalled()
   })
 
@@ -162,7 +166,7 @@ describe('institution search route', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ results: [] })
-    expect(connectToDatabase).not.toHaveBeenCalled()
+    expect(connectToDatabase).toHaveBeenCalledTimes(0)
     expect(searchFaculties).not.toHaveBeenCalled()
   })
 
@@ -210,7 +214,7 @@ describe('institution search route', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ results: [] })
-    expect(connectToDatabase).not.toHaveBeenCalled()
+    expect(connectToDatabase).toHaveBeenCalledTimes(0)
     expect(searchSchools).not.toHaveBeenCalled()
   })
 
