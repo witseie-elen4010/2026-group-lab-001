@@ -2,6 +2,7 @@ jest.mock('../../../src/models/consultation_db', () => ({
   addConsultation: jest.fn(),
   cancelConsultation: jest.fn(),
   getConsultationsForStudent: jest.fn(),
+  getUpcomingConsultationsForLecturer: jest.fn(),
   listConsultationsForLecturerOnDate: jest.fn()
 }))
 
@@ -22,7 +23,7 @@ const http = require('node:http')
 const path = require('node:path')
 const express = require('express')
 
-const { addConsultation, cancelConsultation, getConsultationsForStudent, listConsultationsForLecturerOnDate } = require('../../../src/models/consultation_db')
+const { addConsultation, cancelConsultation, getConsultationsForStudent, getUpcomingConsultationsForLecturer, listConsultationsForLecturerOnDate } = require('../../../src/models/consultation_db')
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
 const { getUser, searchLecturers } = require('../../../src/models/user_db')
@@ -114,6 +115,7 @@ describe('consultations route', () => {
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     cancelConsultation.mockResolvedValue({ success: true })
     getConsultationsForStudent.mockResolvedValue([])
+    getUpcomingConsultationsForLecturer.mockResolvedValue([])
     listConsultationsForLecturerOnDate.mockResolvedValue([])
     connectToDatabase.mockResolvedValue(undefined)
     getLecturerAvailability.mockResolvedValue({
@@ -309,6 +311,22 @@ describe('consultations route', () => {
       expect(response.status).toBe(500)
       expect(data.error).toBeDefined()
     })
+
+    test('returns JSON list of the lecturer consultations with isOrganiser set to true', async () => {
+      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+      const consultations = [
+        { date: '2030-05-06', id: 'abc123', name: 'Project check-in', organiser: 'Morris Molefe', time: '09:00' }
+      ]
+      getUpcomingConsultationsForLecturer.mockResolvedValue(consultations)
+
+      const response = await fetch(`${baseUrl}/consultations`)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.consultations[0].isOrganiser).toBe(true)
+      expect(getUpcomingConsultationsForLecturer).toHaveBeenCalledWith('lecturer1')
+      expect(getConsultationsForStudent).not.toHaveBeenCalled()
+    })
   })
 
   describe('DELETE /consultations/:id', () => {
@@ -374,6 +392,29 @@ describe('consultations route', () => {
       expect(response.status).toBe(500)
       expect(data.success).toBe(false)
       expect(data.error).toBeDefined()
+    })
+
+    test('returns success when the assigned lecturer cancels', async () => {
+      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(cancelConsultation).toHaveBeenCalledWith('abc123', 'lecturer1', 'lecturer')
+    })
+
+    test('returns 403 when the lecturer is not assigned to the consultation', async () => {
+      currentSessionUser = { role: 'lecturer', universityId: 'Wits', username: 'lecturer1' }
+      cancelConsultation.mockResolvedValue({ success: false, statusCode: 403, reason: 'not-lecturer' })
+
+      const response = await fetch(`${baseUrl}/consultations/abc123`, { method: 'DELETE' })
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data.success).toBe(false)
+      expect(data.error).toBe('Only the assigned lecturer can cancel this consultation.')
     })
   })
 

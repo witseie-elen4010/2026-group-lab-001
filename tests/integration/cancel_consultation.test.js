@@ -140,6 +140,54 @@ describe('cancel consultation integration flow', () => {
     expect(data.consultations.some(function (c) { return c.id === insertedId.toString() })).toBe(true)
   })
 
+  RUN_DB_TEST('returns the lecturer upcoming consultations', async function () {
+    await connectToDatabase()
+    const { insertedId } = await getCollection('Consultation').insertOne({
+      attendees: [TEST_STUDENT_USERNAME],
+      capacity: 1,
+      datetime: futureDatetime(),
+      lecturerId: TEST_LECTURER_USERNAME,
+      organiserId: TEST_STUDENT_USERNAME,
+      title: 'Integration lecturer cancel test consultation'
+    })
+
+    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_LECTURER_USERNAME })
+    const response = await fetch(`${baseUrl}/consultations`, {
+      headers: { cookie: sessionCookie }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(Array.isArray(data.consultations)).toBe(true)
+    expect(data.consultations.some(function (c) { return c.id === insertedId.toString() })).toBe(true)
+  })
+
+  RUN_DB_TEST('deletes the consultation and returns success when the lecturer cancels', async function () {
+    await connectToDatabase()
+    const { insertedId } = await getCollection('Consultation').insertOne({
+      attendees: [TEST_STUDENT_USERNAME],
+      capacity: 1,
+      datetime: futureDatetime(),
+      lecturerId: TEST_LECTURER_USERNAME,
+      organiserId: TEST_STUDENT_USERNAME,
+      title: 'Consultation to be cancelled by lecturer'
+    })
+
+    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: TEST_LECTURER_USERNAME })
+    const response = await fetch(`${baseUrl}/consultations/${insertedId.toString()}`, {
+      headers: { cookie: sessionCookie },
+      method: 'DELETE'
+    })
+    const data = await response.json()
+
+    await connectToDatabase()
+    const remaining = await getCollection('Consultation').findOne({ _id: insertedId })
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(remaining).toBeNull()
+  })
+
   RUN_DB_TEST('deletes the consultation and returns success when the organiser cancels', async function () {
     await connectToDatabase()
     const { insertedId } = await getCollection('Consultation').insertOne({
