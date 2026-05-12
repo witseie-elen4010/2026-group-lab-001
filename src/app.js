@@ -14,6 +14,7 @@ const scheduleConsultationRouter = require('./routes/schedule_consultation')
 const scheduledConsultationsRouter = require('./routes/scheduled_consultations')
 const logsRouter = require('./routes/logs')
 const userProfileRouter = require('./routes/user_profile')
+const usersRouter = require('./routes/users')
 const app = express()
 const PORT = process.env.PORT || 8080
 const SESSION_SECRET = process.env.SESSION_SECRET || 'development-session-secret'
@@ -40,6 +41,7 @@ app.use('/schedule_consultation', requireAuthentication, scheduleConsultationRou
 app.use('/scheduled_consultations', requireAuthentication, scheduledConsultationsRouter)
 app.use('/logs', requireAuthentication, logsRouter)
 app.use('/user_profile', requireAuthentication, userProfileRouter)
+app.use('/users', requireAuthentication, usersRouter)
 // entry-point is login page. This can be changed when authentication between pages is added
 
 app.get('/', (req, res) => {

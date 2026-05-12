@@ -102,9 +102,24 @@ const searchLecturers = async function ({ universityId, query = '', facultyId = 
   return usersCollection().find(filter).toArray()
 }
 
+/**
+ * Adds a lecturer to the student's followed lecturers list.
+ * Uses $addToSet so repeated follow requests stay idempotent.
+ * @param {string} studentUsername - Username of the student doing the following.
+ * @param {string} lecturerUsername - Username of the lecturer being followed.
+ * @returns {Promise<import('mongodb').UpdateResult>} MongoDB update result.
+ */
+const followLecturer = async function (studentUsername, lecturerUsername) {
+  return usersCollection().updateOne(
+    { username: studentUsername, role: 'student' },
+    { $addToSet: { followedLecturers: lecturerUsername } }
+  )
+}
+
 module.exports = {
   addUser,
   deleteUser,
+  followLecturer,
   getUser,
   searchLecturers,
   updateUserInstitutions

@@ -6,6 +6,7 @@ const { getCollection } = require('../../../src/models/db')
 const {
   addUser,
   deleteUser,
+  followLecturer,
   getUser,
   searchLecturers,
   updateUserInstitutions
@@ -86,6 +87,20 @@ describe('user database operations', () => {
     expect(getCollection).toHaveBeenCalledWith('User')
     expect(mockCollection.deleteOne).toHaveBeenCalledWith({ username: 'morris' })
     expect(result).toEqual(deleteResult)
+  })
+
+  test('followLecturer stores the lecturer username on the student record', async () => {
+    const updateResult = { acknowledged: true, matchedCount: 1, modifiedCount: 1 }
+    mockCollection.updateOne.mockResolvedValue(updateResult)
+
+    const result = await followLecturer('morris', 'lecturer1')
+
+    expect(getCollection).toHaveBeenCalledWith('User')
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { username: 'morris', role: 'student' },
+      { $addToSet: { followedLecturers: 'lecturer1' } }
+    )
+    expect(result).toEqual(updateResult)
   })
 
   test('searchLecturers filters lecturers within a university and returns cursor results', async () => {
