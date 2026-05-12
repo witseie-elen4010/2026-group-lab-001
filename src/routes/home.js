@@ -4,7 +4,7 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { getConsultationsForCalendar } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
-const { searchLecturers } = require('../models/user_db')
+const { getUser, searchLecturers } = require('../models/user_db')
 const { buildCurrentMonthCalendar } = require('../utils/calendar')
 
 const router = express.Router()
@@ -16,6 +16,23 @@ const HOME_TITLES = Object.freeze({
 })
 
 const PAGE_SIZE = 20
+
+const buildFollowedLecturerSet = function (user) {
+  if (!Array.isArray(user?.followedLecturers)) {
+    return new Set()
+  }
+
+  return new Set(user.followedLecturers.filter(Boolean))
+}
+
+const addFollowStateToLecturers = function (lecturers, followedLecturers) {
+  return lecturers.map(function (lecturer) {
+    return {
+      ...lecturer,
+      isFollowed: followedLecturers.has(lecturer.username)
+    }
+  })
+}
 
 router.get('/', async (req, res) => {
   const role = req.session?.user?.role || ''
@@ -54,10 +71,12 @@ router.get('/', async (req, res) => {
 
   try {
     await connectToDatabase()
-    const [allLecturers, calendarConsultations] = await Promise.all([
+    const [allLecturers, calendarConsultations, currentUser] = await Promise.all([
       searchLecturers({ universityId, query }),
-      getConsultationsForCalendar(username, monthStart, monthEnd)
+      getConsultationsForCalendar(username, monthStart, monthEnd),
+      role === 'student' ? getUser(username) : Promise.resolve(null)
     ])
+    const followedLecturers = buildFollowedLecturerSet(currentUser)
 
     const consultationsByDate = {}
     calendarConsultations.forEach(function (consultation) {
@@ -81,7 +100,10 @@ router.get('/', async (req, res) => {
 
     const totalPages = Math.ceil(filteredLecturers.length / PAGE_SIZE)
     const currentPage = Math.min(page, Math.max(1, totalPages))
-    const lecturers = filteredLecturers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    const lecturers = addFollowStateToLecturers(
+      filteredLecturers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+      followedLecturers
+    )
 
     if (req.headers.accept?.includes('application/json')) {
       return res.json({ lecturers, page: currentPage, totalPages })

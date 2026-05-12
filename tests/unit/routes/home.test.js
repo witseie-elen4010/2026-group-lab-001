@@ -174,6 +174,7 @@ describe('home route', () => {
     getConsultationsForCalendar.mockResolvedValue([])
     getUpcomingConsultationsForLecturer.mockResolvedValue([])
     getLecturerAvailability.mockResolvedValue(null)
+    getUser.mockResolvedValue({ followedLecturers: [], role: 'student', username: 'morris' })
     searchLecturers.mockResolvedValue([])
   })
 
@@ -636,6 +637,46 @@ describe('home route', () => {
     expect(body).toContain('href="/user_profile?user=bob"')
   })
 
+  test('Renders follow buttons for lecturer results on the student home page', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('action="/users/alice/follow"')
+    expect(body).toContain('action="/users/bob/follow"')
+    expect(body).toContain('>Follow</button>')
+  })
+
+  test('Shows when a lecturer is already followed on the student home page', async () => {
+    getUser.mockResolvedValue({ followedLecturers: ['alice'], role: 'student', username: 'testuser' })
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('Following')
+    expect(body).not.toContain('action="/users/alice/follow"')
+    expect(body).toContain('action="/users/bob/follow"')
+  })
+
+  test('Does not render follow buttons for admin lecturer results', async () => {
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'admin', username: 'adminuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).not.toContain('action="/users/alice/follow"')
+    expect(body).not.toContain('action="/users/bob/follow"')
+    expect(body).not.toContain('Following')
+  })
+
   test('Returns JSON lecturer results when requested with Accept application/json', async () => {
     searchLecturers.mockResolvedValue(MOCK_LECTURERS)
     const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
@@ -649,6 +690,22 @@ describe('home route', () => {
     expect(data.lecturers).toHaveLength(2)
     expect(data.page).toBe(1)
     expect(data.totalPages).toBe(1)
+  })
+
+  test('Returns follow state in JSON lecturer results for students', async () => {
+    getUser.mockResolvedValue({ followedLecturers: ['alice'], role: 'student', username: 'testuser' })
+    searchLecturers.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.lecturers).toEqual([
+      expect.objectContaining({ isFollowed: true, username: 'alice' }),
+      expect.objectContaining({ isFollowed: false, username: 'bob' })
+    ])
   })
 
   test('Returns empty JSON results when the database throws and JSON is requested', async () => {

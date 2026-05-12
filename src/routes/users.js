@@ -10,17 +10,56 @@ const FOLLOW_MISSING_TARGET_ERROR = 'Please select a lecturer to follow.'
 const FOLLOW_MISSING_STUDENT_ERROR = 'Student not found.'
 const FOLLOW_SERVER_ERROR = 'Sorry. We could not save your followed lecturer right now.'
 
+const buildDisplayName = function (user, fallbackUsername) {
+  const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
+
+  return fullName || user?.username || fallbackUsername
+}
+
+const getAcceptHeader = function (req) {
+  if (req.get && typeof req.get === 'function') {
+    return req.get('accept') || ''
+  }
+
+  return req.headers?.accept || ''
+}
+
+const isHtmlRequest = function (req) {
+  const acceptHeader = getAcceptHeader(req)
+
+  return acceptHeader.includes('text/html') && !acceptHeader.includes('application/json')
+}
+
+const setFlashMessage = function (req, type, message) {
+  req.session = req.session || {}
+  req.session.flash = { [type]: message }
+}
+
 /**
- * Sends a JSON response for the lecturer follow endpoint.
+ * Sends a response for the lecturer follow endpoint.
+ * Redirects HTML form submissions back to the home page with a flash message,
+ * and returns JSON for programmatic clients.
+ * @param {import('express').Request} req - Express request object.
  * @param {import('express').Response} res - Express response object.
  * @param {object} options - Response options.
  * @param {number} options.statusCode - HTTP status code to send.
  * @param {boolean} options.success - Whether the operation succeeded.
  * @param {boolean} [options.alreadyFollowing=false] - Whether the lecturer was already followed.
  * @param {string} [options.error=''] - Error message for failed requests.
- * @returns {import('express').Response} JSON response.
+ * @param {string} [options.successMessage=''] - Success message for HTML redirects.
+ * @returns {import('express').Response} JSON response or redirect response.
  */
-const respond = function (res, { statusCode, success, alreadyFollowing = false, error = '' }) {
+const respond = function (req, res, { statusCode, success, alreadyFollowing = false, error = '', successMessage = '' }) {
+  if (isHtmlRequest(req)) {
+    if (success) {
+      setFlashMessage(req, 'success', successMessage)
+    } else {
+      setFlashMessage(req, 'error', error)
+    }
+
+    return res.redirect('/home')
+  }
+
   if (success) {
     return res.status(statusCode).json({ alreadyFollowing, success: true })
   }
@@ -35,7 +74,7 @@ router.post('/:id/follow', async (req, res) => {
   const lecturerUsername = req.params.id?.trim() || ''
 
   if (role !== 'student') {
-    return respond(res, {
+    return respond(req, res, {
       error: FOLLOW_FORBIDDEN_ERROR,
       statusCode: 403,
       success: false
@@ -43,7 +82,7 @@ router.post('/:id/follow', async (req, res) => {
   }
 
   if (!lecturerUsername) {
-    return respond(res, {
+    return respond(req, res, {
       error: FOLLOW_MISSING_TARGET_ERROR,
       statusCode: 400,
       success: false
@@ -55,7 +94,7 @@ router.post('/:id/follow', async (req, res) => {
     const lecturer = await getUser(lecturerUsername)
 
     if (!lecturer || lecturer.role !== 'lecturer' || lecturer.universityId !== universityId) {
-      return respond(res, {
+      return respond(req, res, {
         error: FOLLOW_INVALID_TARGET_ERROR,
         statusCode: 404,
         success: false
@@ -65,20 +104,26 @@ router.post('/:id/follow', async (req, res) => {
     const followResult = await followLecturer(studentUsername, lecturerUsername)
 
     if (!followResult.matchedCount) {
-      return respond(res, {
+      return respond(req, res, {
         error: FOLLOW_MISSING_STUDENT_ERROR,
         statusCode: 404,
         success: false
       })
     }
 
-    return respond(res, {
-      alreadyFollowing: followResult.modifiedCount === 0,
+    const lecturerName = buildDisplayName(lecturer, lecturerUsername)
+    const alreadyFollowing = followResult.modifiedCount === 0
+
+    return respond(req, res, {
+      alreadyFollowing,
       statusCode: 200,
+      successMessage: alreadyFollowing
+        ? `You are already following ${lecturerName}.`
+        : `You are now following ${lecturerName}.`,
       success: true
     })
   } catch {
-    return respond(res, {
+    return respond(req, res, {
       error: FOLLOW_SERVER_ERROR,
       statusCode: 500,
       success: false

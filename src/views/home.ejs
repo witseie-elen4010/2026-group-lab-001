@@ -20,6 +20,14 @@
       <% } %>
     </header>
 
+    <% if (flash && flash.success) { %>
+      <div class="success"><%= flash.success %></div>
+    <% } %>
+
+    <% if (flash && flash.error) { %>
+      <div class="error"><%= flash.error %></div>
+    <% } %>
+
     <% if ((role === 'student' || role === 'admin') && username) { %>
       <section class="home_navigation">
         <h2 class="home_navigation_title">Navigation</h2>
@@ -145,14 +153,26 @@
         </form>
       </section>
 
-      <section id="lecturer_results" class="results">
+      <section id="lecturer_results" class="results" data-can-follow="<%= role === 'student' ? 'true' : 'false' %>">
         <% if (lecturers.length === 0) { %>
           <p>No lecturers found.</p>
         <% } else { %>
           <% lecturers.forEach(function (lecturer) { %>
-            <a href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">
-              <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
-            </a>
+            <article class="lecturer_result_card">
+              <a class="lecturer_result_link" href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">
+                <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
+              </a>
+
+              <% if (role === 'student') { %>
+                <% if (lecturer.isFollowed) { %>
+                  <span class="lecturer_result_following">Following</span>
+                <% } else { %>
+                  <form class="lecturer_result_follow_form" action="/users/<%= encodeURIComponent(lecturer.username) %>/follow" method="post">
+                    <button type="submit">Follow</button>
+                  </form>
+                <% } %>
+              <% } %>
+            </article>
           <% }) %>
 
           <% if (totalPages > 1) { %>

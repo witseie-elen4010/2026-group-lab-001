@@ -46,17 +46,17 @@ let currentSessionUser = {
   username: 'morris'
 }
 
+let currentSession = {
+  user: currentSessionUser
+}
+
 const createServer = async function () {
   const app = express()
   const server = http.createServer(app)
 
   app.use(express.urlencoded({ extended: true }))
   app.use((req, res, next) => {
-    if (currentSessionUser) {
-      req.session = { user: currentSessionUser }
-    } else {
-      req.session = {}
-    }
+    req.session = currentSession
 
     next()
   })
@@ -89,13 +89,15 @@ describe('users route', () => {
       universityId: 'Wits',
       username: 'morris'
     }
+    currentSession = { user: currentSessionUser }
     connectToDatabase.mockResolvedValue(undefined)
-    getUser.mockResolvedValue({ role: 'lecturer', universityId: 'Wits', username: 'lecturer1' })
+    getUser.mockResolvedValue({ firstName: 'Alice', lastName: 'Smith', role: 'lecturer', universityId: 'Wits', username: 'lecturer1' })
     followLecturer.mockResolvedValue({ acknowledged: true, matchedCount: 1, modifiedCount: 1 })
   })
 
   test('redirects unauthenticated users to login', async () => {
     currentSessionUser = null
+    currentSession = {}
 
     const response = await fetch(`${baseUrl}/users/lecturer1/follow`, {
       method: 'POST',
@@ -113,6 +115,7 @@ describe('users route', () => {
       universityId: 'Wits',
       username: 'lecturer2'
     }
+    currentSession = { user: currentSessionUser }
 
     const response = await fetch(`${baseUrl}/users/lecturer1/follow`, {
       method: 'POST'
@@ -160,5 +163,17 @@ describe('users route', () => {
 
     expect(response.status).toBe(200)
     expect(data).toEqual({ alreadyFollowing: true, success: true })
+  })
+
+  test('redirects HTML follow submissions back to home with a success flash message', async () => {
+    const response = await fetch(`${baseUrl}/users/lecturer1/follow`, {
+      headers: { accept: 'text/html' },
+      method: 'POST',
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/home')
+    expect(currentSession.flash).toEqual({ success: 'You are now following Alice Smith.' })
   })
 })
