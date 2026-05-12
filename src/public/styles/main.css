@@ -275,6 +275,35 @@ a {
   margin-bottom: 20px;
 }
 
+.followed_dashboard_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.followed_dashboard_grid {
+  margin-top: 16px;
+}
+
+.followed_dashboard_subtitle {
+  margin-top: 24px;
+}
+
+.followed_dashboard_empty {
+  margin-top: 16px;
+}
+
+.followed_dashboard_actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.followed_dashboard_actions .button_compact {
+  margin-left: 0;
+}
+
 .calendar_title {
   margin: 0 0 16px;
 }

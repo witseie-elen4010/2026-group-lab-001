@@ -7,6 +7,7 @@ const {
   addUser,
   deleteUser,
   followLecturer,
+  getLecturersByUsernames,
   getUser,
   searchLecturers,
   updateUserInstitutions
@@ -101,6 +102,25 @@ describe('user database operations', () => {
       { $addToSet: { followedLecturers: 'lecturer1' } }
     )
     expect(result).toEqual(updateResult)
+  })
+
+  test('getLecturersByUsernames loads matching lecturers in the supplied order', async () => {
+    findCursor.toArray.mockResolvedValue([
+      { username: 'bob', firstName: 'Bob' },
+      { username: 'alice', firstName: 'Alice' }
+    ])
+
+    const result = await getLecturersByUsernames(['alice', 'bob'], 'University of the Witwatersrand')
+
+    expect(mockCollection.find).toHaveBeenCalledWith({
+      role: 'lecturer',
+      universityId: 'University of the Witwatersrand',
+      username: { $in: ['alice', 'bob'] }
+    })
+    expect(result).toEqual([
+      { username: 'alice', firstName: 'Alice' },
+      { username: 'bob', firstName: 'Bob' }
+    ])
   })
 
   test('searchLecturers filters lecturers within a university and returns cursor results', async () => {

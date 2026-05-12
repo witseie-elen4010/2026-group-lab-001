@@ -68,6 +68,58 @@
       </dialog>
     <% } %>
 
+    <% if (role === 'student') { %>
+      <section class="followed_dashboard_section">
+        <h2 class="home_navigation_title">Following</h2>
+        <p class="home_navigation_text">Quick access to lecturers you follow and their upcoming consultations.</p>
+
+        <% if (followedLecturers.length === 0) { %>
+          <div class="profile_detail followed_dashboard_empty">
+            <p class="profile_detail_value">Follow lecturers from the search results below to pin them here.</p>
+          </div>
+        <% } else { %>
+          <div class="profile_details followed_dashboard_grid">
+            <% followedLecturers.forEach(function (lecturer) { %>
+              <% const lecturerName = `${lecturer.firstName || ''} ${lecturer.lastName || ''}`.trim() || lecturer.username %>
+              <% const institutionText = [lecturer.facultyId, lecturer.schoolId].filter(Boolean).join(', ') %>
+              <article class="profile_detail">
+                <h3 class="profile_detail_label"><%= lecturerName %></h3>
+                <p class="profile_detail_value"><%= institutionText || 'Lecturer' %></p>
+                <div class="followed_dashboard_actions">
+                  <a class="button_compact" href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">View Schedule</a>
+                  <a class="button_compact" href="/join_consultation?lecturerId=<%= encodeURIComponent(lecturer.username) %>">View Consultations</a>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <h2 class="home_navigation_title followed_dashboard_subtitle">Upcoming from followed lecturers</h2>
+
+        <% if (followedConsultations.length === 0) { %>
+          <div class="profile_detail followed_dashboard_empty">
+            <p class="profile_detail_value">No upcoming consultations from followed lecturers.</p>
+          </div>
+        <% } else { %>
+          <section class="dashboard_consultations">
+            <% followedConsultations.forEach(function (consultation) { %>
+              <% const statusLabel = consultation.hasJoined ? 'Joined' : consultation.isFull ? 'Fully Booked' : 'Open' %>
+              <article class="dashboard_consultation_card">
+                <h3><%= consultation.name %></h3>
+                <p class="dashboard_consultation_meta"><strong>Lecturer:</strong> <%= consultation.lecturer %></p>
+                <p class="dashboard_consultation_meta"><strong>Date:</strong> <%= consultation.date %></p>
+                <p class="dashboard_consultation_meta"><strong>Time:</strong> <%= consultation.time %></p>
+                <p class="dashboard_consultation_meta"><strong>Status:</strong> <%= statusLabel %></p>
+                <div class="followed_dashboard_actions">
+                  <a class="button_compact" href="/join_consultation?lecturerId=<%= encodeURIComponent(consultation.lecturerId) %>&date=<%= encodeURIComponent(consultation.date) %>&time=<%= encodeURIComponent(consultation.startTime) %>">Open Consultation</a>
+                </div>
+              </article>
+            <% }) %>
+          </section>
+        <% } %>
+      </section>
+    <% } %>
+
     <section class="calendar_section">
       <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
       <table class="calendar_table">

@@ -14,12 +14,14 @@ jest.mock('../../../src/models/lecturer_availability_db', () => ({
 jest.mock('../../../src/models/user_db', () => ({
   addUser: jest.fn(),
   deleteUser: jest.fn(),
+  getLecturersByUsernames: jest.fn(),
   getUser: jest.fn(),
   searchLecturers: jest.fn()
 }))
 
 jest.mock('../../../src/models/consultation_db', () => ({
   getConsultationsForCalendar: jest.fn(),
+  getUpcomingConsultationsForFollowedLecturers: jest.fn(),
   getUpcomingConsultationsForLecturer: jest.fn(),
   JOIN_RESULT_REASONS: {
     ALREADY_JOINED: 'already_joined',
@@ -58,8 +60,8 @@ const closeServer = async function (server) {
 
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
-const { getUser, searchLecturers } = require('../../../src/models/user_db')
-const { addConsultation, getConsultationsForCalendar, getUpcomingConsultationsForLecturer } = require('../../../src/models/consultation_db')
+const { getLecturersByUsernames, getUser, searchLecturers } = require('../../../src/models/user_db')
+const { addConsultation, getConsultationsForCalendar, getUpcomingConsultationsForFollowedLecturers, getUpcomingConsultationsForLecturer } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
 
@@ -78,6 +80,20 @@ const MOCK_LECTURERS = [
 const MOCK_LECTURERS_21 = Array.from({ length: 21 }, function (_, i) {
   return { username: `lecturer${i}`, firstName: `First${i}`, lastName: `Last${i}`, facultyId: 'Engineering', schoolId: 'EIE' }
 })
+
+const MOCK_FOLLOWED_CONSULTATIONS = [
+  {
+    date: '2030-05-14',
+    hasJoined: false,
+    id: 'consultation-1',
+    isFull: false,
+    lecturer: 'Alice Smith',
+    lecturerId: 'alice',
+    name: 'Signals Consultation',
+    startTime: '09:00',
+    time: '09:00 to 09:30'
+  }
+]
 
 /**
  * Encodes form fields for URL-encoded POST requests.
@@ -172,6 +188,8 @@ describe('home route', () => {
     addConsultation.mockResolvedValue({ acknowledged: true, insertedId: 'consultation-id' })
     connectToDatabase.mockResolvedValue(undefined)
     getConsultationsForCalendar.mockResolvedValue([])
+    getLecturersByUsernames.mockResolvedValue([])
+    getUpcomingConsultationsForFollowedLecturers.mockResolvedValue([])
     getUpcomingConsultationsForLecturer.mockResolvedValue([])
     getLecturerAvailability.mockResolvedValue(null)
     getUser.mockResolvedValue({ followedLecturers: [], role: 'student', username: 'morris' })
@@ -675,6 +693,51 @@ describe('home route', () => {
     expect(body).not.toContain('action="/users/alice/follow"')
     expect(body).not.toContain('action="/users/bob/follow"')
     expect(body).not.toContain('Following')
+  })
+
+  test('Shows empty followed lecturer dashboard states for students with no followed lecturers', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('Follow lecturers from the search results below to pin them here.')
+    expect(body).toContain('No upcoming consultations from followed lecturers.')
+  })
+
+  test('Shows followed lecturers with quick links on the student home page', async () => {
+    getUser.mockResolvedValue({ followedLecturers: ['alice', 'bob'], role: 'student', username: 'testuser' })
+    getLecturersByUsernames.mockResolvedValue(MOCK_LECTURERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('Quick access to lecturers you follow and their upcoming consultations.')
+    expect(body).toContain('href="/user_profile?user=alice"')
+    expect(body).toContain('href="/join_consultation?lecturerId=alice"')
+    expect(body).toContain('View Schedule')
+    expect(body).toContain('View Consultations')
+  })
+
+  test('Shows upcoming consultations from followed lecturers on the student home page', async () => {
+    getUser.mockResolvedValue({ followedLecturers: ['alice'], role: 'student', username: 'testuser' })
+    getLecturersByUsernames.mockResolvedValue([MOCK_LECTURERS[0]])
+    getUpcomingConsultationsForFollowedLecturers.mockResolvedValue(MOCK_FOLLOWED_CONSULTATIONS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(body).toContain('Upcoming from followed lecturers')
+    expect(body).toContain('Signals Consultation')
+    expect(body).toContain('Alice Smith')
+    expect(body).toContain('09:00 to 09:30')
+    expect(body).toContain('Open')
+    expect(body).toContain('href="/join_consultation?lecturerId=alice&date=2030-05-14&time=09%3A00"')
   })
 
   test('Returns JSON lecturer results when requested with Accept application/json', async () => {

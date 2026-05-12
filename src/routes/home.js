@@ -2,9 +2,9 @@
 
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
-const { getConsultationsForCalendar } = require('../models/consultation_db')
+const { getConsultationsForCalendar, getUpcomingConsultationsForFollowedLecturers } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
-const { getUser, searchLecturers } = require('../models/user_db')
+const { getLecturersByUsernames, getUser, searchLecturers } = require('../models/user_db')
 const { buildCurrentMonthCalendar } = require('../utils/calendar')
 
 const router = express.Router()
@@ -17,12 +17,16 @@ const HOME_TITLES = Object.freeze({
 
 const PAGE_SIZE = 20
 
-const buildFollowedLecturerSet = function (user) {
+const buildFollowedLecturerIds = function (user) {
   if (!Array.isArray(user?.followedLecturers)) {
-    return new Set()
+    return []
   }
 
-  return new Set(user.followedLecturers.filter(Boolean))
+  return [...new Set(user.followedLecturers.filter(Boolean))]
+}
+
+const buildFollowedLecturerSet = function (lecturerIds) {
+  return new Set((Array.isArray(lecturerIds) ? lecturerIds : []).filter(Boolean))
 }
 
 const addFollowStateToLecturers = function (lecturers, followedLecturers) {
@@ -53,7 +57,7 @@ router.get('/', async (req, res) => {
   }
 
   if (role !== 'student' && role !== 'admin') {
-    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0 })
+    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query: '', facultyId: '', schoolId: '', page: 1, totalPages: 0, followedLecturers: [], followedConsultations: [] })
   }
 
   const query = req.query.q?.trim() || ''
@@ -76,7 +80,17 @@ router.get('/', async (req, res) => {
       getConsultationsForCalendar(username, monthStart, monthEnd),
       role === 'student' ? getUser(username) : Promise.resolve(null)
     ])
-    const followedLecturers = buildFollowedLecturerSet(currentUser)
+    const followedLecturerIds = role === 'student' ? buildFollowedLecturerIds(currentUser) : []
+    const followedLecturerSet = buildFollowedLecturerSet(followedLecturerIds)
+    let followedLecturers = []
+    let followedConsultations = []
+
+    if (role === 'student' && followedLecturerIds.length > 0) {
+      [followedLecturers, followedConsultations] = await Promise.all([
+        getLecturersByUsernames(followedLecturerIds, universityId),
+        getUpcomingConsultationsForFollowedLecturers(username, followedLecturerIds)
+      ])
+    }
 
     const consultationsByDate = {}
     calendarConsultations.forEach(function (consultation) {
@@ -102,18 +116,18 @@ router.get('/', async (req, res) => {
     const currentPage = Math.min(page, Math.max(1, totalPages))
     const lecturers = addFollowStateToLecturers(
       filteredLecturers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-      followedLecturers
+      followedLecturerSet
     )
 
     if (req.headers.accept?.includes('application/json')) {
       return res.json({ lecturers, page: currentPage, totalPages })
     }
-    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate, lecturers, faculties, schools, query, facultyId, schoolId, page: currentPage, totalPages })
+    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate, lecturers, faculties, schools, query, facultyId, schoolId, page: currentPage, totalPages, followedLecturers, followedConsultations })
   } catch {
     if (req.headers.accept?.includes('application/json')) {
       return res.json({ lecturers: [], page: 1, totalPages: 0 })
     }
-    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId, page: 1, totalPages: 0 })
+    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId, page: 1, totalPages: 0, followedLecturers: [], followedConsultations: [] })
   }
 })
 
