@@ -96,7 +96,6 @@ router.post('/', async (req, res) => {
     delete req.session.pendingGoogle
     return res.redirect('/home')
   } catch (err) {
-    console.error('[register/complete]', err)
     if (err?.code === 11000) {
       return renderComplete(res, req.session.pendingGoogle, {
         statusCode: 409,

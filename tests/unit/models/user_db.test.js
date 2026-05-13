@@ -7,6 +7,9 @@ const {
   addUser,
   deleteUser,
   getUser,
+  getUserByEmail,
+  getUserByGoogleId,
+  linkGoogleId,
   searchLecturers,
   updateUserInstitutions
 } = require('../../../src/models/user_db')
@@ -86,6 +89,42 @@ describe('user database operations', () => {
     expect(getCollection).toHaveBeenCalledWith('User')
     expect(mockCollection.deleteOne).toHaveBeenCalledWith({ username: 'morris' })
     expect(result).toEqual(deleteResult)
+  })
+
+  test('getUserByGoogleId queries the User collection by googleId', async () => {
+    const user = { username: 'morris', googleId: 'gid-123' }
+    mockCollection.findOne.mockResolvedValue(user)
+
+    const result = await getUserByGoogleId('gid-123')
+
+    expect(getCollection).toHaveBeenCalledWith('User')
+    expect(mockCollection.findOne).toHaveBeenCalledWith({ googleId: 'gid-123' })
+    expect(result).toEqual(user)
+  })
+
+  test('getUserByEmail queries the User collection by email', async () => {
+    const user = { username: 'morris', email: 'morris@example.com' }
+    mockCollection.findOne.mockResolvedValue(user)
+
+    const result = await getUserByEmail('morris@example.com')
+
+    expect(getCollection).toHaveBeenCalledWith('User')
+    expect(mockCollection.findOne).toHaveBeenCalledWith({ email: 'morris@example.com' })
+    expect(result).toEqual(user)
+  })
+
+  test('linkGoogleId sets the googleId field on a user document by username', async () => {
+    const updateResult = { acknowledged: true, modifiedCount: 1 }
+    mockCollection.updateOne.mockResolvedValue(updateResult)
+
+    const result = await linkGoogleId('morris', 'gid-123')
+
+    expect(getCollection).toHaveBeenCalledWith('User')
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { username: 'morris' },
+      { $set: { googleId: 'gid-123' } }
+    )
+    expect(result).toEqual(updateResult)
   })
 
   test('searchLecturers filters lecturers within a university and returns cursor results', async () => {
