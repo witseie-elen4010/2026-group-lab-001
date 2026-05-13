@@ -59,6 +59,21 @@ const deleteUser = async function (username) {
   return usersCollection().deleteOne({ username })
 }
 
+const getUserByGoogleId = async function (googleId) {
+  return usersCollection().findOne({ googleId })
+}
+
+const getUserByEmail = async function (email) {
+  return usersCollection().findOne({ email })
+}
+
+const linkGoogleId = async function (username, googleId) {
+  return usersCollection().updateOne(
+    { username },
+    { $set: { googleId } }
+  )
+}
+
 /**
  * Searches for lecturer documents within a university, optionally filtering by name, faculty, and school.
  * @param {object} options - Search options.
@@ -106,6 +121,9 @@ module.exports = {
   addUser,
   deleteUser,
   getUser,
+  getUserByEmail,
+  getUserByGoogleId,
+  linkGoogleId,
   searchLecturers,
   updateUserInstitutions
 }
