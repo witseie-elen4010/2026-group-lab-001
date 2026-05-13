@@ -59,14 +59,30 @@ const deleteUser = async function (username) {
   return usersCollection().deleteOne({ username })
 }
 
+/**
+ * Returns the user document matching a Google account ID.
+ * @param {string} googleId - Google account ID to search for.
+ * @returns {Promise<object|null>} The matching user or null.
+ */
 const getUserByGoogleId = async function (googleId) {
   return usersCollection().findOne({ googleId })
 }
 
+/**
+ * Returns the user document matching an email address.
+ * @param {string} email - Email address to search for.
+ * @returns {Promise<object|null>} The matching user or null.
+ */
 const getUserByEmail = async function (email) {
   return usersCollection().findOne({ email })
 }
 
+/**
+ * Sets the googleId field on a user document identified by username.
+ * @param {string} username - Username of the user to update.
+ * @param {string} googleId - Google account ID to store.
+ * @returns {Promise<import('mongodb').UpdateResult>} MongoDB update result.
+ */
 const linkGoogleId = async function (username, googleId) {
   return usersCollection().updateOne(
     { username },

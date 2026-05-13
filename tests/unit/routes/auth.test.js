@@ -61,10 +61,6 @@ const closeServer = async function (server) {
   })
 }
 
-const getSessionCookie = function (setCookieHeader) {
-  return setCookieHeader?.split(';')[0] || ''
-}
-
 describe('auth route', () => {
   let server
   let baseUrl

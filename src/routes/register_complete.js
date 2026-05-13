@@ -9,6 +9,23 @@ const PLACEHOLDER_USER_FIELDS = Object.freeze({
   schoolId: 'unassigned'
 })
 
+/**
+ * Renders the profile completion page with the supplied view state.
+ * @param {import('express').Response} res - Express response object.
+ * @param {object} pendingGoogle - Google account data stored in the session.
+ * @param {string} pendingGoogle.firstName - First name from Google profile.
+ * @param {string} pendingGoogle.lastName - Last name from Google profile.
+ * @param {string} pendingGoogle.email - Email from Google profile.
+ * @param {object} [options] - Response rendering options.
+ * @param {number} [options.statusCode=200] - HTTP status code to send.
+ * @param {string} [options.error=''] - Error message to show in the view.
+ * @param {string} [options.username=''] - Username to preserve in the form.
+ * @param {string} [options.role=''] - Role to preserve in the form.
+ * @param {string} [options.university=''] - University to preserve in the form.
+ * @param {string} [options.faculty=''] - Faculty to preserve in the form.
+ * @param {string} [options.school=''] - School to preserve in the form.
+ * @returns {import('express').Response} The rendered response.
+ */
 const renderComplete = function (res, pendingGoogle, {
   statusCode = 200,
   error = '',
