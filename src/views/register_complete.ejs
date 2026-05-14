@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <script src="/scripts/search.js" defer></script>
+</head>
+<body class="page page_login">
+  <main class="card card_wide">
+    <header>
+      <h1>Complete Your Profile</h1>
+      <p>One more step before you can get started.</p>
+    </header>
+
+    <section>
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+
+      <div class="google_prefill">
+        <p><strong><%= firstName %> <%= lastName %></strong> &mdash; <%= email %></p>
+      </div>
+
+      <form action="/register/complete" method="post">
+        <label>
+          Username
+          <input type="text" name="username" value="<%= username %>" placeholder="username" required>
+        </label>
+
+        <label>
+          Role
+          <select id="role" name="role" required>
+            <option value="" disabled <%= role === '' ? 'selected' : '' %>>Select one...</option>
+            <option value="student" <%= role === 'student' ? 'selected' : '' %>>Student</option>
+            <option value="lecturer" <%= role === 'lecturer' ? 'selected' : '' %>>Lecturer</option>
+          </select>
+        </label>
+
+        <label>
+          University
+          <input
+            id="university"
+            type="search"
+            name="university"
+            value="<%= university %>"
+            placeholder="..."
+            autocomplete="off"
+            list="university_options"
+            aria-describedby="university_search_status"
+            data-search-url="/institutions/universities"
+            data-search-label="university"
+            required
+          >
+          <datalist id="university_options"></datalist>
+          <p id="university_search_status" class="search_status" aria-live="polite"></p>
+        </label>
+
+        <label>
+          Faculty
+          <input
+            id="faculty"
+            type="search"
+            name="faculty"
+            value="<%= faculty %>"
+            placeholder="..."
+            autocomplete="off"
+            list="faculty_options"
+            aria-describedby="faculty_search_status"
+            data-search-url="/institutions/faculties"
+            data-search-label="faculty"
+            data-search-parents="university"
+            required
+          >
+          <datalist id="faculty_options"></datalist>
+          <p id="faculty_search_status" class="search_status" aria-live="polite"></p>
+        </label>
+
+        <label>
+          School
+          <input
+            id="school"
+            type="search"
+            name="school"
+            value="<%= school %>"
+            placeholder="..."
+            autocomplete="off"
+            list="school_options"
+            aria-describedby="school_search_status"
+            data-search-url="/institutions/schools"
+            data-search-label="school"
+            data-search-parents="university,faculty"
+            required
+          >
+          <datalist id="school_options"></datalist>
+          <p id="school_search_status" class="search_status" aria-live="polite"></p>
+        </label>
+
+        <button type="submit">Complete Registration</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
