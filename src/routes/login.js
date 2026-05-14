@@ -49,6 +49,14 @@ router.post('/', async (req, res) => {
       })
     }
 
+    if (!user.passwordHash) {
+      return renderLogin(res, {
+        statusCode: 400,
+        error: 'This account uses Google Sign-In. Please sign in with Google.',
+        username
+      })
+    }
+
     if (!(await verifyPassword(password, user.passwordHash))) {
       return renderLogin(res, {
         statusCode: 401,
