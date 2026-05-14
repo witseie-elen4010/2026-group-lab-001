@@ -129,6 +129,39 @@ describe('user database operations', () => {
     expect(result).toEqual(updateResult)
   })
 
+  test('getLecturersByUsernames loads matching lecturers in the supplied order', async () => {
+    findCursor.toArray.mockResolvedValue([
+      { username: 'bob', firstName: 'Bob' },
+      { username: 'alice', firstName: 'Alice' }
+    ])
+
+    const result = await getLecturersByUsernames(['alice', 'bob'], 'University of the Witwatersrand')
+
+    expect(mockCollection.find).toHaveBeenCalledWith({
+      role: 'lecturer',
+      universityId: 'University of the Witwatersrand',
+      username: { $in: ['alice', 'bob'] }
+    })
+    expect(result).toEqual([
+      { username: 'alice', firstName: 'Alice' },
+      { username: 'bob', firstName: 'Bob' }
+    ])
+  })
+
+  test('followLecturer stores the lecturer username on the student record', async () => {
+    const updateResult = { acknowledged: true, matchedCount: 1, modifiedCount: 1 }
+    mockCollection.updateOne.mockResolvedValue(updateResult)
+
+    const result = await followLecturer('morris', 'lecturer1')
+
+    expect(getCollection).toHaveBeenCalledWith('User')
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { username: 'morris', role: 'student' },
+      { $addToSet: { followedLecturers: 'lecturer1' } }
+    )
+    expect(result).toEqual(updateResult)
+  })
+
   test('searchLecturers filters lecturers within a university and returns cursor results', async () => {
     const lecturers = [{ username: 'alice' }]
     findCursor.toArray.mockResolvedValue(lecturers)
