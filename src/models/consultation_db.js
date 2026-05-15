@@ -51,6 +51,12 @@ const buildConsultationTime = function (datetime, duration) {
   return endTime === startTime ? startTime : `${startTime} to ${endTime}`
 }
 
+const getCurrentDatetimeKey = function () {
+  const now = new Date()
+
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
 /**
  * Inserts a new consultation document.
  * @param {object} consultation - Consultation document to insert.
@@ -266,7 +272,10 @@ const getUpcomingConsultationsForFollowedLecturers = async function (username, l
     return []
   }
 
+  const currentDatetimeKey = getCurrentDatetimeKey()
+
   const consultations = await consultationsCollection().find({
+    datetime: { $gt: currentDatetimeKey },
     lecturerId: { $in: followedLecturerIds }
   }).toArray()
 
@@ -285,10 +294,9 @@ const getUpcomingConsultationsForFollowedLecturers = async function (username, l
   const availabilitiesByUsername = new Map(availabilities.map(function (availability) {
     return [availability.username, availability]
   }))
-  const now = new Date()
 
   return consultations.filter(function (consultation) {
-    return consultation?._id && new Date(consultation.datetime) > now
+    return consultation?._id
   }).sort(function (left, right) {
     return (left.datetime || '').localeCompare(right.datetime || '')
   }).map(function (consultation) {

@@ -476,6 +476,9 @@ describe('consultation database operations', () => {
     })
 
     test('returns upcoming consultations for followed lecturers with dashboard details', async () => {
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2030-05-01T08:00:00'))
+
       const buildDatetime = function (dayOffset, hours, minutes) {
         const date = new Date()
 
@@ -526,6 +529,7 @@ describe('consultation database operations', () => {
       const result = await getUpcomingConsultationsForFollowedLecturers('student1', ['lecturer1', 'lecturer2'])
 
       expect(mockConsultationCollection.find).toHaveBeenCalledWith({
+        datetime: { $gt: '2030-05-01T08:00' },
         lecturerId: { $in: ['lecturer1', 'lecturer2'] }
       })
       expect(result).toEqual([
@@ -552,6 +556,8 @@ describe('consultation database operations', () => {
           time: '11:30 to 12:15'
         }
       ])
+
+      jest.useRealTimers()
     })
   })
 
