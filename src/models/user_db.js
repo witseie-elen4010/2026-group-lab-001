@@ -133,9 +133,57 @@ const searchLecturers = async function ({ universityId, query = '', facultyId = 
   return usersCollection().find(filter).toArray()
 }
 
+/**
+ * Returns lecturer documents for the supplied usernames, preserving the request order.
+ * @param {Array<string>} usernames - Lecturer usernames to load.
+ * @param {string} [universityId=''] - Optional university to scope the lookup.
+ * @returns {Promise<object[]>} Matching lecturer documents in the same order as the usernames.
+ */
+const getLecturersByUsernames = async function (usernames, universityId = '') {
+  const lecturerUsernames = [...new Set((Array.isArray(usernames) ? usernames : []).filter(Boolean))]
+
+  if (lecturerUsernames.length === 0) {
+    return []
+  }
+
+  const filter = {
+    role: 'lecturer',
+    username: { $in: lecturerUsernames }
+  }
+
+  if (universityId) {
+    filter.universityId = universityId
+  }
+
+  const lecturers = await usersCollection().find(filter).toArray()
+  const lecturersByUsername = new Map(lecturers.map(function (lecturer) {
+    return [lecturer.username, lecturer]
+  }))
+
+  return lecturerUsernames.map(function (username) {
+    return lecturersByUsername.get(username)
+  }).filter(Boolean)
+}
+
+/**
+ * Adds a lecturer to the student's followed lecturers list.
+ * Uses $addToSet so repeated follow requests stay idempotent.
+ * @param {string} studentUsername - Username of the student doing the following.
+ * @param {string} lecturerUsername - Username of the lecturer being followed.
+ * @returns {Promise<import('mongodb').UpdateResult>} MongoDB update result.
+ */
+const followLecturer = async function (studentUsername, lecturerUsername) {
+  return usersCollection().updateOne(
+    { username: studentUsername, role: 'student' },
+    { $addToSet: { followedLecturers: lecturerUsername } }
+  )
+}
+
 module.exports = {
   addUser,
   deleteUser,
+  followLecturer,
+  getLecturersByUsernames,
   getUser,
   getUserByEmail,
   getUserByGoogleId,

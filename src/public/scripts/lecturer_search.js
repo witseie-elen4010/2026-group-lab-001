@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('lecturer_search_form')
   const resultsSection = document.getElementById('lecturer_results')
+  const canFollow = resultsSection?.dataset.canFollow === 'true'
 
   if (!form || !resultsSection) {
     return
@@ -15,15 +16,28 @@ document.addEventListener('DOMContentLoaded', function () {
       .replace(/'/g, '&#039;')
   }
 
+  const buildLecturerCardHtml = function (lecturer) {
+    const href = `/user_profile?user=${encodeURIComponent(lecturer.username)}`
+    const details = `${escapeHtml(lecturer.firstName)} ${escapeHtml(lecturer.lastName)} &mdash; ${escapeHtml(lecturer.facultyId)}, ${escapeHtml(lecturer.schoolId)}`
+    let followAction = ''
+
+    if (canFollow) {
+      if (lecturer.isFollowed) {
+        followAction = '<span class="lecturer_result_following">Following</span>'
+      } else {
+        followAction = `<form class="lecturer_result_follow_form" action="/users/${encodeURIComponent(lecturer.username)}/follow" method="post"><button type="submit">Follow</button></form>`
+      }
+    }
+
+    return `<article class="lecturer_result_card"><a class="lecturer_result_link" href="${href}">${details}</a>${followAction}</article>`
+  }
+
   const buildResultsHtml = function ({ lecturers, page, totalPages }, params) {
     if (lecturers.length === 0) {
       return '<p>No lecturers found.</p>'
     }
 
-    const lecturerLinks = lecturers.map(function (lecturer) {
-      const href = `/user_profile?user=${encodeURIComponent(lecturer.username)}`
-      return `<a href="${href}">${escapeHtml(lecturer.firstName)} ${escapeHtml(lecturer.lastName)} &mdash; ${escapeHtml(lecturer.facultyId)}, ${escapeHtml(lecturer.schoolId)}</a>`
-    }).join('')
+    const lecturerLinks = lecturers.map(buildLecturerCardHtml).join('')
 
     if (totalPages <= 1) {
       return lecturerLinks

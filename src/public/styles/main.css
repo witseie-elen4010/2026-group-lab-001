@@ -151,6 +151,44 @@ a {
   display: grid;
   gap: 8px;
 }
+
+.lecturer_result_card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.lecturer_result_link {
+  flex: 1;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.lecturer_result_follow_form {
+  display: block;
+  margin: 0;
+}
+
+.lecturer_result_follow_form button {
+  white-space: nowrap;
+}
+
+.lecturer_result_following {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-weight: 600;
+}
+
 .register_columns {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -235,6 +273,35 @@ a {
 .calendar_section {
   margin-top: 32px;
   margin-bottom: 20px;
+}
+
+.followed_dashboard_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.followed_dashboard_grid {
+  margin-top: 16px;
+}
+
+.followed_dashboard_subtitle {
+  margin-top: 24px;
+}
+
+.followed_dashboard_empty {
+  margin-top: 16px;
+}
+
+.followed_dashboard_actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.followed_dashboard_actions .button_compact {
+  margin-left: 0;
 }
 
 .calendar_title {

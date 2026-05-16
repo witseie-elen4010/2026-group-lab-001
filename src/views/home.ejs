@@ -20,6 +20,14 @@
       <% } %>
     </header>
 
+    <% if (flash && flash.success) { %>
+      <div class="success"><%= flash.success %></div>
+    <% } %>
+
+    <% if (flash && flash.error) { %>
+      <div class="error"><%= flash.error %></div>
+    <% } %>
+
     <% if ((role === 'student' || role === 'admin') && username) { %>
       <section class="home_navigation">
         <h2 class="home_navigation_title">Navigation</h2>
@@ -58,6 +66,58 @@
         <p id="manage_consultations_msg" class="is_hidden" aria-live="polite"></p>
         <div id="manage_consultations_list"></div>
       </dialog>
+    <% } %>
+
+    <% if (role === 'student') { %>
+      <section class="followed_dashboard_section">
+        <h2 class="home_navigation_title">Following</h2>
+        <p class="home_navigation_text">Quick access to lecturers you follow and their upcoming consultations.</p>
+
+        <% if (followedLecturers.length === 0) { %>
+          <div class="profile_detail followed_dashboard_empty">
+            <p class="profile_detail_value">Follow lecturers from the search results below to pin them here.</p>
+          </div>
+        <% } else { %>
+          <div class="profile_details followed_dashboard_grid">
+            <% followedLecturers.forEach(function (lecturer) { %>
+              <% const lecturerName = `${lecturer.firstName || ''} ${lecturer.lastName || ''}`.trim() || lecturer.username %>
+              <% const institutionText = [lecturer.facultyId, lecturer.schoolId].filter(Boolean).join(', ') %>
+              <article class="profile_detail">
+                <h3 class="profile_detail_label"><%= lecturerName %></h3>
+                <p class="profile_detail_value"><%= institutionText || 'Lecturer' %></p>
+                <div class="followed_dashboard_actions">
+                  <a class="button_compact" href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">View Schedule</a>
+                  <a class="button_compact" href="/join_consultation?lecturerId=<%= encodeURIComponent(lecturer.username) %>">View Consultations</a>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <h2 class="home_navigation_title followed_dashboard_subtitle">Upcoming from followed lecturers</h2>
+
+        <% if (followedConsultations.length === 0) { %>
+          <div class="profile_detail followed_dashboard_empty">
+            <p class="profile_detail_value">No upcoming consultations from followed lecturers.</p>
+          </div>
+        <% } else { %>
+          <section class="dashboard_consultations">
+            <% followedConsultations.forEach(function (consultation) { %>
+              <% const statusLabel = consultation.hasJoined ? 'Joined' : consultation.isFull ? 'Fully Booked' : 'Open' %>
+              <article class="dashboard_consultation_card">
+                <h3><%= consultation.name %></h3>
+                <p class="dashboard_consultation_meta"><strong>Lecturer:</strong> <%= consultation.lecturer %></p>
+                <p class="dashboard_consultation_meta"><strong>Date:</strong> <%= consultation.date %></p>
+                <p class="dashboard_consultation_meta"><strong>Time:</strong> <%= consultation.time %></p>
+                <p class="dashboard_consultation_meta"><strong>Status:</strong> <%= statusLabel %></p>
+                <div class="followed_dashboard_actions">
+                  <a class="button_compact" href="/join_consultation?lecturerId=<%= encodeURIComponent(consultation.lecturerId) %>&date=<%= encodeURIComponent(consultation.date) %>&time=<%= encodeURIComponent(consultation.startTime) %>">Open Consultation</a>
+                </div>
+              </article>
+            <% }) %>
+          </section>
+        <% } %>
+      </section>
     <% } %>
 
     <section class="calendar_section">
@@ -145,14 +205,26 @@
         </form>
       </section>
 
-      <section id="lecturer_results" class="results">
+      <section id="lecturer_results" class="results" data-can-follow="<%= role === 'student' ? 'true' : 'false' %>">
         <% if (lecturers.length === 0) { %>
           <p>No lecturers found.</p>
         <% } else { %>
           <% lecturers.forEach(function (lecturer) { %>
-            <a href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">
-              <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
-            </a>
+            <article class="lecturer_result_card">
+              <a class="lecturer_result_link" href="/user_profile?user=<%= encodeURIComponent(lecturer.username) %>">
+                <%= lecturer.firstName %> <%= lecturer.lastName %> &mdash; <%= lecturer.facultyId %>, <%= lecturer.schoolId %>
+              </a>
+
+              <% if (role === 'student') { %>
+                <% if (lecturer.isFollowed) { %>
+                  <span class="lecturer_result_following">Following</span>
+                <% } else { %>
+                  <form class="lecturer_result_follow_form" action="/users/<%= encodeURIComponent(lecturer.username) %>/follow" method="post">
+                    <button type="submit">Follow</button>
+                  </form>
+                <% } %>
+              <% } %>
+            </article>
           <% }) %>
 
           <% if (totalPages > 1) { %>

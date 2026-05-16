@@ -51,6 +51,12 @@ const buildConsultationTime = function (datetime, duration) {
   return endTime === startTime ? startTime : `${startTime} to ${endTime}`
 }
 
+const getCurrentDatetimeKey = function () {
+  const now = new Date()
+
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
 /**
  * Inserts a new consultation document.
  * @param {object} consultation - Consultation document to insert.
@@ -253,6 +259,64 @@ const getConsultationsForCalendar = async function (username, monthStart, monthE
   }).filter(Boolean)
 }
 
+/**
+ * Returns upcoming consultations for lecturers followed by the student.
+ * @param {string} username - Student username.
+ * @param {Array<string>} lecturerIds - Followed lecturer usernames.
+ * @returns {Promise<Array<object>>} Upcoming consultations sorted by datetime ascending.
+ */
+const getUpcomingConsultationsForFollowedLecturers = async function (username, lecturerIds) {
+  const followedLecturerIds = [...new Set((Array.isArray(lecturerIds) ? lecturerIds : []).filter(Boolean))]
+
+  if (followedLecturerIds.length === 0) {
+    return []
+  }
+
+  const currentDatetimeKey = getCurrentDatetimeKey()
+
+  const consultations = await consultationsCollection().find({
+    datetime: { $gt: currentDatetimeKey },
+    lecturerId: { $in: followedLecturerIds }
+  }).toArray()
+
+  if (consultations.length === 0) {
+    return []
+  }
+
+  const [users, availabilities] = await Promise.all([
+    usersCollection().find({ username: { $in: followedLecturerIds } }).toArray(),
+    getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: { $in: followedLecturerIds } }).toArray()
+  ])
+
+  const usersByUsername = new Map(users.map(function (user) {
+    return [user.username, user]
+  }))
+  const availabilitiesByUsername = new Map(availabilities.map(function (availability) {
+    return [availability.username, availability]
+  }))
+
+  return consultations.filter(function (consultation) {
+    return consultation?._id
+  }).sort(function (left, right) {
+    return (left.datetime || '').localeCompare(right.datetime || '')
+  }).map(function (consultation) {
+    const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
+    const hasCapacity = Number.isInteger(consultation.capacity)
+
+    return {
+      date: consultation.datetime?.slice(0, 10) || '',
+      hasJoined: attendees.includes(username),
+      id: consultation._id.toString(),
+      isFull: hasCapacity && attendees.length >= consultation.capacity,
+      lecturer: buildDisplayName(usersByUsername.get(consultation.lecturerId), consultation.lecturerId),
+      lecturerId: consultation.lecturerId || '',
+      name: consultation.title || 'Untitled consultation',
+      startTime: consultation.datetime?.slice(11, 16) || '',
+      time: buildConsultationTime(consultation.datetime, availabilitiesByUsername.get(consultation.lecturerId)?.duration)
+    }
+  })
+}
+
 const CANCEL_RESULT_REASONS = {
   NOT_FOUND: 'not-found',
   NOT_LECTURER: 'not-lecturer',
@@ -377,6 +441,7 @@ module.exports = {
   CANCEL_RESULT_REASONS,
   getConsultationsForCalendar,
   getConsultationsForStudent,
+  getUpcomingConsultationsForFollowedLecturers,
   getUpcomingConsultationsForLecturer,
   JOIN_RESULT_REASONS,
   listConsultationsForLecturerOnDate,

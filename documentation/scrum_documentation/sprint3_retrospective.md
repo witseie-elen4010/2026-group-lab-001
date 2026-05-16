@@ -71,7 +71,7 @@ This sprint closed the Cancellation and Activity Log epics while delivering canc
 ## 6. Sprint 4 Goals
 
 - Harden deletion and cancellation flows with stronger unit and integration coverage.
-- Extend Playwright coverage across cancellation, dashboard, roster, and logs journeys.
+- Extend Playwright coverage across cancellation, dashboard, roster and logs journeys.
 - Continue improving lecturer and student management of scheduled consultations.
 - Refine activity logging so key consultation actions remain easy to audit.
 - Reduce test maintenance overhead by consolidating shared fixtures and database setup logic.
