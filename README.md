@@ -43,9 +43,9 @@ The application is built with a server-rendered Node.js and Express stack, backe
 
 2. [x] **Completed**
 
-3. [ ] **In Progress**
+3. [x] **Completed**
 
-4. [ ] **Unstarted**
+4. [ ] **In Progress**
 
 ---
 
@@ -90,6 +90,38 @@ The application is hosted on Render and accessible at:
    ```
 
 The app will be available at `http://localhost:8080`.
+
+---
+
+## Database Seeding
+
+The seed script populates the database with real Wits University faculties, schools, and lecturer accounts scraped from [wits.ac.za](https://www.wits.ac.za). It is safe to run more than once — existing lecturer records are never duplicated or modified.
+
+### Prerequisites
+
+- `MONGODB_URI` must be set in your `.env` file (see [Installation](#installation))
+- An active internet connection (the script fetches live data from the Wits website)
+
+### Running the seed script
+
+```sh
+node scripts/seed_wits_data.js
+```
+
+### What it creates
+
+| Collection | Records added |
+|---|---|
+| `University` | University of the Witwatersrand |
+| `Faculty` | Commerce Law & Management, Engineering & the Built Environment, Health Sciences, Science |
+| `School` | All schools within the seeded faculties |
+| `User` | One lecturer account per scraped staff member |
+
+Each lecturer account is created with the fields `firstName`, `lastName`, `username`, `email`, `passwordHash`, `role`, `universityId`, `facultyId`, and `schoolId`. The default password for each account is the initials portion of the username (e.g. username `CDKatWits` → password `CDK`). If multiple lecturers share the same initials, a counter suffix is appended to both: the second becomes username `CDKatWits2` → password `CDK2`, the third `CDKatWits3` → password `CDK3`, and so on.
+
+> **Note:** The Humanities faculty and certain dispersed Health Sciences schools (Clinical Medicine, Oral Health Sciences, Pathology) are excluded from seeding as their staff pages are not structured for automated scraping.
+
+> **Re-runs:** If all lecturers scraped from a school already exist in the database, the script will report `0 lecturers seeded` for that school. This is expected behaviour — no duplicates are created.
 
 ---
 
