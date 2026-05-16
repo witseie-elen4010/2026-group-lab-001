@@ -109,6 +109,38 @@ describe('users route', () => {
     expect(connectToDatabase).not.toHaveBeenCalled()
   })
 
+  test('returns an autofill template for a known Wits degree', async () => {
+    const response = await fetch(`${baseUrl}/users/academic-template?degree=${encodeURIComponent('BSc (Eng) - Electrical Engineering')}`)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data).toEqual(expect.objectContaining({
+      matched: true,
+      template: expect.objectContaining({
+        coursePrefixes: expect.arrayContaining(['ELEN']),
+        courses: expect.arrayContaining(['ELEN Circuit Theory', 'ELEN Electronics']),
+        degreeName: 'Electrical Engineering',
+        faculty: 'Engineering and the Built Environment'
+      })
+    }))
+    expect(connectToDatabase).not.toHaveBeenCalled()
+  })
+
+  test('returns no template when the degree query is blank or unknown', async () => {
+    const blankResponse = await fetch(`${baseUrl}/users/academic-template`)
+    const blankData = await blankResponse.json()
+
+    expect(blankResponse.status).toBe(200)
+    expect(blankData).toEqual({ matched: false, template: null })
+
+    const unknownResponse = await fetch(`${baseUrl}/users/academic-template?degree=${encodeURIComponent('Bachelor of Portal Magic')}`)
+    const unknownData = await unknownResponse.json()
+
+    expect(unknownResponse.status).toBe(200)
+    expect(unknownData).toEqual({ matched: false, template: null })
+    expect(connectToDatabase).not.toHaveBeenCalled()
+  })
+
   test('rejects authenticated non-student users', async () => {
     currentSessionUser = {
       role: 'lecturer',

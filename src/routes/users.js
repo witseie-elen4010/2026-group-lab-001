@@ -1,6 +1,7 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { followLecturer, getUser } = require('../models/user_db')
+const { findWitsDegreeCourseTemplate } = require('../services/wits_degree_course_templates')
 
 const router = express.Router()
 
@@ -35,6 +36,27 @@ const setFlashMessage = function (req, type, message) {
   req.session.flash = { [type]: message }
 }
 
+const buildAcademicTemplateResponse = function (template) {
+  if (!template) {
+    return {
+      matched: false,
+      template: null
+    }
+  }
+
+  return {
+    matched: true,
+    template: {
+      coursePrefixes: template.coursePrefixes,
+      courses: template.suggestedCourses,
+      degreeName: template.degreeName,
+      faculty: template.faculty,
+      lastUpdated: template.lastUpdated,
+      sourceUrls: template.sourceUrls
+    }
+  }
+}
+
 /**
  * Sends a response for the lecturer follow endpoint.
  * Redirects HTML form submissions back to the home page with a flash message,
@@ -66,6 +88,16 @@ const respond = function (req, res, { statusCode, success, alreadyFollowing = fa
 
   return res.status(statusCode).json({ error, success: false })
 }
+
+router.get('/academic-template', (req, res) => {
+  const degree = req.query.degree?.trim() || ''
+
+  if (!degree) {
+    return res.json(buildAcademicTemplateResponse(null))
+  }
+
+  return res.json(buildAcademicTemplateResponse(findWitsDegreeCourseTemplate(degree)))
+})
 
 router.post('/:id/follow', async (req, res) => {
   const studentUsername = req.session?.user?.username || ''
