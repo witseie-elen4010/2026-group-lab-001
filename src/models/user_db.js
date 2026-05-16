@@ -51,6 +51,29 @@ const updateUserInstitutions = async function (username, {
 }
 
 /**
+ * Updates a user's academic profile by username.
+ * @param {string} username - Username to update.
+ * @param {object} academicProfile - Academic profile fields to store.
+ * @param {string} academicProfile.degree - Updated degree value.
+ * @param {Array<string>} academicProfile.courses - Updated course list.
+ * @returns {Promise<import('mongodb').UpdateResult>} MongoDB update result.
+ */
+const updateUserAcademicProfile = async function (username, {
+  degree,
+  courses
+}) {
+  return usersCollection().updateOne(
+    { username },
+    {
+      $set: {
+        courses,
+        degree
+      }
+    }
+  )
+}
+
+/**
  * Deletes a user document by username.
  * @param {string} username - Username to delete.
  * @returns {Promise<import('mongodb').DeleteResult>} MongoDB delete result.
@@ -189,5 +212,6 @@ module.exports = {
   getUserByGoogleId,
   linkGoogleId,
   searchLecturers,
+  updateUserAcademicProfile,
   updateUserInstitutions
 }

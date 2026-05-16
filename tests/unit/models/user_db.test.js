@@ -13,6 +13,7 @@ const {
   getUserByGoogleId,
   linkGoogleId,
   searchLecturers,
+  updateUserAcademicProfile,
   updateUserInstitutions
 } = require('../../../src/models/user_db')
 
@@ -76,6 +77,28 @@ describe('user database operations', () => {
           facultyId: 'Engineering',
           schoolId: 'EIE',
           universityId: 'University of the Witwatersrand'
+        }
+      }
+    )
+    expect(result).toEqual(updateResult)
+  })
+
+  test('updateUserAcademicProfile updates degree and courses by username', async () => {
+    const updateResult = { acknowledged: true, modifiedCount: 1 }
+    mockCollection.updateOne.mockResolvedValue(updateResult)
+
+    const result = await updateUserAcademicProfile('morris', {
+      courses: ['ELEN Circuit Theory', 'ELEN Electronics'],
+      degree: 'BSc (Eng) - Electrical Engineering'
+    })
+
+    expect(getCollection).toHaveBeenCalledWith('User')
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { username: 'morris' },
+      {
+        $set: {
+          courses: ['ELEN Circuit Theory', 'ELEN Electronics'],
+          degree: 'BSc (Eng) - Electrical Engineering'
         }
       }
     )

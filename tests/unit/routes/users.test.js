@@ -4,7 +4,8 @@ jest.mock('../../../src/models/db', () => ({
 
 jest.mock('../../../src/models/user_db', () => ({
   followLecturer: jest.fn(),
-  getUser: jest.fn()
+  getUser: jest.fn(),
+  updateUserAcademicProfile: jest.fn()
 }))
 
 const http = require('node:http')
@@ -12,7 +13,7 @@ const express = require('express')
 
 const { connectToDatabase } = require('../../../src/models/db')
 const requireAuthentication = require('../../../src/middleware/require_authentication')
-const { followLecturer, getUser } = require('../../../src/models/user_db')
+const { followLecturer, getUser, updateUserAcademicProfile } = require('../../../src/models/user_db')
 const usersRouter = require('../../../src/routes/users')
 
 const closeServer = async function (server) {
@@ -93,6 +94,7 @@ describe('users route', () => {
     connectToDatabase.mockResolvedValue(undefined)
     getUser.mockResolvedValue({ firstName: 'Alice', lastName: 'Smith', role: 'lecturer', universityId: 'Wits', username: 'lecturer1' })
     followLecturer.mockResolvedValue({ acknowledged: true, matchedCount: 1, modifiedCount: 1 })
+    updateUserAcademicProfile.mockResolvedValue({ acknowledged: true, matchedCount: 1, modifiedCount: 1 })
   })
 
   test('redirects unauthenticated users to login', async () => {
@@ -139,6 +141,74 @@ describe('users route', () => {
     expect(unknownResponse.status).toBe(200)
     expect(unknownData).toEqual({ matched: false, template: null })
     expect(connectToDatabase).not.toHaveBeenCalled()
+  })
+
+  test('updates an authenticated users academic profile', async () => {
+    const response = await fetch(`${baseUrl}/users/morris`, {
+      body: new URLSearchParams({
+        courses: 'ELEN Circuit Theory\nELEN Electronics',
+        degree: 'BSc (Eng) - Electrical Engineering'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'PATCH'
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data).toEqual({
+      profile: {
+        courses: ['ELEN Circuit Theory', 'ELEN Electronics'],
+        degree: 'BSc (Eng) - Electrical Engineering'
+      },
+      success: true
+    })
+    expect(connectToDatabase).toHaveBeenCalledTimes(1)
+    expect(updateUserAcademicProfile).toHaveBeenCalledWith('morris', {
+      courses: ['ELEN Circuit Theory', 'ELEN Electronics'],
+      degree: 'BSc (Eng) - Electrical Engineering'
+    })
+  })
+
+  test('autofills academic profile courses from a known Wits degree when courses are blank', async () => {
+    const response = await fetch(`${baseUrl}/users/morris`, {
+      body: new URLSearchParams({
+        courses: '',
+        degree: 'BSc (Eng) - Electrical Engineering'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'PATCH'
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.profile.courses).toEqual(expect.arrayContaining([
+      'ELEN Circuit Theory',
+      'ELEN Electronics',
+      'ELEN Signals and Systems'
+    ]))
+  })
+
+  test('rejects attempts to update another users academic profile', async () => {
+    const response = await fetch(`${baseUrl}/users/alice`, {
+      body: new URLSearchParams({
+        courses: 'ELEN Circuit Theory',
+        degree: 'BSc (Eng) - Electrical Engineering'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'PATCH'
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data).toEqual({ error: 'You can only update your own academic profile.', success: false })
+    expect(connectToDatabase).not.toHaveBeenCalled()
+    expect(updateUserAcademicProfile).not.toHaveBeenCalled()
   })
 
   test('rejects authenticated non-student users', async () => {
