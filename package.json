@@ -46,7 +46,9 @@
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.6.0",
+    "axios": "^1.16.1",
     "c8": "^11.0.0",
+    "cheerio": "^1.2.0",
     "jest": "^30.3.0",
     "standard": "^17.1.2"
   }
