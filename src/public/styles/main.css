@@ -2,7 +2,7 @@
   --font-base: Arial, sans-serif;
   --color-text: #1f2937;
   --color-surface: #ffffff;
-  --color-primary: #2563eb;
+  --color-primary: #0e7490;
   --color-secondary: #64748b;
   --color-border: #cbd5e1;
   --color-error-bg: #fef3c7;
@@ -27,7 +27,7 @@ body {
 }
 
 .page_login {
-  background: #eef2ff;
+  background: #ecfeff;
 }
 
 .page_home {
