@@ -166,6 +166,7 @@ describe('consultations route', () => {
   test('creates a consultation and redirects to home', async () => {
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
+        capacity: '1',
         datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
@@ -188,6 +189,25 @@ describe('consultations route', () => {
       organiserId: 'morris',
       title: 'Project check-in'
     })
+  })
+
+  test('creates a consultation with a custom capacity and passes it to the database', async () => {
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        capacity: '5',
+        datetime: MONDAY_DATETIME,
+        lecturerId: 'lecturer1',
+        title: 'Group session'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST',
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(addConsultation).toHaveBeenCalledWith(expect.objectContaining({ capacity: 5 }))
   })
 
   test('returns forbidden when a non-student submits a consultation', async () => {
@@ -218,6 +238,7 @@ describe('consultations route', () => {
   test('re-renders the form when submitted fields are invalid', async () => {
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
+        capacity: '1',
         datetime: 'not-a-date',
         lecturerId: 'lecturer1',
         title: ''
@@ -234,11 +255,111 @@ describe('consultations route', () => {
     expect(addConsultation).not.toHaveBeenCalled()
   })
 
+  test('re-renders the form when capacity is missing', async () => {
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        datetime: MONDAY_DATETIME,
+        lecturerId: 'lecturer1',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(body).toContain('Please enter a valid maximum number of students (at least 1).')
+    expect(addConsultation).not.toHaveBeenCalled()
+  })
+
+  test('re-renders the form when capacity is zero', async () => {
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        capacity: '0',
+        datetime: MONDAY_DATETIME,
+        lecturerId: 'lecturer1',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(body).toContain('Please enter a valid maximum number of students (at least 1).')
+    expect(addConsultation).not.toHaveBeenCalled()
+  })
+
+  test('re-renders the form when capacity is a negative number', async () => {
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        capacity: '-3',
+        datetime: MONDAY_DATETIME,
+        lecturerId: 'lecturer1',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(body).toContain('Please enter a valid maximum number of students (at least 1).')
+    expect(addConsultation).not.toHaveBeenCalled()
+  })
+
+  test('re-renders the form when capacity is not a number', async () => {
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        capacity: 'many',
+        datetime: MONDAY_DATETIME,
+        lecturerId: 'lecturer1',
+        title: 'Project check-in'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(body).toContain('Please enter a valid maximum number of students (at least 1).')
+    expect(addConsultation).not.toHaveBeenCalled()
+  })
+
+  test('retains the submitted capacity value when re-rendering after a validation error', async () => {
+    const response = await fetch(`${baseUrl}/consultations`, {
+      body: encodeForm({
+        capacity: '8',
+        datetime: MONDAY_DATETIME,
+        lecturerId: 'lecturer1',
+        title: ''
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      method: 'POST'
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(body).toContain('value="8"')
+    expect(addConsultation).not.toHaveBeenCalled()
+  })
+
   test('re-renders the form when the lecturer is invalid', async () => {
     getUser.mockResolvedValue(null)
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
+        capacity: '1',
         datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
@@ -260,6 +381,7 @@ describe('consultations route', () => {
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
+        capacity: '1',
         datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'
@@ -423,6 +545,7 @@ describe('consultations route', () => {
 
     const response = await fetch(`${baseUrl}/consultations`, {
       body: encodeForm({
+        capacity: '1',
         datetime: MONDAY_DATETIME,
         lecturerId: 'lecturer1',
         title: 'Project check-in'

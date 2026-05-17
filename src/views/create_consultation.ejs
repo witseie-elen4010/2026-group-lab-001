@@ -10,16 +10,11 @@
   <main class="card card_wide">
     <header>
       <h1>Create Consultation</h1>
-      <% if (username) { %>
-        <p>Hello <%= username %></p>
-      <% } %>
     </header>
-
-    <% if (error) { %>
-      <p class="error"><%= error %></p>
-    <% } %>
-
     <section>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
       <form action="/consultations" method="post">
         <label>
           Title
@@ -41,6 +36,11 @@
         <label>
           Date and Time
           <input type="datetime-local" name="datetime" value="<%= selectedDatetime %>" required>
+        </label>
+
+        <label>
+          Maximum students
+          <input type="number" name="capacity" value="<%= selectedCapacity %>" min="1" step="1" required>
         </label>
 
         <button type="submit">Create Consultation</button>

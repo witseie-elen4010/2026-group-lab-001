@@ -43,13 +43,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return lecturerLinks
     }
 
-    const pageLinks = []
-    for (let i = 1; i <= totalPages; i++) {
-      const pageParams = new URLSearchParams(params)
-      pageParams.set('page', i)
-      const activeClass = i === page ? ' pagination_link_active' : ''
-      pageLinks.push(`<a href="/home?${pageParams}" class="pagination_link${activeClass}" data-page="${i}">${i}</a>`)
+    const visiblePages = new Set([1, 2, 3, totalPages - 2, totalPages - 1, totalPages])
+    for (let i = page - 2; i <= page + 2; i++) {
+      if (i >= 1 && i <= totalPages) visiblePages.add(i)
     }
+    const sortedPages = [...visiblePages].sort((a, b) => a - b)
+
+    const pageLinks = []
+    sortedPages.forEach(function (pageNum, idx) {
+      if (idx > 0 && pageNum - sortedPages[idx - 1] > 1) {
+        pageLinks.push('<span class="pagination_ellipsis">...</span>')
+      }
+      const pageParams = new URLSearchParams(params)
+      pageParams.set('page', pageNum)
+      const activeClass = pageNum === page ? ' pagination_link_active' : ''
+      pageLinks.push(`<a href="/home?${pageParams}" class="pagination_link${activeClass}" data-page="${pageNum}">${pageNum}</a>`)
+    })
 
     return `${lecturerLinks}<nav class="pagination">${pageLinks.join('')}</nav>`
   }

@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     coursesInput.value = responseBody.template.courses.join('\n')
-    setStatus(`Autofilled ${responseBody.template.courses.length} suggested courses for ${responseBody.template.degreeName}.`, 'success')
+    setStatus(`Autofilled ${responseBody.template.courses.length} courses for ${responseBody.template.degreeName}.`, 'success')
   }
 
   const saveAcademicProfile = async function () {
@@ -180,4 +180,126 @@ document.addEventListener('DOMContentLoaded', function () {
   if (degreeInput.value.trim() && !coursesInput.value.trim()) {
     fetchTemplate()
   }
+})
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('.profile_update_form:not(.academic_profile_form)')
+
+  if (!form) {
+    return
+  }
+
+  const statusElement = document.getElementById('institution_status')
+
+  if (!statusElement) {
+    return
+  }
+
+  let successTimeout = null
+
+  const setStatus = function (message, state) {
+    clearTimeout(successTimeout)
+    statusElement.classList.remove('institution_status_success', 'institution_status_error')
+
+    if (state) {
+      statusElement.classList.add(`institution_status_${state}`)
+    }
+
+    statusElement.textContent = message
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault()
+
+    setStatus('Saving...')
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new URLSearchParams(new FormData(form))
+    }).catch(function () {
+      return null
+    })
+
+    if (!response) {
+      setStatus('Network error. Please try again.', 'error')
+      return
+    }
+
+    const data = await response.json().catch(function () {
+      return null
+    })
+
+    if (!data) {
+      setStatus('An unexpected error occurred.', 'error')
+      return
+    }
+
+    if (data.success) {
+      setStatus('Institution updated.', 'success')
+      successTimeout = setTimeout(function () {
+        setStatus('')
+      }, 3000)
+    } else {
+      setStatus(data.error || 'Could not update institution.', 'error')
+    }
+  })
+})
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('.consultation_preferences_form')
+  if (!form) return
+
+  const toggleBtn = document.getElementById('per_day_availability_toggle')
+  const perDaySection = document.getElementById('per_day_availability')
+  const globalSelect = document.getElementById('global_availability_select')
+  const globalStart = document.getElementById('global_start_time')
+  const globalEnd = document.getElementById('global_end_time')
+
+  if (!toggleBtn || !perDaySection || !globalSelect || !globalStart || !globalEnd) return
+
+  const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+  const syncGlobalToPerDay = function () {
+    const availability = globalSelect.value
+    const startTime = globalStart.value
+    const endTime = globalEnd.value
+
+    DAYS.forEach(function (day) {
+      const availSelect = form.querySelector(`[name="availability_${day}"]`)
+      const startInput = form.querySelector(`[name="start_time_${day}"]`)
+      const endInput = form.querySelector(`[name="end_time_${day}"]`)
+      if (availSelect) availSelect.value = availability
+      if (startInput) startInput.value = availability === 'available' ? startTime : ''
+      if (endInput) endInput.value = availability === 'available' ? endTime : ''
+    })
+  }
+
+  if (perDaySection.hidden) {
+    syncGlobalToPerDay()
+  }
+
+  globalSelect.addEventListener('change', function () {
+    if (perDaySection.hidden) syncGlobalToPerDay()
+  })
+
+  globalStart.addEventListener('change', function () {
+    if (perDaySection.hidden) syncGlobalToPerDay()
+  })
+
+  globalEnd.addEventListener('change', function () {
+    if (perDaySection.hidden) syncGlobalToPerDay()
+  })
+
+  toggleBtn.addEventListener('click', function () {
+    const isHidden = perDaySection.hidden
+    perDaySection.hidden = !isHidden
+    toggleBtn.textContent = isHidden ? 'Hide Custom Settings' : 'Set Custom Availability Settings'
+    if (!isHidden) {
+      syncGlobalToPerDay()
+    }
+  })
 })

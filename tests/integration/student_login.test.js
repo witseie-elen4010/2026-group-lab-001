@@ -91,7 +91,6 @@ describe('student login integration flow', () => {
 
     expect(homeResponse.status).toBe(200)
     expect(body).toContain('<title>Admin Home</title>')
-    expect(body).toContain(`Hello ${USERNAME}`)
     expect(body).toContain('You are logged in as a admin.')
     expect(body).toContain('Create Consultation')
     expect(body).toContain('Join Consultation')
@@ -153,7 +152,5 @@ describe('student login integration flow', () => {
 
     expect(response.status).toBe(403)
     expect(body).toContain('<title>Lecturer Dashboard</title>')
-    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
-    expect(body).not.toContain('No upcoming consultations yet.')
   })
 })

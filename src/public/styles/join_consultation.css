@@ -1,0 +1,39 @@
+.join_consultation_header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.join_consultation_item h2 {
+  font-size: 1.25rem;
+}
+
+.join_consultation_item .register_left_column,
+.join_consultation_item .register_middle_column,
+.join_consultation_item .register_right_column {
+  gap: 8px;
+}
+
+.join_button {
+  width: 100%;
+  margin: 0;
+}
+
+.join_button.success {
+  background: #0e7490;
+  color: #ffffff;
+}
+
+.join_button.error {
+  background: rgb(180 83 9 / var(--join-button-muted-opacity));
+  color: #ffffff;
+}
+
+.join_button.success.join_button_joined {
+  background: rgb(14 116 144 / var(--join-button-muted-opacity));
+}
+
+.join_button_joined {
+  opacity: 0.65;
+}

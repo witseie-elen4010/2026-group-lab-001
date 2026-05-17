@@ -5,23 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/home.css">
+  <link rel="stylesheet" href="/styles/join_consultation.css">
   <script src="/scripts/scheduled_consultations.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <a class="back_link back_link_corner" href="<%= homePath %>">Home</a>
     <header>
-      <h1>Lecturer Dashboard</h1>
-      <% if (username) { %>
-        <p>Hello <%= username %></p>
-      <% } %>
-      <p>View your upcoming consultations and calendar in one place.</p>
+      <h1>Scheduled Consultations</h1>
+      <p>View your upcoming consultations here.</p>
     </header>
-
-    <% if (error) { %>
-      <div class="error"><%= error %></div>
-    <% } else { %>
       <section>
-        <h2>Upcoming Consultations</h2>
         <p id="scheduled_consultations_msg" class="is_hidden" aria-live="polite"></p>
         <% if (consultations.length === 0) { %>
           <p>No upcoming consultations yet.</p>
@@ -29,26 +24,36 @@
           <div class="dashboard_consultations">
             <% consultations.forEach(function (consultation) { %>
               <% const roster = Array.isArray(consultation.roster) ? consultation.roster : [] %>
-              <article class="dashboard_consultation_card">
-                <h3><%= consultation.name %></h3>
-                <p class="dashboard_consultation_meta"><strong>Organiser:</strong> <%= consultation.organiser %></p>
-                <p class="dashboard_consultation_meta"><strong>Date:</strong> <%= consultation.date %></p>
-                <p class="dashboard_consultation_meta"><strong>Time:</strong> <%= consultation.time %></p>
+              <article class="profile_detail join_consultation_item">
+                <div class="search_flex join_consultation_header">
+                  <h2 class="home_navigation_title"><%= consultation.name %></h2>
+                </div>
+                <div class="register_columns">
+                  <div class="register_left_column">
+                    <p class="profile_detail_value"><strong>Organiser:</strong> <%= consultation.organiser %></p>
+                    <p class="profile_detail_value"><strong>Date:</strong> <%= consultation.date %></p>
+                  </div>
+                  <div class="register_middle_column">
+                    <p class="profile_detail_value"><strong>Time:</strong> <%= consultation.time %></p>
+                  </div>
+                  <div class="register_right_column text_center">
+                    <% if (consultation.id) { %>
+                      <button type="button" class="join_button btn_danger" data-cancel-id="<%= consultation.id %>">Cancel</button>
+                    <% } %>
+                  </div>
+                </div>
                 <section class="dashboard_roster">
                   <h4 class="dashboard_roster_title">Attendee roster</h4>
                   <% if (roster.length === 0) { %>
                     <p class="dashboard_roster_empty">No confirmed students booked for this session yet.</p>
                   <% } else { %>
-                    <ul class="dashboard_roster_list">
+                    <ul class="dashboard_roster_list dashboard_roster_grid">
                       <% roster.forEach(function (attendee) { %>
                         <li><%= attendee %></li>
                       <% }) %>
                     </ul>
                   <% } %>
                 </section>
-                <% if (consultation.id) { %>
-                  <button type="button" class="btn_danger" data-cancel-id="<%= consultation.id %>">Cancel Consultation</button>
-                <% } %>
               </article>
             <% }) %>
           </div>
@@ -56,7 +61,7 @@
       </section>
 
       <section>
-        <h2>Calendar</h2>
+        <h2>My Calendar</h2>
         <h3 class="calendar_title"><%= calendar.monthLabel %></h3>
         <table class="calendar_table">
           <thead>
@@ -89,9 +94,7 @@
           </tbody>
         </table>
       </section>
-    <% } %>
 
-    <a class="back_link" href="<%= homePath %>">Home</a>
   </main>
 </body>
 </html>

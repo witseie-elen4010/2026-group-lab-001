@@ -108,9 +108,9 @@ test.describe('lecturer dashboard E2E', () => {
     await page.getByRole('link', { name: 'Scheduled Consultations' }).click()
 
     await expect(page).toHaveURL(/\/scheduled_consultations$/)
-    await expect(page.getByRole('heading', { name: 'Lecturer Dashboard' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Scheduled Consultations' })).toBeVisible()
 
-    const consultationCard = page.locator('.dashboard_consultation_card').filter({ hasText: visibleTitle })
+    const consultationCard = page.locator('.join_consultation_item').filter({ hasText: visibleTitle })
     const calendarNote = page.locator('.calendar_day_note_dashboard').filter({ hasText: visibleTitle })
 
     await expect(consultationCard).toBeVisible()
@@ -135,7 +135,6 @@ test.describe('lecturer dashboard E2E', () => {
     await page.goto('/scheduled_consultations')
 
     await expect(page).toHaveURL(/\/scheduled_consultations$/)
-    await expect(page.getByText('Only lecturers can access the lecturer dashboard.')).toBeVisible()
-    await expect(page.locator('.dashboard_consultation_card')).toHaveCount(0)
+    await expect(page.locator('.join_consultation_item')).toHaveCount(0)
   })
 })

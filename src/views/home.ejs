@@ -5,16 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/user_profile.css">
+  <link rel="stylesheet" href="/styles/home.css">
   <script src="/scripts/lecturer_search.js" defer></script>
   <script src="/scripts/manage_consultations.js" defer></script>
+  <script src="/scripts/peer_search.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <% if (role === 'admin' && username) { %>
+      <a href="/logs" class="logs_corner_link">View Logs</a>
+    <% } %>
     <header>
       <h1><%= homeTitle %></h1>
-      <% if (username) { %>
-        <p>Hello <%= username %></p>
-      <% } %>
       <% if (role) { %>
         <p>You are logged in as a <%= role %>.</p>
       <% } %>
@@ -30,27 +33,20 @@
 
     <% if ((role === 'student' || role === 'admin') && username) { %>
       <section class="home_navigation">
-        <h2 class="home_navigation_title">Navigation</h2>
-        <p class="home_navigation_text">Choose an option below.</p>
         <div class="home_navigation_actions">
           <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
           <a href="/consultations/new">Create Consultation</a>
           <a href="/join_consultation">Join Consultation</a>
           <button type="button" id="manage_consultations_btn" class="home_navigation_primary">Manage Consultations</button>
         </div>
-        <% if (role === 'admin') { %>
-          <a href="/logs" style="width: fit-content; margin: 4px auto 0; padding: 8px 14px; background: var(--color-secondary); font-size: 0.92rem;">View Logs</a>
-        <% } %>
       </section>
 
     <% } else if (role === 'lecturer' && username) { %>
       <section class="home_navigation">
-        <h2 class="home_navigation_title">Navigation</h2>
-        <p class="home_navigation_text">Choose an option below.</p>
         <div class="home_navigation_actions">
-          <a href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
+          <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
           <a href="/scheduled_consultations">Scheduled Consultations</a>
-          <a href="/daily_summary">Daily Summary</a>
+          <a href="/daily_summary">Daily<br>Summary</a>
           <button type="button" id="manage_consultations_btn" class="home_navigation_primary">Manage Consultations</button>
         </div>
       </section>
@@ -121,8 +117,56 @@
       </section>
     <% } %>
 
+    <section class="calendar_section">
+      <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
+      <table class="calendar_table">
+        <thead>
+          <tr>
+            <% calendar.dayLabels.forEach((dayLabel) => { %>
+              <th class="calendar_heading" scope="col"><%= dayLabel %></th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% calendar.weeks.forEach(function (week) { %>
+            <tr>
+              <% week.forEach(function (day) { %>
+                <% if (day.isEmpty) { %>
+                  <td class="calendar_day calendar_day_empty"></td>
+                <% } else if (role === 'student' || role === 'admin') { %>
+                  <% const dayCons = consultationsByDate[day.isoDate] || [] %>
+                  <td class="calendar_day">
+                    <div class="calendar_day_content">
+                      <span class="calendar_day_number"><%= day.dayNumber %></span>
+                      <% dayCons.forEach(function (con) { %>
+                        <% const statusLabel = con.hasJoined ? 'Joined' : con.isFull ? 'Fully Booked' : 'Unjoined' %>
+                        <span class="calendar_day_note <%= con.hasJoined ? 'calendar_day_note_joined' : con.isFull ? 'calendar_day_note_full' : 'calendar_day_note_unjoined' %>"><%= con.name %> &middot; <%= con.lecturer %> &middot; <%= con.time %> &middot; <%= statusLabel %></span>
+                      <% }) %>
+                    </div>
+                  </td>
+                <% } else { %>
+                  <td class="calendar_day<%= day.availabilityState === 'available' ? ' calendar_day_available' : '' %><%= day.availabilityState === 'unavailable' ? ' calendar_day_unavailable' : '' %>">
+                    <div class="calendar_day_content">
+                      <span class="calendar_day_number"><%= day.dayNumber %></span>
+                      <% if (day.availabilityText) { %>
+                        <span class="calendar_day_note"><%= day.availabilityText %></span>
+                      <% } %>
+                    </div>
+                  </td>
+                <% } %>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
     <% if (role === 'student' || role === 'admin') { %>
-      <section class="peer_search_section">
+      <div class="search_reveal_row">
+        <button type="button" id="lecturer_search_btn">Search Lecturer</button>
+        <button type="button" id="peer_search_btn">Find a Wits Peer</button>
+      </div>
+      <section id="peer_search_section" class="peer_search_section<%= hasPeerSearch ? '' : ' is_hidden' %>">
         <h2 class="home_navigation_title">Find a Wits Peer</h2>
         <p class="home_navigation_text">Search for other Wits users by name, degree, or course.</p>
 
@@ -181,52 +225,9 @@
       </section>
     <% } %>
 
-    <section class="calendar_section">
-      <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
-      <table class="calendar_table">
-        <thead>
-          <tr>
-            <% calendar.dayLabels.forEach((dayLabel) => { %>
-              <th class="calendar_heading" scope="col"><%= dayLabel %></th>
-            <% }) %>
-          </tr>
-        </thead>
-        <tbody>
-          <% calendar.weeks.forEach(function (week) { %>
-            <tr>
-              <% week.forEach(function (day) { %>
-                <% if (day.isEmpty) { %>
-                  <td class="calendar_day calendar_day_empty"></td>
-                <% } else if (role === 'student' || role === 'admin') { %>
-                  <% const dayCons = consultationsByDate[day.isoDate] || [] %>
-                  <td class="calendar_day">
-                    <div class="calendar_day_content">
-                      <span class="calendar_day_number"><%= day.dayNumber %></span>
-                      <% dayCons.forEach(function (con) { %>
-                        <% const statusLabel = con.hasJoined ? 'Joined' : con.isFull ? 'Fully Booked' : 'Unjoined' %>
-                        <span class="calendar_day_note <%= con.hasJoined ? 'calendar_day_note_joined' : con.isFull ? 'calendar_day_note_full' : 'calendar_day_note_unjoined' %>"><%= con.name %> &middot; <%= con.lecturer %> &middot; <%= con.time %> &middot; <%= statusLabel %></span>
-                      <% }) %>
-                    </div>
-                  </td>
-                <% } else { %>
-                  <td class="calendar_day<%= day.availabilityState === 'available' ? ' calendar_day_available' : '' %><%= day.availabilityState === 'unavailable' ? ' calendar_day_unavailable' : '' %>">
-                    <div class="calendar_day_content">
-                      <span class="calendar_day_number"><%= day.dayNumber %></span>
-                      <% if (day.availabilityText) { %>
-                        <span class="calendar_day_note"><%= day.availabilityText %></span>
-                      <% } %>
-                    </div>
-                  </td>
-                <% } %>
-              <% }) %>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </section>
-
     <% if (role === 'student' || role === 'admin') { %>
-      <h1>Find a Lecturer</h1>
+      <section id="lecturer_search_section" class="<%= (query || facultyId || schoolId) ? '' : 'is_hidden' %>">
+      <h2 class="home_navigation_title">Find a Lecturer</h2>
       <section>
         <form id="lecturer_search_form" action="/home" method="get">
           <div class="search_criteria">
@@ -289,16 +290,25 @@
           <% }) %>
 
           <% if (totalPages > 1) { %>
+            <%
+              const _vis = new Set([1, 2, 3, totalPages - 2, totalPages - 1, totalPages])
+              for (let _i = page - 2; _i <= page + 2; _i++) { if (_i >= 1 && _i <= totalPages) _vis.add(_i) }
+              const _pages = [..._vis].sort((a, b) => a - b)
+            %>
             <nav class="pagination">
-              <% for (let i = 1; i <= totalPages; i++) { %>
+              <% _pages.forEach(function (_p, _idx) { %>
+                <% if (_idx > 0 && _p - _pages[_idx - 1] > 1) { %>
+                  <span class="pagination_ellipsis">...</span>
+                <% } %>
                 <a
-                  href="/home?q=<%= encodeURIComponent(query) %>&facultyId=<%= encodeURIComponent(facultyId) %>&schoolId=<%= encodeURIComponent(schoolId) %>&page=<%= i %>"
-                  class="pagination_link<%= i === page ? ' pagination_link_active' : '' %>"
-                ><%= i %></a>
-              <% } %>
+                  href="/home?q=<%= encodeURIComponent(query) %>&facultyId=<%= encodeURIComponent(facultyId) %>&schoolId=<%= encodeURIComponent(schoolId) %>&page=<%= _p %>"
+                  class="pagination_link<%= _p === page ? ' pagination_link_active' : '' %>"
+                ><%= _p %></a>
+              <% }) %>
             </nav>
           <% } %>
         <% } %>
+      </section>
       </section>
     <% } %>
   </main>

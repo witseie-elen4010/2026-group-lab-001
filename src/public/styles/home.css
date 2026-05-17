@@ -1,0 +1,259 @@
+.home_navigation {
+  display: grid;
+  gap: 16px;
+  max-width: 320px;
+  margin: 24px auto 0;
+}
+
+.home_navigation_actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.home_navigation_primary {
+  grid-column: 1 / -1;
+}
+
+.home_navigation_title {
+  margin: 0;
+}
+
+.home_navigation_text {
+  margin: 0;
+  color: var(--color-secondary);
+}
+
+.calendar_section {
+  margin-top: 32px;
+  margin-bottom: 20px;
+}
+
+.search_reveal_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.followed_dashboard_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.followed_dashboard_grid {
+  margin-top: 16px;
+}
+
+.followed_dashboard_subtitle {
+  margin-top: 24px;
+}
+
+.followed_dashboard_empty {
+  margin-top: 16px;
+}
+
+.followed_dashboard_actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.followed_dashboard_actions .button_compact {
+  margin-left: 0;
+}
+
+.calendar_title {
+  margin: 0 0 16px;
+}
+
+.calendar_table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendar_heading {
+  padding: 12px 8px;
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+}
+
+.calendar_day {
+  height: 64px;
+  padding: 12px 8px;
+  border: 1px solid var(--color-border);
+  text-align: right;
+  vertical-align: top;
+}
+
+.calendar_day_content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 100%;
+  gap: 6px;
+}
+
+.calendar_day_number {
+  font-weight: 700;
+}
+
+.calendar_day_note {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--color-secondary);
+  text-align: right;
+}
+
+.calendar_day_note_joined {
+  color: #0e7490;
+  font-weight: 600;
+}
+
+.calendar_day_note_unjoined {
+  color: #6b7280;
+}
+
+.calendar_day_note_full {
+  color: #c2410c;
+}
+
+.calendar_day_available {
+  background: #dcfce7;
+}
+
+.calendar_day_available .calendar_day_note {
+  color: #166534;
+}
+
+.calendar_day_unavailable {
+  background: var(--color-error-bg);
+}
+
+.calendar_day_unavailable .calendar_day_note,
+.calendar_day_unavailable .calendar_day_number {
+  color: var(--color-error-text);
+}
+
+.calendar_day_scheduled {
+  background: #ecfeff;
+}
+
+.calendar_day_note_dashboard {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.calendar_day_empty {
+  background: #f8fafc;
+}
+
+.search_filter {
+  width: 48%;
+}
+
+.search_criteria {
+  display: flex;
+  justify-content: space-around;
+}
+
+.search_box {
+  width: 70%;
+  padding-bottom: 0;
+}
+
+.search_button {
+  width: 20%;
+  height: 48px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.search_flex {
+  display: flex;
+  align-items: flex-end;
+}
+
+.lecturer_result_card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.lecturer_result_link {
+  flex: 1;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.lecturer_result_follow_form {
+  display: block;
+  margin: 0;
+}
+
+.lecturer_result_follow_form button {
+  white-space: nowrap;
+}
+
+.lecturer_result_following {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.manage_dialog {
+  width: min(90vw, 600px);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.manage_dialog::backdrop {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.manage_dialog_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.manage_dialog_title {
+  margin: 0;
+}
+
+.manage_dialog_close {
+  background: var(--color-secondary);
+}
+
+@media (max-width: 700px) {
+  .home_navigation_actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .calendar_day {
+    height: 48px;
+    padding: 8px 6px;
+    font-size: 0.9rem;
+  }
+}

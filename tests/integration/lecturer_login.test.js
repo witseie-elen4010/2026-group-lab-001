@@ -119,7 +119,6 @@ describe('lecturer login integration flow', () => {
 
     expect(homeResponse.status).toBe(200)
     expect(body).toContain('<title>Lecturer Home</title>')
-    expect(body).toContain(`Hello ${USERNAME}`)
     expect(body).toContain('You are logged in as a lecturer.')
     expect(body).toContain('User Profile')
     expect(body).toContain(`href="/user_profile?user=${USERNAME}"`)
@@ -158,8 +157,6 @@ describe('lecturer login integration flow', () => {
 
     expect(scheduledResponse.status).toBe(200)
     expect(scheduledBody).toContain('<title>Lecturer Dashboard</title>')
-    expect(scheduledBody).toContain('View your upcoming consultations and calendar in one place.')
-    expect(scheduledBody).toContain('Upcoming Consultations')
     expect(scheduledBody).toContain('Calendar')
     expect(scheduledBody).toContain('calendar_table')
     expect(createResponse.status).toBe(403)

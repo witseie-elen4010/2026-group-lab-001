@@ -189,6 +189,7 @@ test.describe('user profile page', () => {
     await page.locator('input[name="maxStudents"]').fill('3')
     await page.locator('input[name="duration"]').fill('45')
     await page.locator('input[name="dailyMax"]').fill('2')
+    await page.getByRole('button', { name: 'Set Custom Availability Settings' }).click()
     await page.locator('select[name="availability_monday"]').selectOption('available')
     await page.locator('input[name="start_time_monday"]').fill('10:00')
     await page.locator('input[name="end_time_monday"]').fill('11:00')

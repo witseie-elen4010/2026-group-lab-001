@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/user_profile.css">
   <script src="/scripts/search.js" defer></script>
   <script src="/scripts/consultation_preferences.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <a class="back_link back_link_corner" href="/home">Home</a>
     <header>
       <h1><%= canEdit ? `Hello, ${username}` : `${username}'s Profile` %></h1>
     </header>
@@ -107,8 +109,24 @@
             <p id="profile_school_search_status" class="search_status" aria-live="polite"></p>
           </label>
 
-          <button type="submit">Update Institution</button>
+          <div class="institution_form_actions">
+            <p id="institution_status" class="institution_status" aria-live="polite"></p>
+            <button type="submit">Update Institution</button>
+          </div>
         </form>
+        <% } else { %>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">University</h2>
+          <p class="profile_detail_value"><%= university || 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Faculty</h2>
+          <p class="profile_detail_value"><%= faculty || 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">School</h2>
+          <p class="profile_detail_value"><%= school || 'Not set' %></p>
+        </div>
         <% } %>
       </div>
     </section>
@@ -144,7 +162,7 @@
 
         <div class="academic_profile_actions">
           <button id="academic_profile_autofill" type="button">Autofill Courses</button>
-          <button id="academic_profile_save" type="button">Save Academic Profile</button>
+          <button id="academic_profile_save" type="button">Update Profile</button>
           <p id="academic_profile_status" class="academic_profile_status" aria-live="polite"></p>
         </div>
       </div>
@@ -192,8 +210,9 @@
         <input type="hidden" name="username" value="<%= username %>">
         <input type="hidden" name="formType" value="consultationPreferences">
 
-        <h3>Student Attendance Range</h3>
-        <div class="consult_flex">
+        <div class="consult_flex consult_flex_attendance">
+          <span class="consult_input">Student Attendance</span>
+
           <label class="consult_range">
             Min
             <input
@@ -243,38 +262,67 @@
           </label>
         </div>
 
-        <h3>Availability Settings</h3>
+        <%
+          const globalDefaultStart = weeklyAvailability.length ? weeklyAvailability[0].startTime : ''
+          const globalDefaultEnd = weeklyAvailability.length ? weeklyAvailability[0].endTime : ''
+          const anyAvailable = weeklyAvailability.length > 0
+          const perDayVariation = weeklyAvailability.length > 1 && weeklyAvailability.some(function (e) {
+            return e.startTime !== weeklyAvailability[0].startTime || e.endTime !== weeklyAvailability[0].endTime
+          })
+        %>
 
-        <% weekdays.forEach(function (day) { %>
-          <% const selectedAvailability = weeklyAvailability.find(function (entry) { return entry.day === day }) %>
-          <div class="consult_flex">
-            <label class="consult_input">
-              <%= formatDayLabel(day) %>
-              <select name="availability_<%= day %>">
-                <option value="unavailable"<%= selectedAvailability ? '' : ' selected' %>>Unavailable</option>
-                <option value="available"<%= selectedAvailability ? ' selected' : '' %>>Available</option>
-              </select>
-            </label>
+        <div class="consult_flex">
+          <label class="consult_input">
+            All Days
+            <select id="global_availability_select">
+              <option value="available"<%= anyAvailable ? ' selected' : '' %>>Available</option>
+              <option value="unavailable"<%= !anyAvailable ? ' selected' : '' %>>Unavailable</option>
+            </select>
+          </label>
+          <label class="consult_input">
+            Start Time
+            <input type="time" id="global_start_time" value="<%= globalDefaultStart %>">
+          </label>
+          <label class="consult_input">
+            End Time
+            <input type="time" id="global_end_time" value="<%= globalDefaultEnd %>">
+          </label>
+        </div>
 
-            <label class="consult_input">
-              Start Time
-              <input
-                type="time"
-                name="start_time_<%= day %>"
-                value="<%= selectedAvailability ? selectedAvailability.startTime : '' %>"
-              >
-            </label>
+        <button type="button" id="per_day_availability_toggle" class="per_day_toggle_btn">Set Custom Availability Settings</button>
 
-            <label class="consult_input">
-              End Time
-              <input
-                type="time"
-                name="end_time_<%= day %>"
-                value="<%= selectedAvailability ? selectedAvailability.endTime : '' %>"
-              >
-            </label>
-          </div>
-        <% }) %>
+        <div id="per_day_availability"<%= perDayVariation ? '' : ' hidden' %>>
+          <% weekdays.forEach(function (day) { %>
+            <% const selectedAvailability = weeklyAvailability.find(function (entry) { return entry.day === day }) %>
+            <div class="consult_flex">
+              <label class="consult_input">
+                <%= formatDayLabel(day) %>
+                <select name="availability_<%= day %>">
+                  <option value="unavailable"<%= selectedAvailability ? '' : ' selected' %>>Unavailable</option>
+                  <option value="available"<%= selectedAvailability ? ' selected' : '' %>>Available</option>
+                </select>
+              </label>
+
+              <label class="consult_input">
+                Start Time
+                <input
+                  type="time"
+                  name="start_time_<%= day %>"
+                  value="<%= selectedAvailability ? selectedAvailability.startTime : '' %>"
+                >
+              </label>
+
+              <label class="consult_input">
+                End Time
+                <input
+                  type="time"
+                  name="end_time_<%= day %>"
+                  value="<%= selectedAvailability ? selectedAvailability.endTime : '' %>"
+                >
+              </label>
+            </div>
+          <% }) %>
+        </div>
 
         <label class="consult_input">
           Unavailable Dates
@@ -319,7 +367,6 @@
     </section>
     <% } %>
 
-    <a class="back_link" href="/home">Home</a>
   </main>
 </body>
 </html>

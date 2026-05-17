@@ -8,11 +8,9 @@
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <a class="back_link back_link_corner" href="/home">Home</a>
     <header>
       <h1>Daily Summary</h1>
-      <% if (username) { %>
-        <p>Hello <%= username %></p>
-      <% } %>
       <% if (todayLabel) { %>
         <p class="daily_summary_date"><%= todayLabel %></p>
       <% } %>
@@ -57,7 +55,6 @@
       </section>
     <% } %>
 
-    <a class="back_link" href="/home">Home</a>
   </main>
 </body>
 </html>

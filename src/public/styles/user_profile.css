@@ -1,0 +1,167 @@
+.profile_details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 760px;
+  margin: 24px auto 0;
+  text-align: left;
+}
+
+.profile_column {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.profile_update_form {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.consultation_preferences_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.consultation_preferences_title {
+  margin: 0 0 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.consultation_preferences_form {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.consultation_preferences_form h3 {
+  margin: 0;
+  text-align: center;
+}
+
+.consultation_preferences_form .consult_flex + .consult_flex {
+  margin-top: 14px;
+}
+
+.consult_flex {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.consult_flex_attendance > .consult_input {
+  align-self: center;
+}
+
+.consult_range {
+  flex: 0 0 200px;
+  padding-bottom: 0;
+  text-align: center;
+  color: var(--color-secondary);
+  font-weight: bold;
+}
+
+.consult_range input {
+  color: var(--color-text);
+  font-weight: normal;
+}
+
+.consult_input {
+  flex: 1;
+  min-width: 80px;
+  padding-bottom: 0;
+  color: var(--color-secondary);
+  font-weight: bold;
+}
+
+.consult_input input,
+.consult_input select,
+.consult_input textarea {
+  color: var(--color-text);
+  font-weight: normal;
+}
+
+.consult_separator {
+  padding-bottom: 14px;
+  color: var(--color-secondary);
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .profile_details {
+    grid-template-columns: 1fr;
+  }
+}
+
+.academic_profile_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.academic_profile_form {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.academic_profile_actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.academic_profile_status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.academic_profile_status_success {
+  color: #0e7490;
+}
+
+.academic_profile_status_error {
+  color: #b45309;
+}
+
+.institution_form_actions {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.institution_status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.institution_status_success {
+  color: #0e7490;
+}
+
+.institution_status_error {
+  color: #b45309;
+}
+
+.per_day_toggle_btn {
+  margin-top: 20px;
+}
+
+#per_day_availability {
+  margin-top: 12px;
+}

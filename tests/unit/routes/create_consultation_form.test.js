@@ -92,7 +92,18 @@ describe('create consultation form structure', () => {
     expect(body).toContain('name="title"')
     expect(body).toContain('name="lecturerId"')
     expect(body).toContain('name="datetime"')
+    expect(body).toContain('name="capacity"')
     expect(body).toContain('Create Consultation')
     expect(body).toContain('Alice Smith')
+  })
+
+  test('create consultation form capacity input has a default value of 1 and minimum of 1', async () => {
+    const response = await fetch(`${baseUrl}/consultations/new`)
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('name="capacity"')
+    expect(body).toContain('min="1"')
+    expect(body).toContain('value="1"')
   })
 })
