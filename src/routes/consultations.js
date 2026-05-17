@@ -77,6 +77,7 @@ const renderCreateConsultation = function (res, {
   consultationTitle = '',
   error = '',
   lecturers = [],
+  selectedCapacity = 1,
   selectedDatetime = '',
   selectedLecturerId = '',
   username = ''
@@ -88,6 +89,7 @@ const renderCreateConsultation = function (res, {
     consultationTitle,
     error: finalError,
     lecturers,
+    selectedCapacity,
     selectedDatetime,
     selectedLecturerId,
     title: 'Create Consultation',
@@ -111,6 +113,7 @@ const renderCreateConsultation = function (res, {
 const renderCreateConsultationError = async function (res, {
   consultationTitle,
   error,
+  selectedCapacity = 1,
   selectedDatetime,
   selectedLecturerId,
   statusCode = 400,
@@ -130,6 +133,7 @@ const renderCreateConsultationError = async function (res, {
     consultationTitle,
     error,
     lecturers,
+    selectedCapacity,
     selectedDatetime,
     selectedLecturerId,
     statusCode,
@@ -161,6 +165,7 @@ router.get('/new', async function (req, res) {
 
     return renderCreateConsultation(res, {
       lecturers,
+      selectedCapacity: 1,
       selectedDatetime,
       selectedLecturerId: prefilledLecturerId,
       username
@@ -178,6 +183,8 @@ router.post('/', async function (req, res) {
   const consultationTitle = req.body.title?.trim() || ''
   const lecturerId = req.body.lecturerId?.trim() || ''
   const datetime = req.body.datetime?.trim() || ''
+  const capacityRaw = parseInt(req.body.capacity, 10)
+  const capacity = Number.isFinite(capacityRaw) && capacityRaw >= 1 ? capacityRaw : null
   const role = req.session?.user?.role || ''
   const organiserId = req.session?.user?.username || ''
   const universityId = req.session?.user?.universityId || ''
@@ -186,6 +193,7 @@ router.post('/', async function (req, res) {
     return renderCreateConsultation(res, {
       consultationTitle,
       error: 'Only students can create consultations.',
+      selectedCapacity: capacity ?? 1,
       selectedDatetime: datetime,
       selectedLecturerId: lecturerId,
       statusCode: 403,
@@ -193,10 +201,13 @@ router.post('/', async function (req, res) {
     })
   }
 
-  if (!consultationTitle || !lecturerId || !isValidDatetime(datetime)) {
+  if (!consultationTitle || !lecturerId || !isValidDatetime(datetime) || capacity === null) {
     return renderCreateConsultationError(res, {
       consultationTitle,
-      error: 'Please complete all consultation fields with a valid date and time.',
+      error: capacity === null
+        ? 'Please enter a valid maximum number of students (at least 1).'
+        : 'Please complete all consultation fields with a valid date and time.',
+      selectedCapacity: capacity ?? 1,
       selectedDatetime: datetime,
       selectedLecturerId: lecturerId,
       universityId,
@@ -212,6 +223,7 @@ router.post('/', async function (req, res) {
       return renderCreateConsultationError(res, {
         consultationTitle,
         error: 'Please select a valid lecturer.',
+        selectedCapacity: capacity,
         selectedDatetime: datetime,
         selectedLecturerId: lecturerId,
         universityId,
@@ -236,6 +248,7 @@ router.post('/', async function (req, res) {
       return renderCreateConsultationError(res, {
         consultationTitle,
         error: schedulingValidation.error,
+        selectedCapacity: capacity,
         selectedDatetime: datetime,
         selectedLecturerId: lecturerId,
         universityId,
@@ -271,7 +284,7 @@ router.post('/', async function (req, res) {
 
     await addConsultation({
       attendees: [organiserId],
-      capacity: 1,
+      capacity,
       datetime,
       lecturerId,
       organiserId,
@@ -283,6 +296,7 @@ router.post('/', async function (req, res) {
     return renderCreateConsultationError(res, {
       consultationTitle,
       error: 'Unable to create the consultation right now.',
+      selectedCapacity: capacity,
       selectedDatetime: datetime,
       selectedLecturerId: lecturerId,
       statusCode: 500,
