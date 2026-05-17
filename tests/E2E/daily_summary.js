@@ -3,10 +3,11 @@
 const path = require('node:path')
 const { test, expect } = require('@playwright/test')
 const { connectToDatabase, closeDatabaseConnection, getCollection } = require('../../src/models/db')
+const { hashPassword } = require('../../src/utils/password')
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), quiet: true })
 
-const LECTURER_USERNAME = 'user1'
-const LECTURER_PASSWORD = 'password1'
+const LECTURER_USERNAME = 'daily-summary-e2e-user'
+const LECTURER_PASSWORD = 'daily-summary-e2e-pass'
 const STUDENT_USERNAME = 'user'
 const STUDENT_PASSWORD = 'password'
 const TEST_ID = `${process.pid}${Date.now()}`
@@ -63,7 +64,30 @@ const deleteTestConsultations = async function () {
 }
 
 test.describe('daily summary E2E', () => {
+  test.describe.configure({ mode: 'serial' })
   test.skip(!process.env.MONGODB_URI, 'Requires a writable MongoDB test database.')
+
+  test.beforeAll(async function () {
+    await connectToDatabase()
+    const passwordHash = await hashPassword(LECTURER_PASSWORD)
+    await getCollection('User').updateOne(
+      { username: LECTURER_USERNAME },
+      {
+        $setOnInsert: {
+          email: `${LECTURER_USERNAME}@test.local`,
+          facultyId: 'Test Faculty',
+          firstName: 'DailySummary',
+          lastName: 'E2EUser',
+          passwordHash,
+          role: 'lecturer',
+          schoolId: 'Test School',
+          universityId: 'Test University',
+          username: LECTURER_USERNAME
+        }
+      },
+      { upsert: true }
+    )
+  })
 
   test.beforeEach(async function () {
     await deleteTestConsultations()
@@ -75,6 +99,7 @@ test.describe('daily summary E2E', () => {
 
   test.afterAll(async function () {
     await deleteTestConsultations()
+    await getCollection('User').deleteOne({ username: LECTURER_USERNAME })
     await closeDatabaseConnection()
   })
 
@@ -162,7 +187,7 @@ test.describe('daily summary E2E', () => {
     await expect(timeSlots).toHaveCount(2)
 
     const firstSlot = timeSlots.first()
-    await expect(firstSlot.getByRole('heading')).toContainText('09:00')
+    await expect(firstSlot.locator('.daily_summary_slot_heading')).toContainText('09:00')
     await expect(firstSlot.getByText(earlyTitle)).toBeVisible()
     await expect(firstSlot.getByText(earlyTitle2)).toBeVisible()
   })
