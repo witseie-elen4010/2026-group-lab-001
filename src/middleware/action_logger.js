@@ -2,6 +2,17 @@ const { connectToDatabase } = require('../models/db')
 const { addLog } = require('../models/logs_db')
 
 const ACTION_MAP = [
+  { method: 'GET', pattern: /^\/register\/complete$/, label: 'Viewed Complete Registration page' },
+  {
+    method: 'POST',
+    pattern: /^\/register\/complete$/,
+    label: function (req, res) {
+      if (res.statusCode !== 302) {
+        return 'Could not complete registration.'
+      }
+      return 'Completed Google registration'
+    }
+  },
   { method: 'GET', pattern: /^\/login$/, label: 'Viewed Login page' },
   { method: 'POST', pattern: /^\/login$/, label: 'Logged in' },
   { method: 'GET', pattern: /^\/register$/, label: 'Viewed Register page' },
@@ -24,7 +35,7 @@ const ACTION_MAP = [
     method: 'POST',
     pattern: /^\/join_consultation\/[^/]+\/join$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
+      if (res.statusCode < 200 || res.statusCode >= 300) {
         return 'Could not join the consultation.'
       }
       const consultation = req.params.consultationId
@@ -32,6 +43,16 @@ const ACTION_MAP = [
     }
   },
   { method: 'GET', pattern: /^\/scheduled_consultations$/, label: 'Viewed lecturer dashboard' },
+  {
+    method: 'DELETE',
+    pattern: /^\/consultations\/[^/]+$/,
+    label: function (req, res) {
+      if (res.statusCode !== 200) {
+        return 'Could not cancel the consultation.'
+      }
+      return `Cancelled consultation ${req.params.id || req.originalUrl.split('/').pop()}.`
+    }
+  },
   { method: 'GET', pattern: /^\/schedule_consultation$/, label: 'Viewed Schedule Consultation page' },
   {
     method: 'POST',
@@ -99,7 +120,40 @@ const ACTION_MAP = [
       return `Searched Schools for ${school}.`
     }
   },
-  { method: 'GET', pattern: /^\/daily_summary$/, label: 'Checked Daily Summary' }
+  { method: 'GET', pattern: /^\/daily_summary$/, label: 'Checked Daily Summary' },
+  { method: 'GET', pattern: /^\/auth\/google$/, label: 'Started Google login' },
+  {
+    method: 'GET',
+    pattern: /^\/auth\/google\/callback$/,
+    label: function (req, res) {
+      if (res.statusCode !== 302) {
+        return 'Google login failed.'
+      }
+      return 'Logged in with Google'
+    }
+  },
+  {
+    method: 'PATCH',
+    pattern: /^\/users\/[^/]+$/,
+    label: function (req, res) {
+      if (res.statusCode !== 200) {
+        return 'Could not update academic profile.'
+      }
+      const target = req.params.id || req.originalUrl.split('/').pop()
+      return `Updated academic profile for ${target}.`
+    }
+  },
+  {
+    method: 'POST',
+    pattern: /^\/users\/[^/]+\/follow$/,
+    label: function (req, res) {
+      if (res.statusCode !== 200) {
+        return 'Could not follow lecturer.'
+      }
+      const lecturer = req.params.id || req.originalUrl.split('/')[2] || 'unknown'
+      return `Followed lecturer ${lecturer}.`
+    }
+  }
 ]
 /* ^ add here per http method asseblief. I repeat ADD HERE PER HTTP METHOD
 Use static labels when user is not accessing another database item or (as like
