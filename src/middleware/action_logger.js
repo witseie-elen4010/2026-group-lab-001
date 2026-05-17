@@ -98,7 +98,8 @@ const ACTION_MAP = [
       }
       return `Searched Schools for ${school}.`
     }
-  }
+  },
+  { method: 'GET', pattern: /^\/daily_summary$/, label: 'Checked Daily Summary' }
 ]
 /* ^ add here per http method asseblief. I repeat ADD HERE PER HTTP METHOD
 Use static labels when user is not accessing another database item or (as like
