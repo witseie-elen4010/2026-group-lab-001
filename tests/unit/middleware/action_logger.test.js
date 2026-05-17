@@ -99,12 +99,14 @@ describe('actionLogger middleware', () => {
       ['POST', '/login', 'Logged in'],
       ['GET', '/register', 'Viewed Register page'],
       ['POST', '/register', 'Registered account'],
+      ['GET', '/register/complete', 'Viewed Complete Registration page'],
       ['GET', '/home', 'Viewed Home page'],
       ['GET', '/consultations/new', 'Viewed Create Consultation page'],
       ['GET', '/join_consultation', 'Viewed Join Consultation page'],
       ['GET', '/scheduled_consultations', 'Viewed lecturer dashboard'],
       ['GET', '/schedule_consultation', 'Viewed Schedule Consultation page'],
-      ['POST', '/user_profile', 'Updated user profile']
+      ['POST', '/user_profile', 'Updated user profile'],
+      ['GET', '/auth/google', 'Started Google login']
     ]
 
     test.each(cases)('%s %s logs "%s"', (method, url, expectedLabel) => {
@@ -268,6 +270,125 @@ describe('actionLogger middleware', () => {
       const res = makeRes()
       runLogger(req, res)
       expect(consoleSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('GET /register/complete', () => {
+    test('logs "Viewed Complete Registration page"', () => {
+      const req = makeReq({ url: '/register/complete' })
+      const res = makeRes()
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Viewed Complete Registration page'))
+    })
+  })
+
+  describe('POST /register/complete', () => {
+    test('logs "Completed Google registration" on redirect (302)', () => {
+      const req = makeReq({ method: 'POST', url: '/register/complete' })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Completed Google registration'))
+    })
+
+    test('logs failure message on non-302 response', () => {
+      const req = makeReq({ method: 'POST', url: '/register/complete' })
+      const res = makeRes(400)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not complete registration.'))
+    })
+  })
+
+  describe('DELETE /consultations/:id', () => {
+    test('logs cancellation with id on success (200)', () => {
+      const req = makeReq({ method: 'DELETE', url: '/consultations/abc123', params: { id: 'abc123' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Cancelled consultation abc123.'))
+    })
+
+    test('falls back to url segment for id when params not set', () => {
+      const req = makeReq({ method: 'DELETE', url: '/consultations/abc123', session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Cancelled consultation abc123.'))
+    })
+
+    test('logs failure message on non-200 response', () => {
+      const req = makeReq({ method: 'DELETE', url: '/consultations/abc123', params: { id: 'abc123' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(403)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not cancel the consultation.'))
+    })
+  })
+
+  describe('GET /auth/google', () => {
+    test('logs "Started Google login"', () => {
+      const req = makeReq({ url: '/auth/google' })
+      const res = makeRes()
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Started Google login'))
+    })
+  })
+
+  describe('GET /auth/google/callback', () => {
+    test('logs "Logged in with Google" on redirect (302)', () => {
+      const req = makeReq({ url: '/auth/google/callback' })
+      const res = makeRes(302)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Logged in with Google'))
+    })
+
+    test('logs failure message on non-302 response', () => {
+      const req = makeReq({ url: '/auth/google/callback' })
+      const res = makeRes(401)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Google login failed.'))
+    })
+  })
+
+  describe('PATCH /users/:id', () => {
+    test('logs updated username on success (200)', () => {
+      const req = makeReq({ method: 'PATCH', url: '/users/jsmith', params: { id: 'jsmith' }, session: { user: { username: 'jsmith', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Updated academic profile for jsmith.'))
+    })
+
+    test('falls back to url segment for id when params not set', () => {
+      const req = makeReq({ method: 'PATCH', url: '/users/jsmith', session: { user: { username: 'jsmith', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Updated academic profile for jsmith.'))
+    })
+
+    test('logs failure message on non-200 response', () => {
+      const req = makeReq({ method: 'PATCH', url: '/users/jsmith', params: { id: 'jsmith' }, session: { user: { username: 'jsmith', role: 'student' } } })
+      const res = makeRes(403)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not update academic profile.'))
+    })
+  })
+
+  describe('POST /users/:id/follow', () => {
+    test('logs lecturer username on success (200)', () => {
+      const req = makeReq({ method: 'POST', url: '/users/drjones/follow', params: { id: 'drjones' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Followed lecturer drjones.'))
+    })
+
+    test('falls back to url segment for lecturer id when params not set', () => {
+      const req = makeReq({ method: 'POST', url: '/users/drjones/follow', session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(200)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Followed lecturer drjones.'))
+    })
+
+    test('logs failure message on non-200 response', () => {
+      const req = makeReq({ method: 'POST', url: '/users/drjones/follow', params: { id: 'drjones' }, session: { user: { username: 'u', role: 'student' } } })
+      const res = makeRes(403)
+      runLogger(req, res)
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Could not follow lecturer.'))
     })
   })
 })
