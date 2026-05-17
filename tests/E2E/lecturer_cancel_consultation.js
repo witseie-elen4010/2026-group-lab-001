@@ -132,9 +132,9 @@ test.describe('lecturer cancel consultation E2E', () => {
     await loginAsLecturer(page)
     await page.goto('/scheduled_consultations')
 
-    const consultationCard = page.locator('.dashboard_consultation_card').filter({ hasText: title })
+    const consultationCard = page.locator('.join_consultation_item').filter({ hasText: title })
     await expect(consultationCard).toBeVisible()
-    await expect(consultationCard.getByRole('button', { name: 'Cancel Consultation' })).toBeVisible()
+    await expect(consultationCard.getByRole('button', { name: 'Cancel' })).toBeVisible()
 
     page.once('dialog', async function (nativeDialog) {
       await nativeDialog.accept()
@@ -142,11 +142,11 @@ test.describe('lecturer cancel consultation E2E', () => {
 
     await Promise.all([
       page.waitForNavigation(),
-      consultationCard.getByRole('button', { name: 'Cancel Consultation' }).click()
+      consultationCard.getByRole('button', { name: 'Cancel' }).click()
     ])
 
     await expect(page).toHaveURL(/\/scheduled_consultations$/)
-    await expect(page.locator('.dashboard_consultation_card').filter({ hasText: title })).toHaveCount(0)
+    await expect(page.locator('.join_consultation_item').filter({ hasText: title })).toHaveCount(0)
 
     await connectToDatabase()
     const remaining = await getCollection('Consultation').findOne({ _id: insertedId })

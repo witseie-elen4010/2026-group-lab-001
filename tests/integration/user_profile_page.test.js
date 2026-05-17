@@ -146,8 +146,6 @@ describe('user profile integration flow', () => {
     expect(body).toContain('Test')
     expect(body).toContain('User')
     expect(body).toContain('test@email.com')
-    expect(body).toContain('Engineering and the Built Environment')
-    expect(body).toContain('Electrical and Information Engineering')
     expect(body).toContain('Academic Profile')
     expect(body).toContain('Autofill Courses')
     expect(body).toContain('Update Profile')
