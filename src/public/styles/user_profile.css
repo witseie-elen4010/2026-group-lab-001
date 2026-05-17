@@ -40,11 +40,6 @@
   background: var(--color-surface);
 }
 
-.consultation_preferences_form h3 {
-  margin: 0;
-  text-align: center;
-}
-
 .consultation_preferences_form .consult_flex + .consult_flex {
   margin-top: 14px;
 }
@@ -98,6 +93,27 @@
 @media (max-width: 640px) {
   .profile_details {
     grid-template-columns: 1fr;
+  }
+
+  .consult_range {
+    flex-basis: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .consult_flex {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .consult_range,
+  .consult_input {
+    flex: none;
+    width: 100%;
+  }
+
+  .consult_separator {
+    display: none;
   }
 }
 

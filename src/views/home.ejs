@@ -303,6 +303,7 @@
                 <a
                   href="/home?q=<%= encodeURIComponent(query) %>&facultyId=<%= encodeURIComponent(facultyId) %>&schoolId=<%= encodeURIComponent(schoolId) %>&page=<%= _p %>"
                   class="pagination_link<%= _p === page ? ' pagination_link_active' : '' %>"
+                  data-page="<%= _p %>"
                 ><%= _p %></a>
               <% }) %>
             </nav>

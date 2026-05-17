@@ -256,4 +256,47 @@
     padding: 8px 6px;
     font-size: 0.9rem;
   }
+
+  .lecturer_result_card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 540px) {
+  .search_criteria {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search_filter {
+    width: 100%;
+  }
+
+  .search_box {
+    width: 100%;
+  }
+
+  .search_button {
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .search_reveal_row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .calendar_heading {
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+
+  .calendar_day_note {
+    font-size: 0.65rem;
+  }
 }
