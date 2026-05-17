@@ -28,15 +28,6 @@ const loginFromPage = async function (page, { password, username }) {
 }
 
 /**
- * Deletes consultations created by this E2E suite.
- * @returns {Promise<void>}
- */
-const deleteTestConsultations = async function () {
-  await connectToDatabase()
-  await getCollection('Consultation').deleteMany({ title: { $regex: `^${TEST_TITLE_PREFIX}` } })
-}
-
-/**
  * Builds a datetime string for today at the given hour and minute.
  * @param {number} hours - Hour (0-23).
  * @param {number} [minutes=0] - Minute (0-59).
@@ -50,6 +41,25 @@ const getTodayDatetime = function (hours, minutes = 0) {
   const hh = String(hours).padStart(2, '0')
   const mm = String(minutes).padStart(2, '0')
   return `${year}-${month}-${day}T${hh}:${mm}`
+}
+
+/**
+ * Deletes consultations created by this E2E suite and any pre-existing
+ * consultations for the test lecturer scheduled today (to prevent stale data
+ * from creating unexpected time slots).
+ * @returns {Promise<void>}
+ */
+const deleteTestConsultations = async function () {
+  const todayDatetime = getTodayDatetime(0, 0)
+  const todayPrefix = todayDatetime.slice(0, 10)
+  await connectToDatabase()
+  await Promise.all([
+    getCollection('Consultation').deleteMany({ title: { $regex: `^${TEST_TITLE_PREFIX}` } }),
+    getCollection('Consultation').deleteMany({
+      lecturerId: LECTURER_USERNAME,
+      datetime: { $gte: `${todayPrefix}T00:00`, $lt: `${todayPrefix}T23:59~` }
+    })
+  ])
 }
 
 test.describe('daily summary E2E', () => {
