@@ -1,14 +1,32 @@
 document.addEventListener('DOMContentLoaded', function () {
   const cancelButtons = document.querySelectorAll('[data-cancel-id]')
+  const msg = document.getElementById('scheduled_consultations_msg')
 
-  if (cancelButtons.length === 0) {
+  if (cancelButtons.length === 0 || !msg) {
     return
   }
 
+  const showMsg = function (text, isError) {
+    msg.textContent = text
+    msg.className = isError ? 'error' : 'success'
+  }
+
+  const hideMsg = function () {
+    msg.textContent = ''
+    msg.className = 'is_hidden'
+  }
+
+  /**
+   * Sends a cancellation request for the selected consultation.
+   * @param {string} consultationId - Consultation identifier.
+   * @returns {Promise<void>}
+   */
   const handleCancel = async function (consultationId) {
     if (!window.confirm('Are you sure you want to cancel this consultation?')) {
       return
     }
+
+    hideMsg()
 
     try {
       const response = await fetch(`/consultations/${consultationId}`, {
@@ -19,13 +37,16 @@ document.addEventListener('DOMContentLoaded', function () {
       })
 
       if (!response.ok || !data || !data.success) {
-        window.alert(data && data.error ? data.error : 'Unable to cancel consultation right now.')
+        showMsg(data && data.error ? data.error : 'Unable to cancel consultation right now.', true)
         return
       }
 
-      window.location.reload()
+      showMsg('Consultation cancelled successfully.', false)
+      setTimeout(function () {
+        window.location.reload()
+      }, 1000)
     } catch {
-      window.alert('Unable to cancel consultation right now.')
+      showMsg('Unable to cancel consultation right now.', true)
     }
   }
 

@@ -22,6 +22,7 @@
     <% } else { %>
       <section>
         <h2>Upcoming Consultations</h2>
+        <p id="scheduled_consultations_msg" class="is_hidden" aria-live="polite"></p>
         <% if (consultations.length === 0) { %>
           <p>No upcoming consultations yet.</p>
         <% } else { %>
