@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     coursesInput.value = responseBody.template.courses.join('\n')
-    setStatus(`Autofilled ${responseBody.template.courses.length} suggested courses for ${responseBody.template.degreeName}.`, 'success')
+    setStatus(`Autofilled ${responseBody.template.courses.length} courses for ${responseBody.template.degreeName}.`, 'success')
   }
 
   const saveAcademicProfile = async function () {
@@ -180,4 +180,71 @@ document.addEventListener('DOMContentLoaded', function () {
   if (degreeInput.value.trim() && !coursesInput.value.trim()) {
     fetchTemplate()
   }
+})
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('.profile_update_form:not(.academic_profile_form)')
+
+  if (!form) {
+    return
+  }
+
+  const statusElement = document.getElementById('institution_status')
+
+  if (!statusElement) {
+    return
+  }
+
+  let successTimeout = null
+
+  const setStatus = function (message, state) {
+    clearTimeout(successTimeout)
+    statusElement.classList.remove('institution_status_success', 'institution_status_error')
+
+    if (state) {
+      statusElement.classList.add(`institution_status_${state}`)
+    }
+
+    statusElement.textContent = message
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault()
+
+    setStatus('Saving...')
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new URLSearchParams(new FormData(form))
+    }).catch(function () {
+      return null
+    })
+
+    if (!response) {
+      setStatus('Network error. Please try again.', 'error')
+      return
+    }
+
+    const data = await response.json().catch(function () {
+      return null
+    })
+
+    if (!data) {
+      setStatus('An unexpected error occurred.', 'error')
+      return
+    }
+
+    if (data.success) {
+      setStatus('Institution updated.', 'success')
+      successTimeout = setTimeout(function () {
+        setStatus('')
+      }, 3000)
+    } else {
+      setStatus(data.error || 'Could not update institution.', 'error')
+    }
+  })
 })

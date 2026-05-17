@@ -80,3 +80,60 @@
     grid-template-columns: 1fr;
   }
 }
+
+.academic_profile_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.academic_profile_form {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.academic_profile_actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.academic_profile_status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.academic_profile_status_success {
+  color: #16a34a;
+}
+
+.academic_profile_status_error {
+  color: #991b1b;
+}
+
+.institution_form_actions {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.institution_status {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.institution_status_success {
+  color: #16a34a;
+}
+
+.institution_status_error {
+  color: #991b1b;
+}

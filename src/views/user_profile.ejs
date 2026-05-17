@@ -11,6 +11,7 @@
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <a class="back_link back_link_corner" href="/home">Home</a>
     <header>
       <h1><%= canEdit ? `Hello, ${username}` : `${username}'s Profile` %></h1>
     </header>
@@ -108,7 +109,10 @@
             <p id="profile_school_search_status" class="search_status" aria-live="polite"></p>
           </label>
 
-          <button type="submit">Update Institution</button>
+          <div class="institution_form_actions">
+            <p id="institution_status" class="institution_status" aria-live="polite"></p>
+            <button type="submit">Update Institution</button>
+          </div>
         </form>
         <% } else { %>
         <div class="profile_detail">
@@ -158,7 +162,7 @@
 
         <div class="academic_profile_actions">
           <button id="academic_profile_autofill" type="button">Autofill Courses</button>
-          <button id="academic_profile_save" type="button">Save Academic Profile</button>
+          <button id="academic_profile_save" type="button">Update Profile</button>
           <p id="academic_profile_status" class="academic_profile_status" aria-live="polite"></p>
         </div>
       </div>
@@ -333,7 +337,6 @@
     </section>
     <% } %>
 
-    <a class="back_link" href="/home">Home</a>
   </main>
 </body>
 </html>

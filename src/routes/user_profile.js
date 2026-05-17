@@ -346,6 +346,7 @@ router.post('/', async (req, res) => {
     return handleConsultationPreferences(req, res, viewer, profileUsername)
   }
 
+  const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest'
   const university = req.body.university?.trim() || ''
   const faculty = req.body.faculty?.trim() || ''
   const school = req.body.school?.trim() || ''
@@ -361,6 +362,7 @@ router.post('/', async (req, res) => {
     const resolvedUsername = user.username || profileUsername
 
     if (viewer !== resolvedUsername) {
+      if (isAjax) return res.status(403).json({ success: false, error: 'You can only edit your own profile.' })
       return renderProfile(res, {
         statusCode: 403,
         error: 'You can only edit your own profile.',
@@ -378,6 +380,7 @@ router.post('/', async (req, res) => {
     })
 
     if (!institutionValidation.isValid) {
+      if (isAjax) return res.status(institutionValidation.statusCode).json({ success: false, error: institutionValidation.error })
       return renderProfile(res, {
         statusCode: institutionValidation.statusCode,
         error: institutionValidation.error,
@@ -397,6 +400,7 @@ router.post('/', async (req, res) => {
       universityId: university
     })
 
+    if (isAjax) return res.json({ success: true })
     return renderProfile(res, buildProfileViewState(user, {
       canEdit: true,
       faculty,
@@ -405,6 +409,7 @@ router.post('/', async (req, res) => {
       username: resolvedUsername
     }))
   } catch (error) {
+    if (isAjax) return res.status(500).json({ success: false, error: 'Sorry. We could not update your institution information.' })
     return renderProfile(res, {
       statusCode: 500,
       error: 'Sorry. We could not update your institution information.',

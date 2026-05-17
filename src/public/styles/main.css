@@ -156,6 +156,13 @@ a {
   background: var(--color-secondary);
 }
 
+.back_link_corner {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: var(--color-secondary);
+}
+
 .results {
   margin-top: 24px;
   display: grid;
