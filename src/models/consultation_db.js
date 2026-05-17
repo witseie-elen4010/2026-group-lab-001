@@ -434,11 +434,67 @@ const addStudentToConsultation = async function (consultationId, username) {
   return { success: true }
 }
 
+/**
+ * Returns all consultations for a lecturer on a given date, enriched for daily summary display.
+ * @param {string} lecturerId - Lecturer username.
+ * @param {string} isoDate - Date in YYYY-MM-DD format.
+ * @returns {Promise<Array<object>>} Consultations sorted by start time.
+ */
+const getDailyConsultationsForLecturer = async function (lecturerId, isoDate) {
+  const consultations = await consultationsCollection().find({
+    lecturerId,
+    datetime: {
+      $gte: `${isoDate}T00:00`,
+      $lt: `${isoDate}T23:59~`
+    }
+  }).toArray()
+
+  if (consultations.length === 0) {
+    return []
+  }
+
+  const userIds = [...new Set(consultations.flatMap(function (consultation) {
+    const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
+    return [consultation.organiserId, ...attendees]
+  }).filter(Boolean))]
+
+  const [users, availabilities] = await Promise.all([
+    usersCollection().find({ username: { $in: userIds } }).toArray(),
+    getCollection(AVAILABILITY_COLLECTION_NAME).find({ username: lecturerId }).toArray()
+  ])
+
+  const usersByUsername = new Map(users.map(function (user) {
+    return [user.username, user]
+  }))
+  const lecturerAvailability = availabilities[0] || null
+
+  return consultations.filter(function (consultation) {
+    return consultation?._id
+  }).sort(function (left, right) {
+    return (left.datetime || '').localeCompare(right.datetime || '')
+  }).map(function (consultation) {
+    const attendees = Array.isArray(consultation.attendees) ? consultation.attendees : []
+    const hasCapacity = Number.isInteger(consultation.capacity)
+
+    return {
+      attendeesCount: attendees.length,
+      capacity: hasCapacity ? consultation.capacity : null,
+      id: consultation._id.toString(),
+      name: consultation.title || 'Untitled consultation',
+      organiser: buildDisplayName(usersByUsername.get(consultation.organiserId), consultation.organiserId),
+      roster: buildAttendeeRoster(consultation.attendees, usersByUsername),
+      startTime: consultation.datetime?.slice(11, 16) || '',
+      time: buildConsultationTime(consultation.datetime, lecturerAvailability?.duration)
+    }
+  })
+}
+
 module.exports = {
   addConsultation,
   addStudentToConsultation,
   cancelConsultation,
   CANCEL_RESULT_REASONS,
+  getDailyConsultationsForLecturer,
   getConsultationsForCalendar,
   getConsultationsForStudent,
   getUpcomingConsultationsForFollowedLecturers,
