@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return lecturerLinks
     }
 
-    const visiblePages = new Set([1, 2, totalPages - 1, totalPages])
+    const visiblePages = new Set([1, 2, 3, totalPages - 2, totalPages - 1, totalPages])
     for (let i = page - 2; i <= page + 2; i++) {
       if (i >= 1 && i <= totalPages) visiblePages.add(i)
     }

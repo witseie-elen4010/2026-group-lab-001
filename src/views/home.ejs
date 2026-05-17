@@ -232,7 +232,7 @@
 
           <% if (totalPages > 1) { %>
             <%
-              const _vis = new Set([1, 2, totalPages - 1, totalPages])
+              const _vis = new Set([1, 2, 3, totalPages - 2, totalPages - 1, totalPages])
               for (let _i = page - 2; _i <= page + 2; _i++) { if (_i >= 1 && _i <= totalPages) _vis.add(_i) }
               const _pages = [..._vis].sort((a, b) => a - b)
             %>
