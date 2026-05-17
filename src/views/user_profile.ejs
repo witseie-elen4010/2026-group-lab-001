@@ -113,6 +113,56 @@
       </div>
     </section>
 
+    <% if (role !== 'lecturer') { %>
+    <section class="academic_profile_section">
+      <h2 class="consultation_preferences_title">Academic Profile</h2>
+
+      <% if (canEdit) { %>
+      <div class="profile_update_form academic_profile_form" data-save-url="/users/<%= encodeURIComponent(username) %>" data-template-url="/users/academic-template">
+        <label>
+          Degree
+          <input
+            id="academic_profile_degree"
+            type="text"
+            name="degree"
+            value="<%= degree %>"
+            placeholder="e.g. BSc (Eng) - Electrical Engineering"
+            autocomplete="off"
+          >
+        </label>
+
+        <label>
+          Courses
+          <textarea
+            id="academic_profile_courses"
+            class="consult_textarea"
+            name="courses"
+            rows="6"
+            placeholder="Use one course per line"
+          ><%= courses %></textarea>
+        </label>
+
+        <div class="academic_profile_actions">
+          <button id="academic_profile_autofill" type="button">Autofill Courses</button>
+          <button id="academic_profile_save" type="button">Save Academic Profile</button>
+          <p id="academic_profile_status" class="academic_profile_status" aria-live="polite"></p>
+        </div>
+      </div>
+      <% } else { %>
+      <div class="profile_details">
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Degree</h3>
+          <p class="profile_detail_value"><%= degree || 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h3 class="profile_detail_label">Courses</h3>
+          <p class="profile_detail_value"><%= courses ? courses.split('\n').join(', ') : 'Not set' %></p>
+        </div>
+      </div>
+      <% } %>
+    </section>
+    <% } %>
+
     <% if (role === 'lecturer') { %>
     <%
       const weeklyAvailability = consultationPreferences && consultationPreferences.weeklyAvailability

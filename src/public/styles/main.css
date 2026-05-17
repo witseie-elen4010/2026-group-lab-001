@@ -226,6 +226,33 @@ a {
   text-align: left;
 }
 
+.academic_profile_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.academic_profile_actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.academic_profile_status {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: 0.95rem;
+}
+
+.academic_profile_status_error {
+  color: var(--color-error-text);
+}
+
+.academic_profile_status_success {
+  color: #16a34a;
+}
+
 .profile_detail {
   padding: 14px;
   border: 1px solid var(--color-border);
@@ -302,6 +329,32 @@ a {
 
 .followed_dashboard_actions .button_compact {
   margin-left: 0;
+}
+
+.peer_search_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.peer_search_criteria {
+  margin-top: 16px;
+}
+
+.peer_search_flex {
+  margin-top: 12px;
+}
+
+.peer_result_card {
+  align-items: flex-start;
+}
+
+.peer_result_summary {
+  flex: 1;
+}
+
+.peer_result_meta {
+  margin: 6px 0 0;
 }
 
 .calendar_title {
@@ -569,6 +622,13 @@ a {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
+}
+
+@media (max-width: 700px) {
+  .academic_profile_actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .dashboard_consultations {

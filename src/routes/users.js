@@ -1,8 +1,13 @@
 const express = require('express')
 const { connectToDatabase } = require('../models/db')
-const { followLecturer, getUser } = require('../models/user_db')
+const { followLecturer, getUser, updateUserAcademicProfile } = require('../models/user_db')
+const { findWitsDegreeCourseTemplate } = require('../services/wits_degree_course_templates')
 
 const router = express.Router()
+
+const ACADEMIC_PROFILE_FORBIDDEN_ERROR = 'You can only update your own academic profile.'
+const ACADEMIC_PROFILE_NOT_FOUND_ERROR = 'User not found.'
+const ACADEMIC_PROFILE_SERVER_ERROR = 'Sorry. We could not save your academic profile right now.'
 
 const FOLLOW_FORBIDDEN_ERROR = 'Only students can follow lecturers.'
 const FOLLOW_INVALID_TARGET_ERROR = 'Please select a valid lecturer.'
@@ -33,6 +38,49 @@ const isHtmlRequest = function (req) {
 const setFlashMessage = function (req, type, message) {
   req.session = req.session || {}
   req.session.flash = { [type]: message }
+}
+
+const buildAcademicTemplateResponse = function (template) {
+  if (!template) {
+    return {
+      matched: false,
+      template: null
+    }
+  }
+
+  return {
+    matched: true,
+    template: {
+      coursePrefixes: template.coursePrefixes,
+      courses: template.suggestedCourses,
+      degreeName: template.degreeName,
+      faculty: template.faculty,
+      lastUpdated: template.lastUpdated,
+      sourceUrls: template.sourceUrls
+    }
+  }
+}
+
+const parseCourses = function (rawCourses) {
+  if (typeof rawCourses !== 'string') {
+    return []
+  }
+
+  const seenCourses = new Set()
+
+  return rawCourses
+    .split(/[\n,]+/)
+    .map(function (course) {
+      return course.trim()
+    })
+    .filter(function (course) {
+      if (!course || seenCourses.has(course)) {
+        return false
+      }
+
+      seenCourses.add(course)
+      return true
+    })
 }
 
 /**
@@ -66,6 +114,57 @@ const respond = function (req, res, { statusCode, success, alreadyFollowing = fa
 
   return res.status(statusCode).json({ error, success: false })
 }
+
+router.get('/academic-template', (req, res) => {
+  const degree = req.query.degree?.trim() || ''
+
+  if (!degree) {
+    return res.json(buildAcademicTemplateResponse(null))
+  }
+
+  return res.json(buildAcademicTemplateResponse(findWitsDegreeCourseTemplate(degree)))
+})
+
+router.patch('/:id', async (req, res) => {
+  const viewer = req.session?.user?.username || ''
+  const targetUsername = req.params.id?.trim() || ''
+  const degree = req.body.degree?.trim() || ''
+  let courses = parseCourses(req.body.courses)
+
+  if (!viewer || viewer !== targetUsername) {
+    return res.status(403).json({ error: ACADEMIC_PROFILE_FORBIDDEN_ERROR, success: false })
+  }
+
+  if (degree && courses.length === 0) {
+    const template = findWitsDegreeCourseTemplate(degree)
+
+    if (template) {
+      courses = template.suggestedCourses
+    }
+  }
+
+  try {
+    await connectToDatabase()
+    const updateResult = await updateUserAcademicProfile(targetUsername, {
+      courses,
+      degree
+    })
+
+    if (!updateResult.matchedCount) {
+      return res.status(404).json({ error: ACADEMIC_PROFILE_NOT_FOUND_ERROR, success: false })
+    }
+
+    return res.json({
+      profile: {
+        courses,
+        degree
+      },
+      success: true
+    })
+  } catch {
+    return res.status(500).json({ error: ACADEMIC_PROFILE_SERVER_ERROR, success: false })
+  }
+})
 
 router.post('/:id/follow', async (req, res) => {
   const studentUsername = req.session?.user?.username || ''

@@ -16,7 +16,8 @@ jest.mock('../../../src/models/user_db', () => ({
   deleteUser: jest.fn(),
   getLecturersByUsernames: jest.fn(),
   getUser: jest.fn(),
-  searchLecturers: jest.fn()
+  searchLecturers: jest.fn(),
+  searchUsersByAcademicProfile: jest.fn()
 }))
 
 jest.mock('../../../src/models/consultation_db', () => ({
@@ -60,7 +61,7 @@ const closeServer = async function (server) {
 
 const { connectToDatabase } = require('../../../src/models/db')
 const { getLecturerAvailability } = require('../../../src/models/lecturer_availability_db')
-const { getLecturersByUsernames, getUser, searchLecturers } = require('../../../src/models/user_db')
+const { getLecturersByUsernames, getUser, searchLecturers, searchUsersByAcademicProfile } = require('../../../src/models/user_db')
 const { addConsultation, getConsultationsForCalendar, getUpcomingConsultationsForFollowedLecturers, getUpcomingConsultationsForLecturer } = require('../../../src/models/consultation_db')
 const { hashPassword } = require('../../../src/utils/password')
 const app = require('../../../src/app')
@@ -80,6 +81,27 @@ const MOCK_LECTURERS = [
 const MOCK_LECTURERS_21 = Array.from({ length: 21 }, function (_, i) {
   return { username: `lecturer${i}`, firstName: `First${i}`, lastName: `Last${i}`, facultyId: 'Engineering', schoolId: 'EIE' }
 })
+
+const MOCK_PEERS = [
+  {
+    username: 'amy',
+    firstName: 'Amy',
+    lastName: 'Ndlovu',
+    facultyId: 'Engineering',
+    schoolId: 'Electrical Engineering',
+    degree: 'BSc (Eng) - Electrical Engineering',
+    courses: ['ELEN Circuit Theory', 'ELEN Electronics', 'ELEN Signals and Systems']
+  },
+  {
+    username: 'busi',
+    firstName: 'Busi',
+    lastName: 'Mokoena',
+    facultyId: 'Engineering',
+    schoolId: 'Electrical Engineering',
+    degree: 'BSc (Eng) - Electrical Engineering',
+    courses: ['ELEN Energy Conversion']
+  }
+]
 
 const MOCK_FOLLOWED_CONSULTATIONS = [
   {
@@ -194,6 +216,7 @@ describe('home route', () => {
     getLecturerAvailability.mockResolvedValue(null)
     getUser.mockResolvedValue({ followedLecturers: [], role: 'student', username: 'morris' })
     searchLecturers.mockResolvedValue([])
+    searchUsersByAcademicProfile.mockResolvedValue([])
   })
 
   test('Redirects unauthenticated users to login when requesting the home page', async () => {
@@ -583,6 +606,73 @@ describe('home route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('Alice Smith')
     expect(body).toContain('Bob Jones')
+  })
+
+  test('Renders peer search controls for student-like users', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser' })
+    const response = await fetch(`${baseUrl}/home`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Find a Wits Peer')
+    expect(body).toContain('name="peerDegree"')
+    expect(body).toContain('name="peerCourse"')
+    expect(body).toContain('name="peerQuery"')
+    expect(searchUsersByAcademicProfile).not.toHaveBeenCalled()
+  })
+
+  test('Passes peer search filters to searchUsersByAcademicProfile', async () => {
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser', universityId: 'Wits' })
+
+    await fetch(`${baseUrl}/home?peerDegree=Electrical%20Engineering&peerCourse=ELEN&peerQuery=amy`, {
+      headers: { cookie: sessionCookie }
+    })
+
+    expect(searchUsersByAcademicProfile).toHaveBeenCalledWith({
+      course: 'ELEN',
+      degree: 'Electrical Engineering',
+      excludeUsername: 'testuser',
+      query: 'amy',
+      universityId: 'Wits'
+    })
+  })
+
+  test('Renders peer search results with degree and course details', async () => {
+    searchUsersByAcademicProfile.mockResolvedValue(MOCK_PEERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser', universityId: 'Wits' })
+    const response = await fetch(`${baseUrl}/home?peerCourse=ELEN`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Amy Ndlovu')
+    expect(body).toContain('BSc (Eng) - Electrical Engineering')
+    expect(body).toContain('ELEN Circuit Theory, ELEN Electronics, ELEN Signals and Systems')
+    expect(body).toContain('href="/user_profile?user=amy"')
+  })
+
+  test('Returns peer search results in JSON when requested', async () => {
+    searchUsersByAcademicProfile.mockResolvedValue(MOCK_PEERS)
+    const { sessionCookie } = await loginAs({ role: 'student', username: 'testuser', universityId: 'Wits' })
+    const response = await fetch(`${baseUrl}/home?peerCourse=ELEN`, {
+      headers: { cookie: sessionCookie, accept: 'application/json' }
+    })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.peers).toEqual([
+      expect.objectContaining({
+        username: 'amy',
+        coursePreview: ['ELEN Circuit Theory', 'ELEN Electronics', 'ELEN Signals and Systems']
+      }),
+      expect.objectContaining({
+        username: 'busi',
+        coursePreview: ['ELEN Energy Conversion']
+      })
+    ])
   })
 
   test('Passes the search query string to searchLecturers', async () => {
