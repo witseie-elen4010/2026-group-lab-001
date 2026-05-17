@@ -157,9 +157,9 @@ describe('actionLogger middleware', () => {
   })
 
   describe('POST /join_consultation/:id/join', () => {
-    test('logs consultation id on successful join (302)', () => {
+    test('logs consultation id on successful join (200)', () => {
       const req = makeReq({ method: 'POST', url: '/join_consultation/abc123/join', params: { consultationId: 'abc123' }, session: { user: { username: 'u', role: 'student' } } })
-      const res = makeRes(302)
+      const res = makeRes(200)
       runLogger(req, res)
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Joined consultation abc123.'))
     })

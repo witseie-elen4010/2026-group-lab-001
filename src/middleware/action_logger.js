@@ -35,7 +35,7 @@ const ACTION_MAP = [
     method: 'POST',
     pattern: /^\/join_consultation\/[^/]+\/join$/,
     label: function (req, res) {
-      if (res.statusCode !== 302) {
+      if (res.statusCode < 200 || res.statusCode >= 300) {
         return 'Could not join the consultation.'
       }
       const consultation = req.params.consultationId
