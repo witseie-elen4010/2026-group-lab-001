@@ -8,6 +8,7 @@
 </head>
 <body class="page page_home">
   <main class="card card_wide text_center">
+    <a class="back_link back_link_corner" href="<%= homePath %>">Home</a>
     <header>
       <h1>Schedule a Consultation</h1>
       <% if (username) { %>
@@ -17,7 +18,6 @@
 
     <div class="error"><%= error %></div>
     <p><%= message %></p>
-    <a class="back_link" href="<%= homePath %>">Home</a>
   </main>
 </body>
 </html>
