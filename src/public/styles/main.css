@@ -546,10 +546,6 @@ a {
   .home_navigation_actions {
     grid-template-columns: 1fr;
   }
-
-  .home_navigation_primary {
-    grid-column: auto;
-  }
 }
 
 .consultation_preferences_section {

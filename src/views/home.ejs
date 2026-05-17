@@ -48,10 +48,9 @@
         <h2 class="home_navigation_title">Navigation</h2>
         <p class="home_navigation_text">Choose an option below.</p>
         <div class="home_navigation_actions">
-          <a href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
+          <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
           <a href="/scheduled_consultations">Scheduled Consultations</a>
-          <a href="/daily_summary">Daily Summary</a>
-          <button type="button" id="manage_consultations_btn" class="home_navigation_primary">Manage Consultations</button>
+          <button type="button" id="manage_consultations_btn">Manage Consultations</button>
         </div>
       </section>
     <% } else if (username) { %>
