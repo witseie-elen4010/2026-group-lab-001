@@ -13,6 +13,9 @@
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
+    <% if (role === 'admin' && username) { %>
+      <a href="/logs" class="logs_corner_link">View Logs</a>
+    <% } %>
     <header>
       <h1><%= homeTitle %></h1>
       <% if (username) { %>
@@ -33,23 +36,16 @@
 
     <% if ((role === 'student' || role === 'admin') && username) { %>
       <section class="home_navigation">
-        <h2 class="home_navigation_title">Navigation</h2>
-        <p class="home_navigation_text">Choose an option below.</p>
         <div class="home_navigation_actions">
           <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
           <a href="/consultations/new">Create Consultation</a>
           <a href="/join_consultation">Join Consultation</a>
           <button type="button" id="manage_consultations_btn" class="home_navigation_primary">Manage Consultations</button>
         </div>
-        <% if (role === 'admin') { %>
-          <a href="/logs" style="width: fit-content; margin: 4px auto 0; padding: 8px 14px; background: var(--color-secondary); font-size: 0.92rem;">View Logs</a>
-        <% } %>
       </section>
 
     <% } else if (role === 'lecturer' && username) { %>
       <section class="home_navigation">
-        <h2 class="home_navigation_title">Navigation</h2>
-        <p class="home_navigation_text">Choose an option below.</p>
         <div class="home_navigation_actions">
           <a class="home_navigation_primary" href="/user_profile?user=<%= encodeURIComponent(username) %>">User Profile</a>
           <a href="/scheduled_consultations">Scheduled Consultations</a>

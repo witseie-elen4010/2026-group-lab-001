@@ -35,6 +35,7 @@ body {
 }
 
 .card {
+  position: relative;
   margin: 48px auto;
   padding: 32px;
   background: var(--color-surface);
@@ -143,6 +144,15 @@ a {
 
 .back_link {
   margin-top: 16px;
+  background: var(--color-secondary);
+}
+
+.logs_corner_link {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
   background: var(--color-secondary);
 }
 
