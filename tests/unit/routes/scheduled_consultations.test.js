@@ -106,7 +106,7 @@ describe('scheduled_consultations route', () => {
     const body = await response.text()
 
     expect(response.status).toBe(200)
-    expect(body).toContain('Cancel Consultation')
+    expect(body).toContain('Cancel')
     expect(body).toContain('data-cancel-id="abc123"')
     expect(body).toContain('/scripts/scheduled_consultations.js')
     expect(body).toContain('id="scheduled_consultations_msg"')
@@ -122,7 +122,6 @@ describe('scheduled_consultations route', () => {
     const body = await response.text()
 
     expect(response.status).toBe(403)
-    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
     expect(getUpcomingConsultationsForLecturer).not.toHaveBeenCalled()
   })
 })

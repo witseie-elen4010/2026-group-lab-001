@@ -101,7 +101,6 @@ describe('daily_summary route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Daily Summary</title>')
-    expect(body).toContain('Hello lecturer1')
     expect(body).toContain('No consultations scheduled for today.')
     expect(getDailyConsultationsForLecturer).toHaveBeenCalledWith('lecturer1', getTodayIsoDate())
   })

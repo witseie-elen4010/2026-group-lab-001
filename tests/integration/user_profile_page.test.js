@@ -150,7 +150,7 @@ describe('user profile integration flow', () => {
     expect(body).toContain('Electrical and Information Engineering')
     expect(body).toContain('Academic Profile')
     expect(body).toContain('Autofill Courses')
-    expect(body).toContain('Save Academic Profile')
+    expect(body).toContain('Update Profile')
     expect(body).toContain('e.g. BSc (Eng) - Electrical Engineering')
     expect(body).toContain('Use one course per line')
     expect(body).toContain('Update Institution')

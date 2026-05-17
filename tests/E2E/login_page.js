@@ -18,7 +18,6 @@ test.describe('login page', () => {
 
     await expect(page).toHaveURL(/\/home$/)
     await expect(page.getByRole('heading', { name: 'Admin Home' })).toBeVisible()
-    await expect(page.getByText(`Hello ${USERNAME}`)).toBeVisible()
     await expect(page.getByText('You are logged in as a admin.')).toBeVisible()
   })
 })

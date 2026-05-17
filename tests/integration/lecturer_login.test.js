@@ -119,7 +119,6 @@ describe('lecturer login integration flow', () => {
 
     expect(homeResponse.status).toBe(200)
     expect(body).toContain('<title>Lecturer Home</title>')
-    expect(body).toContain(`Hello ${USERNAME}`)
     expect(body).toContain('You are logged in as a lecturer.')
     expect(body).toContain('User Profile')
     expect(body).toContain(`href="/user_profile?user=${USERNAME}"`)

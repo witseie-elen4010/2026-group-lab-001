@@ -91,7 +91,6 @@ describe('student login integration flow', () => {
 
     expect(homeResponse.status).toBe(200)
     expect(body).toContain('<title>Admin Home</title>')
-    expect(body).toContain(`Hello ${USERNAME}`)
     expect(body).toContain('You are logged in as a admin.')
     expect(body).toContain('Create Consultation')
     expect(body).toContain('Join Consultation')

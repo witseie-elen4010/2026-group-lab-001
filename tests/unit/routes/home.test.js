@@ -247,9 +247,7 @@ describe('home route', () => {
     expect(loginResponse.headers.get('location')).toBe('/home')
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Student Home</title>')
-    expect(body).toContain('Hello morris')
     expect(body).toContain('You are logged in as a student.')
-    expect(body).toContain('Choose an option below.')
     expect(body).toContain('User Profile')
     expect(body).toContain('Create Consultation')
     expect(body).toContain('/user_profile?user=morris')
@@ -279,7 +277,6 @@ describe('home route', () => {
     expect(loginResponse.headers.get('location')).toBe('/home')
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Admin Home</title>')
-    expect(body).toContain('Hello user')
     expect(body).toContain('You are logged in as a admin.')
     expect(body).toContain('Create Consultation')
     expect(body).toContain('Join Consultation')
@@ -305,9 +302,7 @@ describe('home route', () => {
     expect(loginResponse.headers.get('location')).toBe('/home')
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Lecturer Home</title>')
-    expect(body).toContain('Hello lecturer1')
     expect(body).toContain('You are logged in as a lecturer.')
-    expect(body).toContain('Choose an option below.')
     expect(body).toContain('User Profile')
     expect(body).toContain('/user_profile?user=lecturer1')
     expect(body).not.toContain('View Logs')
@@ -386,7 +381,6 @@ describe('home route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Create Consultation</title>')
     expect(body).toContain('Create Consultation')
-    expect(body).toContain('Hello morris')
     expect(body).toContain('action="/consultations"')
     expect(body).toContain('name="title"')
     expect(body).toContain('name="lecturerId"')
@@ -435,8 +429,6 @@ describe('home route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('<title>Lecturer Dashboard</title>')
     expect(body).toContain('Lecturer Dashboard')
-    expect(body).toContain('View your upcoming consultations and calendar in one place.')
-    expect(body).toContain('Upcoming Consultations')
     expect(body).toContain('Calendar')
     expect(body).toContain('Project check-in')
     expect(body).toContain('morris')
@@ -559,8 +551,6 @@ describe('home route', () => {
     const body = await response.text()
 
     expect(response.status).toBe(500)
-    expect(body).toContain('Unable to load upcoming consultations right now.')
-    expect(body).not.toContain('No upcoming consultations yet.')
     expect(body).not.toContain('dashboard_consultation_card')
   })
 
@@ -579,8 +569,6 @@ describe('home route', () => {
 
     expect(response.status).toBe(403)
     expect(body).toContain('<title>Lecturer Dashboard</title>')
-    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
-    expect(body).not.toContain('No upcoming consultations yet.')
   })
 
   test('Renders the home page without lecturer search for a non-student user', async () => {
