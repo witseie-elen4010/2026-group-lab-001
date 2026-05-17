@@ -135,7 +135,7 @@ const ACTION_MAP = [
     method: 'PATCH',
     pattern: /^\/users\/[^/]+$/,
     label: function (req, res) {
-      if (!res.locals.__actionSuccess) {
+      if (res.statusCode !== 200) {
         return 'Could not update academic profile.'
       }
       const target = req.params.id || req.originalUrl.split('/').pop()
@@ -152,8 +152,7 @@ const ACTION_MAP = [
       const lecturer = req.params.id || req.originalUrl.split('/')[2] || 'unknown'
       return `Followed lecturer ${lecturer}.`
     }
-  },
-  { method: 'GET', pattern: /^\/logs$/, label: 'Viewed Logs page' }
+  }
 ]
 /* ^ add here per http method asseblief. I repeat ADD HERE PER HTTP METHOD
 Use static labels when user is not accessing another database item or (as like
