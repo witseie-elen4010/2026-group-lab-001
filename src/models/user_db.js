@@ -1,9 +1,42 @@
 const { getCollection } = require('./db')
 
 const USER_COLLECTION_NAME = 'User'
+const ACADEMIC_SEARCH_ROLES = ['admin', 'student']
 
 const usersCollection = function () {
   return getCollection(USER_COLLECTION_NAME)
+}
+
+const escapeRegularExpression = function (value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const buildNameSearchConditions = function (query) {
+  if (!query) {
+    return []
+  }
+
+  const escapedQuery = escapeRegularExpression(query)
+  const regex = new RegExp(escapedQuery, 'i')
+  const conditions = [
+    { username: regex },
+    { firstName: regex },
+    { lastName: regex }
+  ]
+
+  const parts = query.trim().split(/\s+/)
+
+  if (parts.length >= 2) {
+    const firstRegex = new RegExp(escapeRegularExpression(parts[0]), 'i')
+    const lastRegex = new RegExp(escapeRegularExpression(parts.slice(1).join(' ')), 'i')
+
+    conditions.push(
+      { firstName: firstRegex, lastName: lastRegex },
+      { firstName: lastRegex, lastName: firstRegex }
+    )
+  }
+
+  return conditions
 }
 
 /**
@@ -45,6 +78,29 @@ const updateUserInstitutions = async function (username, {
         universityId,
         facultyId,
         schoolId
+      }
+    }
+  )
+}
+
+/**
+ * Updates a user's academic profile by username.
+ * @param {string} username - Username to update.
+ * @param {object} academicProfile - Academic profile fields to store.
+ * @param {string} academicProfile.degree - Updated degree value.
+ * @param {Array<string>} academicProfile.courses - Updated course list.
+ * @returns {Promise<import('mongodb').UpdateResult>} MongoDB update result.
+ */
+const updateUserAcademicProfile = async function (username, {
+  degree,
+  courses
+}) {
+  return usersCollection().updateOne(
+    { username },
+    {
+      $set: {
+        courses,
+        degree
       }
     }
   )
@@ -109,25 +165,48 @@ const searchLecturers = async function ({ universityId, query = '', facultyId = 
   if (schoolId) filter.schoolId = schoolId
 
   if (query) {
-    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const regex = new RegExp(escape(query), 'i')
-    const conditions = [
-      { username: regex },
-      { firstName: regex },
-      { lastName: regex }
-    ]
+    filter.$or = buildNameSearchConditions(query)
+  }
 
-    const parts = query.trim().split(/\s+/)
-    if (parts.length >= 2) {
-      const firstRegex = new RegExp(escape(parts[0]), 'i')
-      const lastRegex = new RegExp(escape(parts.slice(1).join(' ')), 'i')
-      conditions.push(
-        { firstName: firstRegex, lastName: lastRegex },
-        { firstName: lastRegex, lastName: firstRegex }
-      )
-    }
+  return usersCollection().find(filter).toArray()
+}
 
-    filter.$or = conditions
+/**
+ * Searches for non-lecturer users within a university, optionally filtering by name, degree, and course.
+ * @param {object} options - Search options.
+ * @param {string} options.universityId - University to scope the search to.
+ * @param {string} [options.query=''] - Name or username substring to match (case-insensitive).
+ * @param {string} [options.degree=''] - Degree substring to match (case-insensitive).
+ * @param {string} [options.course=''] - Course substring to match (case-insensitive).
+ * @param {string} [options.excludeUsername=''] - Username to exclude from the results.
+ * @returns {Promise<object[]>} Array of matching user documents.
+ */
+const searchUsersByAcademicProfile = async function ({
+  universityId,
+  query = '',
+  degree = '',
+  course = '',
+  excludeUsername = ''
+}) {
+  const filter = {
+    role: { $in: ACADEMIC_SEARCH_ROLES },
+    universityId
+  }
+
+  if (excludeUsername) {
+    filter.username = { $ne: excludeUsername }
+  }
+
+  if (degree) {
+    filter.degree = new RegExp(escapeRegularExpression(degree), 'i')
+  }
+
+  if (course) {
+    filter.courses = new RegExp(escapeRegularExpression(course), 'i')
+  }
+
+  if (query) {
+    filter.$or = buildNameSearchConditions(query)
   }
 
   return usersCollection().find(filter).toArray()
@@ -189,5 +268,7 @@ module.exports = {
   getUserByGoogleId,
   linkGoogleId,
   searchLecturers,
+  searchUsersByAcademicProfile,
+  updateUserAcademicProfile,
   updateUserInstitutions
 }

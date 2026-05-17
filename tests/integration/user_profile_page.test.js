@@ -1,7 +1,7 @@
 const http = require('node:http')
 const { closeDatabaseConnection, connectToDatabase, getCollection } = require('../../src/models/db')
 const { getLecturerAvailability, setLecturerAvailability } = require('../../src/models/lecturer_availability_db')
-const { getUser, updateUserInstitutions } = require('../../src/models/user_db')
+const { getUser, updateUserAcademicProfile, updateUserInstitutions } = require('../../src/models/user_db')
 const app = require('../../src/app')
 
 const FACULTY_NAME = 'Engineering and the Built Environment'
@@ -59,6 +59,7 @@ const loginAs = async function (baseUrl, { password, username }) {
 }
 
 describe('user profile integration flow', () => {
+  let originalStudentAcademicProfile
   let baseUrl
   let originalLecturerPreferences
   let originalStudentInstitutions
@@ -76,6 +77,10 @@ describe('user profile integration flow', () => {
       facultyId: originalStudent?.facultyId || FACULTY_NAME,
       schoolId: originalStudent?.schoolId || SCHOOL_NAME,
       universityId: originalStudent?.universityId || UNIVERSITY_NAME
+    }
+    originalStudentAcademicProfile = {
+      courses: originalStudent?.courses || [],
+      degree: originalStudent?.degree || ''
     }
     originalLecturerPreferences = await getLecturerAvailability(LECTURER_USERNAME)
 
@@ -104,6 +109,7 @@ describe('user profile integration flow', () => {
     }
 
     await connectToDatabase()
+    await updateUserAcademicProfile(STUDENT_USERNAME, originalStudentAcademicProfile)
     await updateUserInstitutions(STUDENT_USERNAME, originalStudentInstitutions)
 
     if (originalLecturerPreferences) {
@@ -142,8 +148,46 @@ describe('user profile integration flow', () => {
     expect(body).toContain('test@email.com')
     expect(body).toContain('Engineering and the Built Environment')
     expect(body).toContain('Electrical and Information Engineering')
+    expect(body).toContain('Academic Profile')
+    expect(body).toContain('Autofill Courses')
+    expect(body).toContain('Save Academic Profile')
+    expect(body).toContain('e.g. BSc (Eng) - Electrical Engineering')
+    expect(body).toContain('Use one course per line')
     expect(body).toContain('Update Institution')
     expect(body).not.toContain('Consultation Preferences')
+  })
+
+  RUN_DB_TEST('saves academic profile details for the seeded profile owner', async function () {
+    const sessionCookie = await loginAs(baseUrl, {
+      password: STUDENT_PASSWORD,
+      username: STUDENT_USERNAME
+    })
+    const response = await fetch(`${baseUrl}/users/${STUDENT_USERNAME}`, {
+      body: encodeForm({
+        courses: 'ELEN Circuit Theory\nELEN Electronics\nELEN Signals and Systems',
+        degree: 'BSc (Eng) - Electrical Engineering'
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        cookie: sessionCookie
+      },
+      method: 'PATCH'
+    })
+    const data = await response.json()
+    const updatedUser = await getUser(STUDENT_USERNAME)
+
+    expect(response.status).toBe(200)
+    expect(data).toEqual({
+      profile: {
+        courses: ['ELEN Circuit Theory', 'ELEN Electronics', 'ELEN Signals and Systems'],
+        degree: 'BSc (Eng) - Electrical Engineering'
+      },
+      success: true
+    })
+    expect(updatedUser).toEqual(expect.objectContaining({
+      courses: ['ELEN Circuit Theory', 'ELEN Electronics', 'ELEN Signals and Systems'],
+      degree: 'BSc (Eng) - Electrical Engineering'
+    }))
   })
 
   RUN_DB_TEST('renders the seeded lecturer profile with consultation preferences controls', async function () {

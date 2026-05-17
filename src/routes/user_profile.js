@@ -20,6 +20,18 @@ const WEEKDAYS = [
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/
 
+const formatCoursesForTextarea = function (courses) {
+  if (Array.isArray(courses)) {
+    return courses.filter(Boolean).join('\n')
+  }
+
+  if (typeof courses === 'string') {
+    return courses.trim()
+  }
+
+  return ''
+}
+
 /**
  * Renders the user profile page with the given view state.
  * @param {object} res - Express response object.
@@ -36,9 +48,11 @@ const renderProfile = function (res, {
   statusCode = 200,
   error = '',
   prefError = '',
+  degree = '',
   emailAddress = '',
   username = '',
   canEdit = false,
+  courses = '',
   university = '',
   faculty = '',
   school = '',
@@ -52,9 +66,11 @@ const renderProfile = function (res, {
     title: 'User Profile',
     error,
     prefError,
+    degree,
     emailAddress,
     username,
     canEdit,
+    courses,
     university,
     faculty,
     school,
@@ -74,9 +90,11 @@ const renderProfile = function (res, {
  */
 const buildProfileViewState = function (user, overrides = {}) {
   return {
+    degree: user?.degree || '',
     emailAddress: user?.email || '',
     username: user?.username || '',
     canEdit: false,
+    courses: formatCoursesForTextarea(user?.courses),
     university: user?.universityId || '',
     faculty: user?.facultyId || '',
     school: user?.schoolId || '',

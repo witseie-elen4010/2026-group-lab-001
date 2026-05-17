@@ -3,10 +3,11 @@
 const path = require('node:path')
 const { test, expect } = require('@playwright/test')
 const { connectToDatabase, closeDatabaseConnection, getCollection } = require('../../src/models/db')
+const { hashPassword } = require('../../src/utils/password')
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), quiet: true })
 
-const LECTURER_USERNAME = 'user1'
-const LECTURER_PASSWORD = 'password1'
+const LECTURER_USERNAME = 'daily-summary-e2e-user'
+const LECTURER_PASSWORD = 'daily-summary-e2e-pass'
 const STUDENT_USERNAME = 'user'
 const STUDENT_PASSWORD = 'password'
 const TEST_ID = `${process.pid}${Date.now()}`
@@ -28,15 +29,6 @@ const loginFromPage = async function (page, { password, username }) {
 }
 
 /**
- * Deletes consultations created by this E2E suite.
- * @returns {Promise<void>}
- */
-const deleteTestConsultations = async function () {
-  await connectToDatabase()
-  await getCollection('Consultation').deleteMany({ title: { $regex: `^${TEST_TITLE_PREFIX}` } })
-}
-
-/**
  * Builds a datetime string for today at the given hour and minute.
  * @param {number} hours - Hour (0-23).
  * @param {number} [minutes=0] - Minute (0-59).
@@ -52,8 +44,50 @@ const getTodayDatetime = function (hours, minutes = 0) {
   return `${year}-${month}-${day}T${hh}:${mm}`
 }
 
+/**
+ * Deletes consultations created by this E2E suite and any pre-existing
+ * consultations for the test lecturer scheduled today (to prevent stale data
+ * from creating unexpected time slots).
+ * @returns {Promise<void>}
+ */
+const deleteTestConsultations = async function () {
+  const todayDatetime = getTodayDatetime(0, 0)
+  const todayPrefix = todayDatetime.slice(0, 10)
+  await connectToDatabase()
+  await Promise.all([
+    getCollection('Consultation').deleteMany({ title: { $regex: `^${TEST_TITLE_PREFIX}` } }),
+    getCollection('Consultation').deleteMany({
+      lecturerId: LECTURER_USERNAME,
+      datetime: { $gte: `${todayPrefix}T00:00`, $lt: `${todayPrefix}T23:59~` }
+    })
+  ])
+}
+
 test.describe('daily summary E2E', () => {
+  test.describe.configure({ mode: 'serial' })
   test.skip(!process.env.MONGODB_URI, 'Requires a writable MongoDB test database.')
+
+  test.beforeAll(async function () {
+    await connectToDatabase()
+    const passwordHash = await hashPassword(LECTURER_PASSWORD)
+    await getCollection('User').updateOne(
+      { username: LECTURER_USERNAME },
+      {
+        $setOnInsert: {
+          email: `${LECTURER_USERNAME}@test.local`,
+          facultyId: 'Test Faculty',
+          firstName: 'DailySummary',
+          lastName: 'E2EUser',
+          passwordHash,
+          role: 'lecturer',
+          schoolId: 'Test School',
+          universityId: 'Test University',
+          username: LECTURER_USERNAME
+        }
+      },
+      { upsert: true }
+    )
+  })
 
   test.beforeEach(async function () {
     await deleteTestConsultations()
@@ -65,6 +99,7 @@ test.describe('daily summary E2E', () => {
 
   test.afterAll(async function () {
     await deleteTestConsultations()
+    await getCollection('User').deleteOne({ username: LECTURER_USERNAME })
     await closeDatabaseConnection()
   })
 
@@ -152,7 +187,7 @@ test.describe('daily summary E2E', () => {
     await expect(timeSlots).toHaveCount(2)
 
     const firstSlot = timeSlots.first()
-    await expect(firstSlot.getByRole('heading')).toContainText('09:00')
+    await expect(firstSlot.locator('.daily_summary_slot_heading')).toContainText('09:00')
     await expect(firstSlot.getByText(earlyTitle)).toBeVisible()
     await expect(firstSlot.getByText(earlyTitle2)).toBeVisible()
   })

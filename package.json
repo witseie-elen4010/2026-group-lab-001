@@ -2,6 +2,7 @@
   "scripts": {
     "start": "node src/app.js",
     "check:db": "node src/models/db.js",
+    "refresh:wits-degree-templates": "node scripts/seed_wits_data.js --refresh-degree-templates",
     "postinstall": "npx playwright install",
     "test": "npm run test:coverage:all",
     "test:unit": "jest",

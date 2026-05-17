@@ -123,6 +123,66 @@
       </section>
     <% } %>
 
+    <% if (role === 'student' || role === 'admin') { %>
+      <section class="peer_search_section">
+        <h2 class="home_navigation_title">Find a Wits Peer</h2>
+        <p class="home_navigation_text">Search for other Wits users by name, degree, or course.</p>
+
+        <form action="/home" method="get">
+          <div class="search_criteria peer_search_criteria">
+            <label class="search_filter">
+              Degree
+              <input type="text" name="peerDegree" value="<%= peerDegree %>" placeholder="e.g. BSc (Eng) - Electrical Engineering">
+            </label>
+
+            <label class="search_filter">
+              Course
+              <input type="text" name="peerCourse" value="<%= peerCourse %>" placeholder="e.g. ELEN">
+            </label>
+          </div>
+
+          <div class="search_flex peer_search_flex">
+            <label class="search_box">
+              Search
+              <input type="text" name="peerQuery" value="<%= peerQuery %>" placeholder="Name and/or username">
+            </label>
+
+            <button type="submit" class="search_button">Search Peers</button>
+          </div>
+        </form>
+
+        <section class="results">
+          <% if (!hasPeerSearch) { %>
+            <p>Search by name, degree, or course to find other Wits users.</p>
+          <% } else if (peers.length === 0) { %>
+            <p>No peers found.</p>
+          <% } else { %>
+            <% peers.forEach(function (peer) { %>
+              <% const peerName = `${peer.firstName || ''} ${peer.lastName || ''}`.trim() || peer.username %>
+              <% const peerInstitution = [peer.facultyId, peer.schoolId].filter(Boolean).join(', ') %>
+              <% const peerCourses = Array.isArray(peer.coursePreview) ? peer.coursePreview : [] %>
+              <article class="lecturer_result_card peer_result_card">
+                <div class="peer_result_summary">
+                  <a class="lecturer_result_link" href="/user_profile?user=<%= encodeURIComponent(peer.username) %>">
+                    <%= peerName %>
+                  </a>
+                  <p class="peer_result_meta"><strong>Username:</strong> <%= peer.username %></p>
+                  <p class="peer_result_meta"><strong>Degree:</strong> <%= peer.degree || 'Not shared yet' %></p>
+                  <% if (peerInstitution) { %>
+                    <p class="peer_result_meta"><strong>School:</strong> <%= peerInstitution %></p>
+                  <% } %>
+                  <% if (peerCourses.length > 0) { %>
+                    <p class="peer_result_meta"><strong>Courses:</strong> <%= peerCourses.join(', ') %><%= Array.isArray(peer.courses) && peer.courses.length > peerCourses.length ? ' ...' : '' %></p>
+                  <% } %>
+                </div>
+                <a class="button_compact" href="/user_profile?user=<%= encodeURIComponent(peer.username) %>">View Profile</a>
+              </article>
+            <% }) %>
+          <% } %>
+        </section>
+      </section>
+    <% } %>
+
     <section class="calendar_section">
       <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
       <table class="calendar_table">
