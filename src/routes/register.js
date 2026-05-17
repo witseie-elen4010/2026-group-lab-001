@@ -11,6 +11,11 @@ const PLACEHOLDER_USER_FIELDS = Object.freeze({
   schoolId: 'unassigned'
 })
 
+const EMPTY_ACADEMIC_PROFILE = Object.freeze({
+  courses: [],
+  degree: ''
+})
+
 /**
  * Renders the register page with the supplied view state.
  * @param {import('express').Response} res - Express response object.
@@ -77,6 +82,8 @@ const buildUser = async function ({
   role = ''
 }) {
   return {
+    courses: [...EMPTY_ACADEMIC_PROFILE.courses],
+    degree: EMPTY_ACADEMIC_PROFILE.degree,
     lastName: surname,
     firstName: name,
     role: role.toLowerCase(),

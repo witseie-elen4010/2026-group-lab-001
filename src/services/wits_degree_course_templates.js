@@ -1477,6 +1477,45 @@ const getWitsDegreeCourseTemplates = function () {
   return WITS_DEGREE_COURSE_TEMPLATES
 }
 
+const buildWitsDegreeTemplateAuditReport = function (degreeNames) {
+  const discoveredDegreeNames = Array.from(new Set(
+    (Array.isArray(degreeNames) ? degreeNames : [])
+      .filter(function (degreeName) {
+        return typeof degreeName === 'string' && degreeName.trim()
+      })
+      .map(function (degreeName) {
+        return degreeName.trim()
+      })
+  ))
+
+  const matched = []
+  const unmatched = []
+
+  discoveredDegreeNames.forEach(function (degreeName) {
+    const template = findWitsDegreeCourseTemplate(degreeName)
+
+    if (!template) {
+      unmatched.push(degreeName)
+      return
+    }
+
+    matched.push({
+      degreeName,
+      faculty: template.faculty,
+      templateDegreeName: template.degreeName
+    })
+  })
+
+  return {
+    degreeCount: discoveredDegreeNames.length,
+    matched,
+    matchedCount: matched.length,
+    templateCount: WITS_DEGREE_COURSE_TEMPLATES.length,
+    unmatched,
+    unmatchedCount: unmatched.length
+  }
+}
+
 const findWitsDegreeCourseTemplate = function (degreeName) {
   const normalizedDegreeName = normalizeDegreeName(degreeName)
 
@@ -1531,6 +1570,7 @@ const findWitsDegreeCourseTemplate = function (degreeName) {
 }
 
 module.exports = {
+  buildWitsDegreeTemplateAuditReport,
   findWitsDegreeCourseTemplate,
   getWitsDegreeCourseTemplates,
   normalizeDegreeName,
