@@ -12,6 +12,9 @@
       <h1>Create Consultation</h1>
     </header>
     <section>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
       <form action="/consultations" method="post">
         <label>
           Title
