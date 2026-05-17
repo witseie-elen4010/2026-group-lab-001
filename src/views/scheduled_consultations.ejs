@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/home.css">
   <link rel="stylesheet" href="/styles/join_consultation.css">
   <script src="/scripts/scheduled_consultations.js" defer></script>
 </head>
@@ -46,7 +47,7 @@
                   <% if (roster.length === 0) { %>
                     <p class="dashboard_roster_empty">No confirmed students booked for this session yet.</p>
                   <% } else { %>
-                    <ul class="dashboard_roster_list">
+                    <ul class="dashboard_roster_list dashboard_roster_grid">
                       <% roster.forEach(function (attendee) { %>
                         <li><%= attendee %></li>
                       <% }) %>
@@ -60,7 +61,7 @@
       </section>
 
       <section>
-        <h2>Calendar</h2>
+        <h2>My Calendar</h2>
         <h3 class="calendar_title"><%= calendar.monthLabel %></h3>
         <table class="calendar_table">
           <thead>
