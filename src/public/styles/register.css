@@ -1,0 +1,42 @@
+.btn_google {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: #ffffff;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn_google:hover {
+  background: #f8fafc;
+}
+
+.oauth_divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.oauth_divider::before,
+.oauth_divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.google_prefill {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.google_prefill p {
+  margin: 0;
+  color: var(--color-secondary);
+}

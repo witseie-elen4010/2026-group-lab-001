@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/styles/home.css">
   <script src="/scripts/lecturer_search.js" defer></script>
   <script src="/scripts/manage_consultations.js" defer></script>
+  <script src="/scripts/peer_search.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
@@ -123,8 +124,56 @@
       </section>
     <% } %>
 
+    <section class="calendar_section">
+      <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
+      <table class="calendar_table">
+        <thead>
+          <tr>
+            <% calendar.dayLabels.forEach((dayLabel) => { %>
+              <th class="calendar_heading" scope="col"><%= dayLabel %></th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% calendar.weeks.forEach(function (week) { %>
+            <tr>
+              <% week.forEach(function (day) { %>
+                <% if (day.isEmpty) { %>
+                  <td class="calendar_day calendar_day_empty"></td>
+                <% } else if (role === 'student' || role === 'admin') { %>
+                  <% const dayCons = consultationsByDate[day.isoDate] || [] %>
+                  <td class="calendar_day">
+                    <div class="calendar_day_content">
+                      <span class="calendar_day_number"><%= day.dayNumber %></span>
+                      <% dayCons.forEach(function (con) { %>
+                        <% const statusLabel = con.hasJoined ? 'Joined' : con.isFull ? 'Fully Booked' : 'Unjoined' %>
+                        <span class="calendar_day_note <%= con.hasJoined ? 'calendar_day_note_joined' : con.isFull ? 'calendar_day_note_full' : 'calendar_day_note_unjoined' %>"><%= con.name %> &middot; <%= con.lecturer %> &middot; <%= con.time %> &middot; <%= statusLabel %></span>
+                      <% }) %>
+                    </div>
+                  </td>
+                <% } else { %>
+                  <td class="calendar_day<%= day.availabilityState === 'available' ? ' calendar_day_available' : '' %><%= day.availabilityState === 'unavailable' ? ' calendar_day_unavailable' : '' %>">
+                    <div class="calendar_day_content">
+                      <span class="calendar_day_number"><%= day.dayNumber %></span>
+                      <% if (day.availabilityText) { %>
+                        <span class="calendar_day_note"><%= day.availabilityText %></span>
+                      <% } %>
+                    </div>
+                  </td>
+                <% } %>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
     <% if (role === 'student' || role === 'admin') { %>
-      <section class="peer_search_section">
+      <div class="search_reveal_row">
+        <button type="button" id="lecturer_search_btn">Search Lecturer</button>
+        <button type="button" id="peer_search_btn">Find a Wits Peer</button>
+      </div>
+      <section id="peer_search_section" class="peer_search_section<%= hasPeerSearch ? '' : ' is_hidden' %>">
         <h2 class="home_navigation_title">Find a Wits Peer</h2>
         <p class="home_navigation_text">Search for other Wits users by name, degree, or course.</p>
 
@@ -183,52 +232,9 @@
       </section>
     <% } %>
 
-    <section class="calendar_section">
-      <h2 class="calendar_title"><%= calendar.monthLabel %></h2>
-      <table class="calendar_table">
-        <thead>
-          <tr>
-            <% calendar.dayLabels.forEach((dayLabel) => { %>
-              <th class="calendar_heading" scope="col"><%= dayLabel %></th>
-            <% }) %>
-          </tr>
-        </thead>
-        <tbody>
-          <% calendar.weeks.forEach(function (week) { %>
-            <tr>
-              <% week.forEach(function (day) { %>
-                <% if (day.isEmpty) { %>
-                  <td class="calendar_day calendar_day_empty"></td>
-                <% } else if (role === 'student' || role === 'admin') { %>
-                  <% const dayCons = consultationsByDate[day.isoDate] || [] %>
-                  <td class="calendar_day">
-                    <div class="calendar_day_content">
-                      <span class="calendar_day_number"><%= day.dayNumber %></span>
-                      <% dayCons.forEach(function (con) { %>
-                        <% const statusLabel = con.hasJoined ? 'Joined' : con.isFull ? 'Fully Booked' : 'Unjoined' %>
-                        <span class="calendar_day_note <%= con.hasJoined ? 'calendar_day_note_joined' : con.isFull ? 'calendar_day_note_full' : 'calendar_day_note_unjoined' %>"><%= con.name %> &middot; <%= con.lecturer %> &middot; <%= con.time %> &middot; <%= statusLabel %></span>
-                      <% }) %>
-                    </div>
-                  </td>
-                <% } else { %>
-                  <td class="calendar_day<%= day.availabilityState === 'available' ? ' calendar_day_available' : '' %><%= day.availabilityState === 'unavailable' ? ' calendar_day_unavailable' : '' %>">
-                    <div class="calendar_day_content">
-                      <span class="calendar_day_number"><%= day.dayNumber %></span>
-                      <% if (day.availabilityText) { %>
-                        <span class="calendar_day_note"><%= day.availabilityText %></span>
-                      <% } %>
-                    </div>
-                  </td>
-                <% } %>
-              <% }) %>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </section>
-
     <% if (role === 'student' || role === 'admin') { %>
-      <h1>Find a Lecturer</h1>
+      <section id="lecturer_search_section" class="<%= (query || facultyId || schoolId) ? '' : 'is_hidden' %>">
+      <h2 class="home_navigation_title">Find a Lecturer</h2>
       <section>
         <form id="lecturer_search_form" action="/home" method="get">
           <div class="search_criteria">
@@ -309,6 +315,7 @@
             </nav>
           <% } %>
         <% } %>
+      </section>
       </section>
     <% } %>
   </main>
