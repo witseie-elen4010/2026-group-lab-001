@@ -120,6 +120,7 @@ const ACTION_MAP = [
       return `Searched Schools for ${school}.`
     }
   },
+  { method: 'GET', pattern: /^\/daily_summary$/, label: 'Checked Daily Summary' },
   { method: 'GET', pattern: /^\/auth\/google$/, label: 'Started Google login' },
   {
     method: 'GET',
