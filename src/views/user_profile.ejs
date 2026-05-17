@@ -110,6 +110,19 @@
 
           <button type="submit">Update Institution</button>
         </form>
+        <% } else { %>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">University</h2>
+          <p class="profile_detail_value"><%= university || 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">Faculty</h2>
+          <p class="profile_detail_value"><%= faculty || 'Not set' %></p>
+        </div>
+        <div class="profile_detail">
+          <h2 class="profile_detail_label">School</h2>
+          <p class="profile_detail_value"><%= school || 'Not set' %></p>
+        </div>
         <% } %>
       </div>
     </section>
