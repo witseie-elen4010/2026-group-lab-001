@@ -119,7 +119,7 @@ describe('scheduled_consultations route', () => {
     }
 
     const response = await fetch(`${baseUrl}/scheduled_consultations`)
-    const body = await response.text()
+    await response.text()
 
     expect(response.status).toBe(403)
     expect(getUpcomingConsultationsForLecturer).not.toHaveBeenCalled()
