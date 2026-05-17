@@ -108,6 +108,7 @@ describe('scheduled_consultations route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('Cancel Consultation')
     expect(body).toContain('data-cancel-id="abc123"')
+    expect(body).toContain('/scripts/scheduled_consultations.js')
   })
 
   test('returns 403 when a non-lecturer accesses the dashboard', async () => {
