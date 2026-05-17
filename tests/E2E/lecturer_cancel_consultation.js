@@ -115,4 +115,41 @@ test.describe('lecturer cancel consultation E2E', () => {
     const remaining = await getCollection('Consultation').findOne({ _id: insertedId })
     expect(remaining).toBeNull()
   })
+
+  test('confirming cancellation from the lecturer dashboard removes the consultation', async ({ page }) => {
+    const title = 'E2E Lecturer Dashboard Consultation To Cancel'
+
+    await connectToDatabase()
+    const { insertedId } = await getCollection('Consultation').insertOne({
+      attendees: [TEST_STUDENT_USERNAME],
+      capacity: 1,
+      datetime: futureDatetime(),
+      lecturerId: TEST_LECTURER_USERNAME,
+      organiserId: TEST_STUDENT_USERNAME,
+      title
+    })
+
+    await loginAsLecturer(page)
+    await page.goto('/scheduled_consultations')
+
+    const consultationCard = page.locator('.dashboard_consultation_card').filter({ hasText: title })
+    await expect(consultationCard).toBeVisible()
+    await expect(consultationCard.getByRole('button', { name: 'Cancel Consultation' })).toBeVisible()
+
+    page.once('dialog', async function (nativeDialog) {
+      await nativeDialog.accept()
+    })
+
+    await Promise.all([
+      page.waitForNavigation(),
+      consultationCard.getByRole('button', { name: 'Cancel Consultation' }).click()
+    ])
+
+    await expect(page).toHaveURL(/\/scheduled_consultations$/)
+    await expect(page.locator('.dashboard_consultation_card').filter({ hasText: title })).toHaveCount(0)
+
+    await connectToDatabase()
+    const remaining = await getCollection('Consultation').findOne({ _id: insertedId })
+    expect(remaining).toBeNull()
+  })
 })
