@@ -44,6 +44,9 @@
                     </ul>
                   <% } %>
                 </section>
+                <% if (consultation.id) { %>
+                  <button type="button" class="btn_danger" data-cancel-id="<%= consultation.id %>">Cancel Consultation</button>
+                <% } %>
               </article>
             <% }) %>
           </div>
