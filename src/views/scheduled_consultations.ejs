@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/styles/main.css">
+  <script src="/scripts/scheduled_consultations.js" defer></script>
 </head>
 <body class="page page_home">
   <main class="card card_even_wider text_center">
@@ -21,6 +22,7 @@
     <% } else { %>
       <section>
         <h2>Upcoming Consultations</h2>
+        <p id="scheduled_consultations_msg" class="is_hidden" aria-live="polite"></p>
         <% if (consultations.length === 0) { %>
           <p>No upcoming consultations yet.</p>
         <% } else { %>
@@ -44,6 +46,9 @@
                     </ul>
                   <% } %>
                 </section>
+                <% if (consultation.id) { %>
+                  <button type="button" class="btn_danger" data-cancel-id="<%= consultation.id %>">Cancel Consultation</button>
+                <% } %>
               </article>
             <% }) %>
           </div>
