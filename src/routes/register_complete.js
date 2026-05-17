@@ -9,6 +9,11 @@ const PLACEHOLDER_USER_FIELDS = Object.freeze({
   schoolId: 'unassigned'
 })
 
+const EMPTY_ACADEMIC_PROFILE = Object.freeze({
+  courses: [],
+  degree: ''
+})
+
 /**
  * Renders the profile completion page with the supplied view state.
  * @param {import('express').Response} res - Express response object.
@@ -90,6 +95,8 @@ router.post('/', async (req, res) => {
     }
 
     await addUser({
+      courses: [...EMPTY_ACADEMIC_PROFILE.courses],
+      degree: EMPTY_ACADEMIC_PROFILE.degree,
       googleId,
       email,
       firstName,
@@ -102,6 +109,8 @@ router.post('/', async (req, res) => {
     })
 
     req.session.user = {
+      courses: [...EMPTY_ACADEMIC_PROFILE.courses],
+      degree: EMPTY_ACADEMIC_PROFILE.degree,
       role: role.toLowerCase(),
       username,
       universityId: university,

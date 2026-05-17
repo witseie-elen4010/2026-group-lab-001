@@ -1,10 +1,30 @@
 require('dotenv').config()
 const axios = require('axios')
 const cheerio = require('cheerio')
+const fs = require('node:fs/promises')
+const path = require('node:path')
 const { MongoClient } = require('mongodb')
+const { buildWitsDegreeTemplateAuditReport } = require('../src/services/wits_degree_course_templates')
 const { hashPassword } = require('../src/utils/password')
 
 const BASE_URL = 'https://www.wits.ac.za'
+const DEGREE_TEMPLATE_REFRESH_FLAG = '--refresh-degree-templates'
+const DEGREE_TEMPLATE_SERVICE_FILE_PATH = path.join(__dirname, '..', 'src', 'services', 'wits_degree_course_templates.js')
+const DEGREE_TEMPLATE_FACULTY_PAGE_URLS = Object.freeze([
+  'https://www.wits.ac.za/clm/undergraduate-programmes/',
+  'https://www.wits.ac.za/clm/undergraduate-programmes/2/',
+  'https://www.wits.ac.za/clm/undergraduate-programmes/3/',
+  'https://www.wits.ac.za/ebe/undergraduate-programmes/',
+  'https://www.wits.ac.za/ebe/undergraduate-programmes/2/',
+  'https://www.wits.ac.za/ebe/undergraduate-programmes/3/',
+  'https://www.wits.ac.za/health/academic-programmes/undergraduate-programmes/',
+  'https://www.wits.ac.za/health/academic-programmes/undergraduate-programmes/2/',
+  'https://www.wits.ac.za/humanities/undergraduate-programmes/',
+  'https://www.wits.ac.za/humanities/undergraduate-programmes/2/',
+  'https://www.wits.ac.za/humanities/undergraduate-programmes/3/',
+  'https://www.wits.ac.za/law/undergraduate-programmes/',
+  'https://www.wits.ac.za/science/undergraduate/'
+])
 const UNIVERSITY_NAME = 'University of the Witwatersrand'
 const REQUEST_DELAY_MS = 700
 
@@ -182,6 +202,79 @@ const scrapeFacultiesAndSchools = async function () {
   return faculties
 }
 
+const extractProgrammeNamesFromFacultyPage = function ($) {
+  const programmeNames = new Set()
+
+  $('a[href*="/course-finder/undergraduate/"]').each(function (_, link) {
+    const programmeName = $(link).text().replace(/\s+/g, ' ').trim()
+
+    if (!programmeName || /^(apply|read more)$/i.test(programmeName)) {
+      return
+    }
+
+    programmeNames.add(programmeName)
+  })
+
+  return Array.from(programmeNames)
+}
+
+const collectUndergraduateProgrammeNames = async function () {
+  const programmeNames = new Set()
+
+  for (const pageUrl of DEGREE_TEMPLATE_FACULTY_PAGE_URLS) {
+    const $ = await fetchPage(pageUrl)
+
+    extractProgrammeNamesFromFacultyPage($).forEach(function (programmeName) {
+      programmeNames.add(programmeName)
+    })
+
+    await sleep(REQUEST_DELAY_MS)
+  }
+
+  return Array.from(programmeNames).sort()
+}
+
+const updateDegreeTemplateLastUpdated = async function (lastUpdated) {
+  const fileContents = await fs.readFile(DEGREE_TEMPLATE_SERVICE_FILE_PATH, 'utf8')
+  const datePattern = /const DEFAULT_LAST_UPDATED = '\d{4}-\d{2}-\d{2}'/
+
+  if (!datePattern.test(fileContents)) {
+    throw new Error('Could not find DEFAULT_LAST_UPDATED in the Wits degree template module.')
+  }
+
+  const updatedFileContents = fileContents.replace(
+    datePattern,
+    `const DEFAULT_LAST_UPDATED = '${lastUpdated}'`
+  )
+
+  if (updatedFileContents !== fileContents) {
+    await fs.writeFile(DEGREE_TEMPLATE_SERVICE_FILE_PATH, updatedFileContents)
+  }
+}
+
+const refreshWitsDegreeTemplates = async function () {
+  const discoveredProgrammeNames = await collectUndergraduateProgrammeNames()
+  const auditReport = buildWitsDegreeTemplateAuditReport(discoveredProgrammeNames)
+
+  console.log(`Discovered ${auditReport.degreeCount} undergraduate programme labels across ${DEGREE_TEMPLATE_FACULTY_PAGE_URLS.length} Wits faculty pages.`)
+  console.log(`Matched ${auditReport.matchedCount} programme labels to ${auditReport.templateCount} local templates.`)
+
+  if (auditReport.unmatchedCount > 0) {
+    console.log('\nUnmatched programme labels:')
+    auditReport.unmatched.forEach(function (programmeName) {
+      console.log(`- ${programmeName}`)
+    })
+    console.log('\nReview the unmatched labels above and extend src/services/wits_degree_course_templates.js before refreshing again.')
+    return
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  await updateDegreeTemplateLastUpdated(today)
+
+  console.log(`All discovered programme labels are covered. Refreshed Wits degree template metadata to ${today}.`)
+}
+
 const scrapeStaffNamesAffiliated = async function (staffUrl) {
   try {
     const names = []
@@ -337,6 +430,11 @@ const scrapeStaffNames = async function (schoolPath) {
 }
 
 const run = async function () {
+  if (process.argv.includes(DEGREE_TEMPLATE_REFRESH_FLAG)) {
+    await refreshWitsDegreeTemplates()
+    return
+  }
+
   if (!process.env.MONGODB_URI) {
     console.error('MONGODB_URI is not set in .env')
     process.exit(1)

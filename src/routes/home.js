@@ -4,7 +4,7 @@ const express = require('express')
 const { connectToDatabase } = require('../models/db')
 const { getConsultationsForCalendar, getUpcomingConsultationsForFollowedLecturers } = require('../models/consultation_db')
 const { getLecturerAvailability } = require('../models/lecturer_availability_db')
-const { getLecturersByUsernames, getUser, searchLecturers } = require('../models/user_db')
+const { getLecturersByUsernames, getUser, searchLecturers, searchUsersByAcademicProfile } = require('../models/user_db')
 const { buildCurrentMonthCalendar } = require('../utils/calendar')
 
 const router = express.Router()
@@ -38,6 +38,10 @@ const addFollowStateToLecturers = function (lecturers, followedLecturers) {
   })
 }
 
+const buildPeerCoursePreview = function (courses) {
+  return (Array.isArray(courses) ? courses : []).filter(Boolean).slice(0, 3)
+}
+
 router.get('/', async (req, res) => {
   const role = req.session?.user?.role || ''
   const username = req.session?.user?.username || ''
@@ -62,8 +66,12 @@ router.get('/', async (req, res) => {
 
   const query = req.query.q?.trim() || ''
   const facultyId = req.query.facultyId?.trim() || ''
+  const peerCourse = req.query.peerCourse?.trim() || ''
+  const peerDegree = req.query.peerDegree?.trim() || ''
+  const peerQuery = req.query.peerQuery?.trim() || ''
   const schoolId = req.query.schoolId?.trim() || ''
   const page = Math.max(1, parseInt(req.query.page) || 1)
+  const hasPeerSearch = Boolean(peerQuery || peerDegree || peerCourse)
 
   const calendarNow = new Date()
   const calendarYear = calendarNow.getFullYear()
@@ -75,10 +83,19 @@ router.get('/', async (req, res) => {
 
   try {
     await connectToDatabase()
-    const [allLecturers, calendarConsultations, currentUser] = await Promise.all([
+    const [allLecturers, calendarConsultations, currentUser, peerUsers] = await Promise.all([
       searchLecturers({ universityId, query }),
       getConsultationsForCalendar(username, monthStart, monthEnd),
-      role === 'student' ? getUser(username) : Promise.resolve(null)
+      role === 'student' ? getUser(username) : Promise.resolve(null),
+      hasPeerSearch
+        ? searchUsersByAcademicProfile({
+          course: peerCourse,
+          degree: peerDegree,
+          excludeUsername: username,
+          query: peerQuery,
+          universityId
+        })
+        : Promise.resolve([])
     ])
     const followedLecturerIds = role === 'student' ? buildFollowedLecturerIds(currentUser) : []
     const followedLecturerSet = buildFollowedLecturerSet(followedLecturerIds)
@@ -118,16 +135,66 @@ router.get('/', async (req, res) => {
       filteredLecturers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
       followedLecturerSet
     )
+    const peers = peerUsers.map(function (peer) {
+      return {
+        ...peer,
+        coursePreview: buildPeerCoursePreview(peer.courses)
+      }
+    })
 
     if (req.headers.accept?.includes('application/json')) {
-      return res.json({ lecturers, page: currentPage, totalPages })
+      return res.json({ lecturers, page: currentPage, totalPages, peers })
     }
-    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate, lecturers, faculties, schools, query, facultyId, schoolId, page: currentPage, totalPages, followedLecturers, followedConsultations })
+    return res.render('home', {
+      title,
+      homeTitle,
+      role,
+      username,
+      calendar,
+      consultationsByDate,
+      lecturers,
+      faculties,
+      schools,
+      query,
+      facultyId,
+      schoolId,
+      page: currentPage,
+      totalPages,
+      followedLecturers,
+      followedConsultations,
+      peerQuery,
+      peerDegree,
+      peerCourse,
+      hasPeerSearch,
+      peers
+    })
   } catch {
     if (req.headers.accept?.includes('application/json')) {
-      return res.json({ lecturers: [], page: 1, totalPages: 0 })
+      return res.json({ lecturers: [], page: 1, totalPages: 0, peers: [] })
     }
-    return res.render('home', { title, homeTitle, role, username, calendar, consultationsByDate: {}, lecturers: [], faculties: [], schools: [], query, facultyId, schoolId, page: 1, totalPages: 0, followedLecturers: [], followedConsultations: [] })
+    return res.render('home', {
+      title,
+      homeTitle,
+      role,
+      username,
+      calendar,
+      consultationsByDate: {},
+      lecturers: [],
+      faculties: [],
+      schools: [],
+      query,
+      facultyId,
+      schoolId,
+      page: 1,
+      totalPages: 0,
+      followedLecturers: [],
+      followedConsultations: [],
+      peerQuery,
+      peerDegree,
+      peerCourse,
+      hasPeerSearch,
+      peers: []
+    })
   }
 })
 

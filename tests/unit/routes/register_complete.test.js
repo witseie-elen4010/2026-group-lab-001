@@ -250,6 +250,8 @@ describe('register_complete route', () => {
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toBe('/home')
     expect(addUser).toHaveBeenCalledWith(expect.objectContaining({
+      courses: [],
+      degree: '',
       googleId: MOCK_PENDING_GOOGLE.googleId,
       email: MOCK_PENDING_GOOGLE.email,
       username: 'alice',
@@ -257,6 +259,40 @@ describe('register_complete route', () => {
     }))
     expect(addUser).toHaveBeenCalledWith(expect.not.objectContaining({
       passwordHash: expect.anything()
+    }))
+  })
+
+  test('POST /register creates a local user with empty academic defaults', async () => {
+    const response = await fetch(`${baseUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: encodeForm({
+        emailAddress: 'sam@example.com',
+        username: 'sam',
+        password: 'welovesd3',
+        university: 'Wits',
+        faculty: 'Engineering',
+        school: 'EIE',
+        role: 'student',
+        name: 'Sam',
+        surname: 'Ndlovu'
+      }),
+      redirect: 'manual'
+    })
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('/login')
+    expect(addUser).toHaveBeenCalledWith(expect.objectContaining({
+      courses: [],
+      degree: '',
+      email: 'sam@example.com',
+      firstName: 'Sam',
+      lastName: 'Ndlovu',
+      passwordHash: expect.any(String),
+      role: 'student',
+      username: 'sam'
     }))
   })
 
