@@ -110,12 +110,12 @@
 }
 
 .calendar_day_note_joined {
-  color: #166534;
+  color: #0e7490;
   font-weight: 600;
 }
 
 .calendar_day_note_unjoined {
-  color: #9ca3af;
+  color: #6b7280;
 }
 
 .calendar_day_note_full {

@@ -128,11 +128,11 @@
 }
 
 .academic_profile_status_success {
-  color: #16a34a;
+  color: #0e7490;
 }
 
 .academic_profile_status_error {
-  color: #991b1b;
+  color: #b45309;
 }
 
 .institution_form_actions {
@@ -151,11 +151,11 @@
 }
 
 .institution_status_success {
-  color: #16a34a;
+  color: #0e7490;
 }
 
 .institution_status_error {
-  color: #991b1b;
+  color: #b45309;
 }
 
 .per_day_toggle_btn {

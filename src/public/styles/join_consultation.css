@@ -19,17 +19,17 @@
 }
 
 .join_button.success {
-  background: #16a34a;
+  background: #0e7490;
   color: #ffffff;
 }
 
 .join_button.error {
-  background: rgb(153 27 27 / var(--join-button-muted-opacity));
+  background: rgb(180 83 9 / var(--join-button-muted-opacity));
   color: #ffffff;
 }
 
 .join_button.success.join_button_joined {
-  background: rgb(95 143 114 / var(--join-button-muted-opacity));
+  background: rgb(14 116 144 / var(--join-button-muted-opacity));
 }
 
 .join_button_joined {
