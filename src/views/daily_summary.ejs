@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body class="page page_home">
+  <main class="card card_even_wider text_center">
+    <header>
+      <h1>Daily Summary</h1>
+      <% if (username) { %>
+        <p>Hello <%= username %></p>
+      <% } %>
+      <% if (todayLabel) { %>
+        <p class="daily_summary_date"><%= todayLabel %></p>
+      <% } %>
+    </header>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } else { %>
+      <section class="daily_summary_section">
+        <% if (timeSlots.length === 0) { %>
+          <p>No consultations scheduled for today.</p>
+        <% } else { %>
+          <% timeSlots.forEach(function (slot) { %>
+            <section class="daily_summary_slot">
+              <h2 class="daily_summary_slot_heading"><%= slot.timeSlot %></h2>
+              <div class="dashboard_consultations">
+                <% slot.consultations.forEach(function (consultation) { %>
+                  <% const roster = Array.isArray(consultation.roster) ? consultation.roster : [] %>
+                  <article class="dashboard_consultation_card">
+                    <h3><%= consultation.name %></h3>
+                    <p class="dashboard_consultation_meta"><strong>Time:</strong> <%= consultation.time %></p>
+                    <p class="dashboard_consultation_meta"><strong>Organiser:</strong> <%= consultation.organiser %></p>
+                    <p class="dashboard_consultation_meta"><strong>Attendees:</strong> <%= consultation.attendeesCount %><% if (consultation.capacity !== null) { %>/<%= consultation.capacity %><% } %></p>
+                    <section class="dashboard_roster">
+                      <h4 class="dashboard_roster_title">Attendee roster</h4>
+                      <% if (roster.length === 0) { %>
+                        <p class="dashboard_roster_empty">No confirmed students booked for this session yet.</p>
+                      <% } else { %>
+                        <ul class="dashboard_roster_list">
+                          <% roster.forEach(function (attendee) { %>
+                            <li><%= attendee %></li>
+                          <% }) %>
+                        </ul>
+                      <% } %>
+                    </section>
+                  </article>
+                <% }) %>
+              </div>
+            </section>
+          <% }) %>
+        <% } %>
+      </section>
+    <% } %>
+
+    <a class="back_link" href="/home">Home</a>
+  </main>
+</body>
+</html>
