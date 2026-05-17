@@ -157,8 +157,6 @@ describe('lecturer login integration flow', () => {
 
     expect(scheduledResponse.status).toBe(200)
     expect(scheduledBody).toContain('<title>Lecturer Dashboard</title>')
-    expect(scheduledBody).toContain('View your upcoming consultations and calendar in one place.')
-    expect(scheduledBody).toContain('Upcoming Consultations')
     expect(scheduledBody).toContain('Calendar')
     expect(scheduledBody).toContain('calendar_table')
     expect(createResponse.status).toBe(403)

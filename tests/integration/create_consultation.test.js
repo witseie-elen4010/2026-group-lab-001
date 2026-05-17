@@ -229,6 +229,7 @@ describe('create consultation integration flow', () => {
       username: TEST_STUDENT_USERNAME
     })
     const response = await submitConsultation(baseUrl, sessionCookie, {
+      capacity: '1',
       datetime: toDatetimeLocal(nextWeekdayAtHour(10)),
       lecturerId: TEST_LECTURER_USERNAME,
       title
@@ -250,6 +251,7 @@ describe('create consultation integration flow', () => {
       username: TEST_STUDENT_USERNAME
     })
     const response = await submitConsultation(baseUrl, sessionCookie, {
+      capacity: '1',
       datetime: toDatetimeLocal(nextWeekdayAtHour(9)),
       lecturerId: TEST_LECTURER_USERNAME,
       title
@@ -295,6 +297,7 @@ describe('create consultation integration flow', () => {
       username: TEST_STUDENT_USERNAME
     })
     const response = await submitConsultation(baseUrl, sessionCookie, {
+      capacity: '1',
       datetime: toDatetimeLocal(requestedDate),
       lecturerId: TEST_LECTURER_USERNAME,
       title
@@ -319,6 +322,7 @@ describe('create consultation integration flow', () => {
       username: TEST_STUDENT_USERNAME
     })
     const response = await submitConsultation(baseUrl, sessionCookie, {
+      capacity: '1',
       datetime: toDatetimeLocal(requestedDate),
       lecturerId: TEST_LECTURER_USERNAME,
       title

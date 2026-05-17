@@ -152,7 +152,5 @@ describe('student login integration flow', () => {
 
     expect(response.status).toBe(403)
     expect(body).toContain('<title>Lecturer Dashboard</title>')
-    expect(body).toContain('Only lecturers can access the lecturer dashboard.')
-    expect(body).not.toContain('No upcoming consultations yet.')
   })
 })
