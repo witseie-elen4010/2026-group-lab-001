@@ -248,3 +248,58 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })
 })
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('.consultation_preferences_form')
+  if (!form) return
+
+  const toggleBtn = document.getElementById('per_day_availability_toggle')
+  const perDaySection = document.getElementById('per_day_availability')
+  const globalSelect = document.getElementById('global_availability_select')
+  const globalStart = document.getElementById('global_start_time')
+  const globalEnd = document.getElementById('global_end_time')
+
+  if (!toggleBtn || !perDaySection || !globalSelect || !globalStart || !globalEnd) return
+
+  const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+  const syncGlobalToPerDay = function () {
+    const availability = globalSelect.value
+    const startTime = globalStart.value
+    const endTime = globalEnd.value
+
+    DAYS.forEach(function (day) {
+      const availSelect = form.querySelector(`[name="availability_${day}"]`)
+      const startInput = form.querySelector(`[name="start_time_${day}"]`)
+      const endInput = form.querySelector(`[name="end_time_${day}"]`)
+      if (availSelect) availSelect.value = availability
+      if (startInput) startInput.value = availability === 'available' ? startTime : ''
+      if (endInput) endInput.value = availability === 'available' ? endTime : ''
+    })
+  }
+
+  if (perDaySection.hidden) {
+    syncGlobalToPerDay()
+  }
+
+  globalSelect.addEventListener('change', function () {
+    if (perDaySection.hidden) syncGlobalToPerDay()
+  })
+
+  globalStart.addEventListener('change', function () {
+    if (perDaySection.hidden) syncGlobalToPerDay()
+  })
+
+  globalEnd.addEventListener('change', function () {
+    if (perDaySection.hidden) syncGlobalToPerDay()
+  })
+
+  toggleBtn.addEventListener('click', function () {
+    const isHidden = perDaySection.hidden
+    perDaySection.hidden = !isHidden
+    toggleBtn.textContent = isHidden ? 'Hide Custom Settings' : 'Set Custom Availability Settings'
+    if (!isHidden) {
+      syncGlobalToPerDay()
+    }
+  })
+})

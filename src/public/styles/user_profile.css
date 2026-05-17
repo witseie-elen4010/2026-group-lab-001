@@ -46,7 +46,7 @@
 }
 
 .consultation_preferences_form .consult_flex + .consult_flex {
-  margin-top: 24px;
+  margin-top: 14px;
 }
 
 .consult_flex {
@@ -57,16 +57,36 @@
   gap: 12px;
 }
 
+.consult_flex_attendance > .consult_input {
+  align-self: center;
+}
+
 .consult_range {
   flex: 0 0 200px;
   padding-bottom: 0;
   text-align: center;
+  color: var(--color-secondary);
+  font-weight: bold;
+}
+
+.consult_range input {
+  color: var(--color-text);
+  font-weight: normal;
 }
 
 .consult_input {
   flex: 1;
   min-width: 80px;
   padding-bottom: 0;
+  color: var(--color-secondary);
+  font-weight: bold;
+}
+
+.consult_input input,
+.consult_input select,
+.consult_input textarea {
+  color: var(--color-text);
+  font-weight: normal;
 }
 
 .consult_separator {
@@ -136,4 +156,12 @@
 
 .institution_status_error {
   color: #991b1b;
+}
+
+.per_day_toggle_btn {
+  margin-top: 20px;
+}
+
+#per_day_availability {
+  margin-top: 12px;
 }
