@@ -1,9 +1,11 @@
 const http = require('node:http')
 const { closeDatabaseConnection, connectToDatabase, getCollection } = require('../../src/models/db')
+const { hashPassword } = require('../../src/utils/password')
 const app = require('../../src/app')
 
 const LECTURER_USERNAME = 'user1'
 const PASSWORD = 'password'
+const PEER_SEARCH_TEST_USERNAME = `peer-search-${process.pid}`
 const RUN_DB_TEST = process.env.MONGODB_URI ? test : test.skip
 const STUDENT_USERNAME = 'user'
 const TEST_ID = `${process.pid}${Date.now()}`
@@ -50,6 +52,11 @@ const deleteTestConsultations = async function () {
   await getCollection('Consultation').deleteMany({ title: { $regex: `^${TEST_TITLE_PREFIX}` } })
 }
 
+const deletePeerSearchUsers = async function () {
+  await connectToDatabase()
+  await getCollection('User').deleteMany({ username: { $regex: `^${PEER_SEARCH_TEST_USERNAME}` } })
+}
+
 const getFutureCurrentMonthDatetime = function () {
   const future = new Date(Date.now() + 2 * 60 * 60 * 1000)
   const year = future.getFullYear()
@@ -77,16 +84,19 @@ describe('home calendar integration', () => {
   beforeEach(async function () {
     if (!process.env.MONGODB_URI) return
     await deleteTestConsultations()
+    await deletePeerSearchUsers()
   })
 
   afterEach(async function () {
     if (!process.env.MONGODB_URI) return
     await deleteTestConsultations()
+    await deletePeerSearchUsers()
   })
 
   afterAll(async function () {
     if (!process.env.MONGODB_URI) return
     await deleteTestConsultations()
+    await deletePeerSearchUsers()
     await closeServer(server)
     await closeDatabaseConnection()
   })
@@ -183,5 +193,37 @@ describe('home calendar integration', () => {
 
     expect(response.status).toBe(200)
     expect(body).not.toContain(title)
+  })
+
+  RUN_DB_TEST('finds a peer on the home page by course and degree', async function () {
+    await connectToDatabase()
+    const users = getCollection('User')
+    const seededStudent = await users.findOne({ username: STUDENT_USERNAME })
+
+    await users.insertOne({
+      username: `${PEER_SEARCH_TEST_USERNAME}-${TEST_ID}`,
+      passwordHash: await hashPassword('password'),
+      role: 'student',
+      email: `peer-search-${TEST_ID}@example.com`,
+      firstName: 'Amogelang',
+      lastName: 'Maseko',
+      universityId: seededStudent?.universityId || 'University of the Witwatersrand',
+      facultyId: 'Engineering',
+      schoolId: 'Electrical Engineering',
+      degree: 'BSc (Eng) - Electrical Engineering',
+      courses: ['ELEN Circuit Theory', 'ELEN Electronics']
+    })
+
+    const sessionCookie = await loginAs(baseUrl, { password: PASSWORD, username: STUDENT_USERNAME })
+    const response = await fetch(`${baseUrl}/home?peerDegree=Electrical%20Engineering&peerCourse=ELEN`, {
+      headers: { cookie: sessionCookie }
+    })
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Find a Wits Peer')
+    expect(body).toContain('Amogelang Maseko')
+    expect(body).toContain('ELEN Circuit Theory, ELEN Electronics')
+    expect(body).toContain('BSc (Eng) - Electrical Engineering')
   })
 })

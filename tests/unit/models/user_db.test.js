@@ -13,6 +13,7 @@ const {
   getUserByGoogleId,
   linkGoogleId,
   searchLecturers,
+  searchUsersByAcademicProfile,
   updateUserAcademicProfile,
   updateUserInstitutions
 } = require('../../../src/models/user_db')
@@ -239,5 +240,48 @@ describe('user database operations', () => {
     expect(filter.$or[3].lastName.source).toBe('Smith\\?')
     expect(filter.$or[4].firstName.source).toBe('Smith\\?')
     expect(filter.$or[4].lastName.source).toBe('Alice\\.\\*')
+  })
+
+  test('searchUsersByAcademicProfile filters non-lecturer users within a university', async () => {
+    const peers = [{ username: 'alice', degree: 'BSc (Eng) - Electrical Engineering' }]
+    findCursor.toArray.mockResolvedValue(peers)
+
+    const result = await searchUsersByAcademicProfile({
+      excludeUsername: 'morris',
+      universityId: 'University of the Witwatersrand'
+    })
+
+    expect(mockCollection.find).toHaveBeenCalledWith({
+      role: { $in: ['admin', 'student'] },
+      universityId: 'University of the Witwatersrand',
+      username: { $ne: 'morris' }
+    })
+    expect(result).toEqual(peers)
+  })
+
+  test('searchUsersByAcademicProfile adds degree, course, and name filters', async () => {
+    findCursor.toArray.mockResolvedValue([])
+
+    await searchUsersByAcademicProfile({
+      course: 'ELEN.*',
+      degree: 'Electrical Engineering?',
+      excludeUsername: 'morris',
+      query: 'Alice Smith',
+      universityId: 'University of the Witwatersrand'
+    })
+
+    const filter = mockCollection.find.mock.calls[0][0]
+
+    expect(filter).toMatchObject({
+      role: { $in: ['admin', 'student'] },
+      universityId: 'University of the Witwatersrand',
+      username: { $ne: 'morris' }
+    })
+    expect(filter.degree.source).toBe('Electrical Engineering\\?')
+    expect(filter.courses.source).toBe('ELEN\\.\\*')
+    expect(filter.$or).toHaveLength(5)
+    expect(filter.$or[0].username.source).toBe('Alice Smith')
+    expect(filter.$or[3].firstName.source).toBe('Alice')
+    expect(filter.$or[3].lastName.source).toBe('Smith')
   })
 })

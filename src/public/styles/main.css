@@ -331,6 +331,32 @@ a {
   margin-left: 0;
 }
 
+.peer_search_section {
+  max-width: 760px;
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.peer_search_criteria {
+  margin-top: 16px;
+}
+
+.peer_search_flex {
+  margin-top: 12px;
+}
+
+.peer_result_card {
+  align-items: flex-start;
+}
+
+.peer_result_summary {
+  flex: 1;
+}
+
+.peer_result_meta {
+  margin: 6px 0 0;
+}
+
 .calendar_title {
   margin: 0 0 16px;
 }
