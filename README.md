@@ -32,7 +32,8 @@ The application is built with a server-rendered Node.js and Express stack, backe
 | Templating | EJS |
 | Database | MongoDB Atlas (native driver) |
 | Sessions | express-session |
-| Testing | Jest 30 |
+| Authentication | Passport.js (Google OAuth 2.0) |
+| Testing | Jest 30, Playwright |
 | Linting | StandardJS |
 | CI | GitHub Actions |
 | Coverage Reporting | Coveralls |
@@ -45,7 +46,7 @@ The application is built with a server-rendered Node.js and Express stack, backe
 
 3. [x] **Completed**
 
-4. [ ] **In Progress**
+4. [x] **Completed**
 
 ---
 
@@ -82,6 +83,8 @@ The application is hosted on Render and accessible at:
    ```env
    MONGODB_URI=your_mongodb_atlas_connection_string
    SESSION_SECRET=your_session_secret
+   GOOGLE_CLIENT_ID=your_client_id
+   GOOGLE_CLIENT_SECRET=your_client_secret
    ```
 
 4. Start the development server:
@@ -130,6 +133,7 @@ Each lecturer account is created with the fields `firstName`, `lastName`, `usern
 ### Authentication & Accounts
 
 - **User registration** — Students and lecturers can register with their name, email address, username, password, and role
+- **Google OAuth sign-in** — Users can sign in with a Google account; new Google users complete a one-time registration step to set their role and institutional details
 - **User login** — Session-based authentication with secure password hashing
 - **Role-based redirection** — Students and lecturers are directed to their respective home pages on login
 - **Authentication guard** — All private routes require an active session; unauthenticated requests are redirected to login
@@ -138,7 +142,12 @@ Each lecturer account is created with the fields `firstName`, `lastName`, `usern
 
 - **Student home page** — Central navigation hub with quick access to browse lecturers and manage consultations
 - **Browse lecturers** — Search for lecturers by name with real-time typeahead results and paginated output; matches full names in either order (first–last or last–first)
+- **Follow lecturers** — Students can follow a lecturer to scope their consultation search to that lecturer's sessions
 - **View lecturer profiles** — Students can view a lecturer's institutional details, consultation preferences, and weekly availability
+- **Schedule consultation** — Students can check a lecturer's availability for a given date and time before creating a booking
+- **Create consultation** — Students can create a new group consultation with a lecturer at an available date and time slot
+- **Join consultation** — Students can browse open consultations (filterable by lecturer, date, and time) and join them; when no consultations exist for an available slot a direct link to create one is shown
+- **Academic profile** — Students can save their degree programme and a list of enrolled courses; the system suggests courses from Wits degree templates when a known degree is selected
 
 ### Lecturer Experience
 
@@ -147,6 +156,9 @@ Each lecturer account is created with the fields `firstName`, `lastName`, `usern
 - **Weekly availability** — Lecturers can specify their available days of the week with start and end times for each day
 - **Unavailable dates** — Lecturers can list specific dates on which they are unavailable, overriding their usual weekly pattern
 - **AJAX form submission** — Consultation and availability settings update without a full page reload, with inline success and error feedback
+- **Lecturer dashboard** — Calendar-based view of all upcoming booked consultations, grouped by date with attendee rosters
+- **Cancel consultation** — Lecturers can cancel any upcoming consultation from the dashboard
+- **Daily summary** — Lecturers can view all of today's consultations grouped by time slot
 
 ### User Profile
 
@@ -158,11 +170,15 @@ Each lecturer account is created with the fields `firstName`, `lastName`, `usern
 
 - **University, faculty, and school search** — Typeahead API endpoints return matching institutions filtered by partial name, with parent-scoped filtering (faculty results scoped to a selected university; school results scoped to a selected faculty)
 
+### Admin
+
+- **Audit log viewer** — Admin users can access a paginated log of all significant user actions (logins, consultation creates/joins/cancellations, profile updates, and more), persisted to the database by the action logger middleware
+
 ---
 
 ## Running Tests
 
-Run the full Jest test suite (unit, integration, and Atlas system tests):
+Run the full test suite (unit, integration, E2E, and Atlas system tests) with combined coverage:
 
 ```sh
 npm test
@@ -170,10 +186,12 @@ npm test
 
 Atlas integration tests require `MONGODB_URI` to be set. When the variable is absent, those tests are automatically skipped and the suite still passes.
 
-Run only the database model tests:
+Run individual tiers:
 
 ```sh
-npm run test:db
+npm run test:unit              # Jest unit tests only
+npm run test:integration:web   # Web integration tests (mocked routes)
+npm run test:e2e               # Playwright end-to-end tests
 ```
 
 Run the StandardJS linter:
@@ -184,12 +202,13 @@ npm run lint
 
 ### Test Coverage
 
-Tests are organised into three tiers:
+Tests are organised into four tiers:
 
 | Tier | Location | Description |
 |---|---|---|
-| Unit | `tests/services/`, `tests/utils/` | Pure function tests — validation logic, calendar utilities |
-| Integration | `tests/routes/`, `tests/models/` | Route handlers with mocked MongoDB; real HTTP server and session handling |
+| Unit | `tests/unit/` | Pure function tests — validation logic, calendar utilities, middleware |
+| Integration | `tests/integration/` | Route handlers with mocked MongoDB; real HTTP server and session handling |
+| E2E | `tests/E2E/` | Browser-driven acceptance tests via Playwright against a live server |
 | System / Acceptance | `tests/models/atlas.test.js` | Live Atlas connection — verifies seeded data and relationship lookups |
 
 ---
@@ -217,6 +236,8 @@ Key architectural decisions are documented in [`documentation/architecture/`](ht
 | [ADR 003](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/003_adr.md) | Jest for automated testing with GitHub Actions CI |
 | [ADR 004](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/004_adr.md) | Coveralls for code coverage reporting with GitHub Actions CI |
 | [ADR 005](https://github.com/witseie-elen4010/2026-group-lab-001/tree/main/documentation/architecture/005_adr.md) | Render for hosting |
+| [ADR 006](https://github.com/witseie-elen4010/2026-group-lab-001/blob/main/documentation/architecture/006_adr.md) | Built-in scrypt for Password Hashing |
+| [ADR 007](https://github.com/witseie-elen4010/2026-group-lab-001/blob/main/documentation/architecture/007_adr.md) | Google OAuth 2.0 Sign-In |
 
 ---
 
